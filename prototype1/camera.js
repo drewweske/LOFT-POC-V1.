@@ -54,8 +54,11 @@ export class LoftCamera{
   }
 
   _setFov(target,dt){
-    this.camera.fov=smooth(this.camera.fov,target,7,dt);
-    this.camera.updateProjectionMatrix();
+    const next=smooth(this.camera.fov,target,7,dt);
+    if(Math.abs(next-this.camera.fov)>.002){
+      this.camera.fov=next;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   _smooth(dt){
