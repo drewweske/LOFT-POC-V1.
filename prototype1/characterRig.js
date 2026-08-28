@@ -17,12 +17,15 @@ export class LoftGolferRig{
     const m=this._add(new THREE.Mesh(geo,mat));m.position.set(...pos);m.scale.set(...scale);m.rotation.set(...rot);return m;
   }
   _segment(r,mat){
-    return this._add(new THREE.Mesh(new THREE.CapsuleGeometry(r,.1,7,14),mat));
+    const m=this._add(new THREE.Mesh(new THREE.CylinderGeometry(r,r*.96,1,12),mat));
+    m.userData.baseRadius=r;
+    return m;
   }
   _between(mesh,a,b,r){
-    const mid=a.clone().add(b).multiplyScalar(.5),len=a.distanceTo(b);
-    mesh.geometry.dispose();mesh.geometry=new THREE.CapsuleGeometry(r,Math.max(.01,len-r*2),7,14);
-    mesh.position.copy(mid);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
+    const mid=a.clone().add(b).multiplyScalar(.5),len=Math.max(.001,a.distanceTo(b));
+    mesh.position.copy(mid);
+    mesh.scale.set(1,len,1);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
   }
   _build(){
     this.pelvis=this._shape(new THREE.SphereGeometry(.28,24,18),this.ink);
