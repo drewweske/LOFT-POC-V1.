@@ -151,17 +151,26 @@ function updateLine(){
 }
 updateLine();
 
-const bunkerDefs=[[-14,pin.z+8,8.8,4.9],[17,pin.z-3,7.8,4.2],[12,-94,6,3.3]];
+const bunkerDefs=[[-14,-148,8.8,4.9],[17,-160,7.8,4.2],[12,-94,6,3.3],[-8,-202,6.4,3.1]];
+function distanceToSegment(px,pz,ax,az,bx,bz){
+  const vx=bx-ax,vz=bz-az,wx=px-ax,wz=pz-az;
+  const vv=vx*vx+vz*vz||1;
+  const t=clamp((wx*vx+wz*vz)/vv,0,1);
+  return Math.hypot(px-(ax+vx*t),pz-(az+vz*t));
+}
 function surfaceAt(x,z){
   const gx=(x-pin.x)/(18*1.36),gz=(z-pin.z)/18;
   if(gx*gx+gz*gz<=1)return'green';
   for(const [bx,bz,sx,sz] of bunkerDefs){const dx=(x-bx)/sx,dz=(z-bz)/sz;if(dx*dx+dz*dz<=1)return'sand';}
   if(x>38&&z<-18)return'water';
-  if(Math.abs(x)<18.5&&z<2&&z>-176)return'fairway';
+  const ht=holeDef.tee,hp=holeDef.pin;
+  const fairDist=distanceToSegment(x,z,ht[0],ht[1],hp[0],hp[1]);
+  if(fairDist<15.5)return'fairway';
   return'rough';
 }
 
 const physics=new GolfPhysics({terrainHeight,surfaceAt,wind});
+physics.setCup(pin);
 const cam=new LoftCamera(camera,{terrainHeight});
 const topo=new LoftTopoMap($('course-map'));
 const feedback=new LoftFeedback(scene,COLORS);
