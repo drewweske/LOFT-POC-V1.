@@ -411,7 +411,7 @@ function launchShot(metrics){
   hidePuttPace();
 
   setTimeout(()=>document.getElementById('app')?.classList.remove('swing-focus'),420);
-  state.learned.stroke=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
+  state.learned.stroke=true;if(c.head==='putter')state.learned.putt=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
   showContext(state.shot.label,q>.94?780:560);
 }
 
@@ -755,7 +755,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('PULL FARTHER · DRIVE THROUGH');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);hidePuttPace();$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip(gesture.putt?'PULL FOR PACE · RETURN THROUGH BALL':'PULL FARTHER · DRIVE THROUGH');}
   }
   gesture=null;
 }
@@ -780,8 +780,8 @@ function frame(now){
 
   const yaw=aimYaw();
   if(state.phase==='ready'){
-    if(cam.isSwingLocked)cam.updateSwing(dt,{ball:ballGroup.position,aimYaw:yaw,swingProgress:state.swingPhase});
-    else cam.updateAim(dt,{ball:ballGroup.position,aimYaw:yaw});
+    if(cam.isSwingLocked)cam.updateSwing(dt,{ball:ballGroup.position,aimYaw:yaw,swingProgress:state.swingPhase,putting:isPutting()});
+    else cam.updateAim(dt,{ball:ballGroup.position,aimYaw:yaw,putting:isPutting()});
   }else if(state.phase==='flight'){
     const L=LEVELS[state.level];
     if(state.hitStop>0){
@@ -801,7 +801,7 @@ function frame(now){
         feedback.surfaceTransition(ps.surfaceChanged.to,Math.hypot(ps.vel.x,ps.vel.z));
         ps.surfaceChanged=null;
       }
-      cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin});
+      cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin,putting:Boolean(state.shot?.putting)});
 
       if(ps.lastImpactSurface&&!state.landingFX){
         state.landingFX=true;
@@ -829,6 +829,9 @@ function frame(now){
     ballGroup.scale.setScalar(s);
     if(state.cupSink===0)ballGroup.visible=false;
   }
+
+  const tendingPin=(state.phase==='ready'&&isPutting())||(state.phase==='flight'&&state.shot?.putting)||(state.phase==='result'&&state.shot?.putting);
+  world.setPinFade(tendingPin?.10:1);
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
