@@ -1,38 +1,148 @@
 import * as THREE from '../vendor/three.module.js';
+
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=(a,b,r,dt)=>a+(b-a)*(1-Math.exp(-r*dt));
 
 export class LoftCamera{
   constructor(camera){
-    this.camera=camera;this.target=new THREE.Vector3(0,.85,-7);
-    this.yaw=.62;this.yawT=.62;this.pitch=.18;this.pitchT=.18;this.dist=9.2;this.distT=9.2;
-    this.flightYaw=.42;this.flightYawT=.42;this.flightPitch=.20;this.flightPitchT=.20;this.flightDist=10.2;this.flightDistT=10.2;
+    this.camera=camera;
+    this.target=new THREE.Vector3();
+
+    this.pitch=.16;
+    this.pitchT=.16;
+    this.dist=9.0;
+    this.distT=9.0;
+
+    this.swingBlend=0;
+    this.swinging=false;
+
+    this.flightYaw=.38;
+    this.flightYawT=.38;
+    this.flightPitch=.18;
+    this.flightPitchT=.18;
+    this.flightDist=9.8;
+    this.flightDistT=9.8;
+
+    this.resultYaw=.42;
+    this.resultPitch=.24;
   }
-  reset(){this.yawT=.62;this.pitchT=.18;this.distT=9.2;this.flightYawT=.42;this.flightPitchT=.20;this.flightDistT=10.2;}
-  orbit(dx,dy,flight=false){
-    if(!flight){this.yawT-=dx*.0047;this.pitchT=clamp(this.pitchT+dy*.0027,-.08,.52);}
-    else{this.flightYawT-=dx*.0047;this.flightPitchT=clamp(this.flightPitchT+dy*.0027,-.08,.58);}
+
+  reset(){
+    this.pitchT=.16;
+    this.distT=9.0;
+    this.flightYawT=.38;
+    this.flightPitchT=.18;
+    this.flightDistT=9.8;
   }
+
+  setSwinging(v){
+    this.swinging=!!v;
+  }
+
+  aimVertical(dy){
+    this.pitchT=clamp(this.pitchT+dy*.0025,-.06,.44);
+  }
+
   zoom(delta,flight=false){
-    if(!flight)this.distT=clamp(this.distT*Math.exp(-delta*.0022),6.2,14.5);
-    else this.flightDistT=clamp(this.flightDistT*Math.exp(-delta*.0022),6.0,16.5);
+    if(!flight)this.distT=clamp(this.distT*Math.exp(-delta*.0020),6.3,12.6);
+    else this.flightDistT=clamp(this.flightDistT*Math.exp(-delta*.0020),6.2,15.0);
   }
-  _smooth(dt){this.yaw=smooth(this.yaw,this.yawT,11,dt);this.pitch=smooth(this.pitch,this.pitchT,11,dt);this.dist=smooth(this.dist,this.distT,12,dt);this.flightYaw=smooth(this.flightYaw,this.flightYawT,10,dt);this.flightPitch=smooth(this.flightPitch,this.flightPitchT,10,dt);this.flightDist=smooth(this.flightDist,this.flightDistT,11,dt);}
-  address(dt,aimYaw){
-    this._smooth(dt);const yaw=aimYaw+this.yaw;
-    const pos=new THREE.Vector3(Math.sin(yaw)*this.dist,2.72+this.pitch*5.2,Math.cos(yaw)*this.dist);
-    const look=new THREE.Vector3(Math.sin(aimYaw)*-6.2,.87,Math.cos(aimYaw)*6.2);
-    this.camera.position.lerp(pos,1-Math.exp(-8*dt));this.target.lerp(look,1-Math.exp(-9*dt));this.camera.lookAt(this.target);
+
+  flightOrbit(dx,dy){
+    this.flightYawT-=dx*.0044;
+    this.flightPitchT=clamp(this.flightPitchT+dy*.0026,-.06,.52);
   }
+
+  _smooth(dt){
+    this.pitch=smooth(this.pitch,this.pitchT,10,dt);
+    this.dist=smooth(this.dist,this.distT,11,dt);
+    this.flightYaw=smooth(this.flightYaw,this.flightYawT,10,dt);
+    this.flightPitch=smooth(this.flightPitch,this.flightPitchT,10,dt);
+    this.flightDist=smooth(this.flightDist,this.flightDistT,11,dt);
+    const desired=this.swinging?1:0;
+    this.swingBlend=smooth(this.swingBlend,desired,this.swinging?18:10,dt);
+  }
+
+  /*
+    Address/Aim camera:
+    - aimYaw is driven by the player's camera drag in game.js
+    - therefore golfer + The Line rotate with the camera-facing direction
+    - pitch/zoom remain semi-free
+    - when swing starts, the camera blends to a ball-locked golf composition
+  */
+  address(dt,ball,aimYaw){
+    this._smooth(dt);
+
+    const forward=new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw)).normalize();
+    const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
+    const up=new THREE.Vector3(0,1,0);
+
+    // Semi-free address composition. The shot direction remains readable.
+    const freePos=ball.clone()
+      .addScaledVector(forward,-this.dist*.78)
+      .addScaledVector(right,this.dist*.46)
+      .addScaledVector(up,2.25+this.pitch*4.8);
+
+    const freeLook=ball.clone()
+      .addScaledVector(forward,7.2)
+      .addScaledVector(up,.72);
+
+    // Swing-lock composition: tightly anchored to the ball while keeping
+    // the golfer + target line in frame. No user camera transforms during stroke.
+    const swingDist=7.0;
+    const swingPos=ball.clone()
+      .addScaledVector(forward,-swingDist*.67)
+      .addScaledVector(right,swingDist*.48)
+      .addScaledVector(up,2.18);
+
+    const swingLook=ball.clone()
+      .addScaledVector(forward,1.25)
+      .addScaledVector(up,.52);
+
+    const desiredPos=freePos.clone().lerp(swingPos,this.swingBlend);
+    const desiredLook=freeLook.clone().lerp(swingLook,this.swingBlend);
+
+    this.camera.position.lerp(desiredPos,1-Math.exp(-10*dt));
+    this.target.lerp(desiredLook,1-Math.exp(-11*dt));
+    this.camera.lookAt(this.target);
+  }
+
   flight(dt,ball,velocity,aimYaw){
-    this._smooth(dt);const h=velocity.clone();h.y=0;const base=h.lengthSq()>.02?Math.atan2(h.x,-h.z):aimYaw,yaw=base+this.flightYaw;
-    const pos=ball.clone().add(new THREE.Vector3(Math.sin(yaw)*this.flightDist,3.2+this.flightPitch*5.8+Math.min(2.6,ball.y*.10),Math.cos(yaw)*this.flightDist));
-    this.camera.position.lerp(pos,1-Math.exp(-7.5*dt));this.target.lerp(ball,1-Math.exp(-10*dt));this.camera.lookAt(this.target);
+    this._smooth(dt);
+    const horizontal=velocity.clone();horizontal.y=0;
+    const base=horizontal.lengthSq()>.02?Math.atan2(horizontal.x,-horizontal.z):aimYaw;
+    const yaw=base+this.flightYaw;
+    const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
+    const right=new THREE.Vector3(forward.z,0,-forward.x);
+
+    const desired=ball.clone()
+      .addScaledVector(forward,-this.flightDist*.82)
+      .addScaledVector(right,this.flightDist*.28)
+      .add(new THREE.Vector3(0,3.0+this.flightPitch*5.2+Math.min(2.2,ball.y*.09),0));
+
+    this.camera.position.lerp(desired,1-Math.exp(-7.6*dt));
+    this.target.lerp(ball.clone().add(new THREE.Vector3(0,.14,0)),1-Math.exp(-10*dt));
+    this.camera.lookAt(this.target);
   }
+
   result(dt,ball,pin,aimYaw){
-    this._smooth(dt);const yaw=aimYaw+this.flightYaw;
-    const pos=ball.clone().add(new THREE.Vector3(Math.sin(yaw)*8.2,3.3+this.flightPitch*5.1,Math.cos(yaw)*8.2));
-    const look=ball.clone().lerp(pin.clone().setY(pin.y+.15),.18);
-    this.camera.position.lerp(pos,1-Math.exp(-5.5*dt));this.target.lerp(look,1-Math.exp(-6.5*dt));this.camera.lookAt(this.target);
+    this._smooth(dt);
+    const toPin=pin.clone().sub(ball);toPin.y=0;
+    const dir=toPin.lengthSq()>.01?toPin.normalize():new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw));
+    const right=new THREE.Vector3(dir.z,0,-dir.x);
+
+    // Result camera is a lie-inspection camera, not a giant empty-ground overview.
+    const desired=ball.clone()
+      .addScaledVector(dir,-6.2)
+      .addScaledVector(right,3.6)
+      .add(new THREE.Vector3(0,3.0,0));
+
+    const look=ball.clone()
+      .addScaledVector(dir,2.2)
+      .add(new THREE.Vector3(0,.18,0));
+
+    this.camera.position.lerp(desired,1-Math.exp(-6.4*dt));
+    this.target.lerp(look,1-Math.exp(-7.2*dt));
+    this.camera.lookAt(this.target);
   }
 }
