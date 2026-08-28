@@ -6,7 +6,7 @@ export const CLUBS=[
 {id:'iron9',name:'9 Iron',short:'9I',carry:135,launch:24,ballSpeed:38,spin:7600,roll:5,head:'iron',feel:'PRECISE'},
 {id:'pw',name:'Pitching Wedge',short:'PW',carry:115,launch:29,ballSpeed:32.8,spin:9000,roll:3,head:'wedge',feel:'SOFT'},
 {id:'sw',name:'Sand Wedge',short:'SW',carry:90,launch:34,ballSpeed:28,spin:10000,roll:2,head:'wedge',feel:'SPIN'},
-{id:'putter',name:'Putter',short:'P',carry:25,launch:1.5,ballSpeed:7,spin:0,roll:25,head:'putter',feel:'ROLL'}
+{id:'putter',name:'Putter',short:'P',carry:25,launch:0,ballSpeed:5.4,spin:0,roll:25,head:'putter',feel:'ROLL'}
 ];
 
 export const LEVELS={
