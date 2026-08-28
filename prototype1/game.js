@@ -7,17 +7,18 @@ import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
 import {ROUND_HOLES,ROWAN_SCORES,holeYards,scoreName,relativeScore} from './round.js';
-import {surfaceDisplay} from './surfaces.js';
+import {surfaceDisplay,surfacePhysics} from './surfaces.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const YARD=.9144;
+const BALL_VISUAL_R=.034;
 let holeIndex=0;
 let holeDef=ROUND_HOLES[holeIndex];
 let pin=new THREE.Vector3(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
 let wind=new THREE.Vector3(holeDef.wind[0],0,holeDef.wind[1]);
-let TEE=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.052,holeDef.tee[1]);
+let TEE=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+BALL_VISUAL_R,holeDef.tee[1]);
 let COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
 
 window.addEventListener('error',e=>{
@@ -58,7 +59,7 @@ const state={
   target:new THREE.Vector3(),
   shot:null,
   swingPhase:0,
-  learned:{camera:false,line:false,stroke:false},
+  learned:{camera:false,line:false,stroke:false,putt:false},
   interaction:null,
   shotCount:0,
   holeIndex:0,
@@ -74,6 +75,7 @@ const state={
 };
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
+function isPutting(){return club()?.head==='putter';}
 function aimYaw(){return state.aimYaw;}
 function pinDistanceYards(){return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)/YARD;}
 function scoreToParText(strokes=state.strokes,par=holeDef.par){const d=strokes-par;return d===0?'E':d>0?'+'+d:String(d);}
@@ -142,9 +144,9 @@ function makeBallBump(){
 
 const creamMat=new THREE.MeshStandardMaterial({color:COLORS.cream,roughness:.80,bumpMap:makeBallBump(),bumpScale:-.052});
 const ballGroup=new THREE.Group();scene.add(ballGroup);
-const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.052,48,36),creamMat);ballMesh.castShadow=true;ballGroup.add(ballMesh);
-const ballSignal=new THREE.Mesh(new THREE.SphereGeometry(.008,16,12),new THREE.MeshStandardMaterial({color:COLORS.orange,roughness:.82}));
-ballSignal.position.set(-.024,-.015,.044);ballGroup.add(ballSignal);
+const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(BALL_VISUAL_R,48,36),creamMat);ballMesh.castShadow=true;ballGroup.add(ballMesh);
+const ballSignal=new THREE.Mesh(new THREE.SphereGeometry(.0052,16,12),new THREE.MeshStandardMaterial({color:COLORS.orange,roughness:.82}));
+ballSignal.position.set(-.0155,-.010,.029);ballGroup.add(ballSignal);
 ballGroup.position.copy(TEE);
 
 const golfer=new LoftGolferRig(COLORS);
@@ -163,6 +165,19 @@ ring.rotation.x=Math.PI/2;halo.add(ring);
 const haloDot=new THREE.Mesh(new THREE.SphereGeometry(.09,18,12),new THREE.MeshBasicMaterial({color:COLORS.orange}));haloDot.position.set(-.55,.09,.55);halo.add(haloDot);
 const core=new THREE.Mesh(new THREE.RingGeometry(.13,.20,32),new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.58,side:THREE.DoubleSide}));
 core.rotation.x=-Math.PI/2;core.position.y=.018;halo.add(core);
+
+const puttPaceGhost=new THREE.Group();puttPaceGhost.visible=false;scene.add(puttPaceGhost);
+const puttPaceRing=new THREE.Mesh(
+  new THREE.TorusGeometry(.34,.025,8,48),
+  new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.76,depthWrite:false})
+);
+puttPaceRing.rotation.x=Math.PI/2;puttPaceGhost.add(puttPaceRing);
+const puttPaceDot=new THREE.Mesh(
+  new THREE.SphereGeometry(.052,18,12),
+  new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
+);
+puttPaceDot.position.set(-.22,.045,.22);puttPaceGhost.add(puttPaceDot);
+
 
 function updateLine(){
   const start=ballGroup.position.clone();
@@ -198,7 +213,7 @@ function updateLine(){
   // +X for positive yaw. Therefore the golfer MUST rotate by -yaw. Using +yaw
   // was the source of the strange front-on / mirrored address angles seen on iPhone.
   const rigYaw=-yaw;
-  const localAddressBall=new THREE.Vector3(.46,.052,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw);
+  const localAddressBall=new THREE.Vector3(.46,BALL_VISUAL_R,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw);
   golfer.group.position.copy(ballGroup.position).sub(localAddressBall);
   golfer.group.rotation.y=rigYaw;
 }
@@ -233,6 +248,31 @@ function playingHeight(x,z){
   return terrainHeight(x,z);
 }
 
+function cupDistanceFeet(){
+  return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)*3.28084;
+}
+function puttPaceFromPull(px,height){
+  const norm=clamp(px/(height*.18),0,1.08);
+  const feet=.7+64*Math.pow(norm,1.55);
+  return {norm,feet};
+}
+function updatePuttPaceGhost(feet){
+  if(!isPutting()||state.phase!=='ready'){puttPaceGhost.visible=false;return;}
+  const d=Math.max(.15,feet*.3048);
+  const forward=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
+  const x=TEE.x+forward.x*d,z=TEE.z+forward.z*d;
+  puttPaceGhost.position.set(x,playingHeight(x,z)+.035,z);
+  const err=Math.abs(feet-cupDistanceFeet());
+  const close=err<=Math.max(.55,cupDistanceFeet()*.055);
+  puttPaceRing.material.opacity=close?.98:.70;
+  puttPaceRing.scale.setScalar(close?1.10:1);
+  puttPaceDot.scale.setScalar(close?1.20:1);
+  puttPaceGhost.visible=true;
+  return close;
+}
+function hidePuttPace(){puttPaceGhost.visible=false;}
+
+
 const physics=new GolfPhysics({terrainHeight:playingHeight,surfaceAt,wind});
 physics.setCup(pin);
 const cam=new LoftCamera(camera,{terrainHeight});
@@ -257,6 +297,7 @@ function showContext(text,duration=520){
 function setTip(text){$('tip-text').textContent=text;$('tip').style.opacity='1';}
 function updateTip(){
   if(state.phase==='result'){$('tip').style.opacity='0';return;}
+  if(isPutting()&&!state.learned.putt){setTip('PULL FOR PACE · RETURN THROUGH BALL');return;}
   if(!state.learned.camera)setTip('DRAG TO AIM · PINCH TO ZOOM');
   else if(!state.learned.line)setTip('LANDING MARK · SET DISTANCE');
   else if(!state.learned.stroke)setTip('PULL BACK · DRIVE THROUGH');
@@ -282,7 +323,8 @@ function selectClub(id){
   state.clubId=id;golfer.setClub(next.head);
   state.targetDistance=Math.min(next.carry*YARD,pinDistanceYards()*YARD*1.04);
   syncTargetFromAim();
-  updateLine();syncBag();closeBag();showContext(next.name+' · '+next.carry+' YD',650);
+  puttPaceGhost.visible=false;
+  updateLine();syncBag();closeBag();showContext(next.name+' · '+next.carry+' YD',650);updateTip();
 }
 function openBag(){$('bag').classList.add('open');$('bag').setAttribute('aria-hidden','false');$('tip').style.opacity='0';}
 function closeBag(){$('bag').classList.remove('open');$('bag').setAttribute('aria-hidden','true');updateTip();}
@@ -318,21 +360,19 @@ function launchShot(metrics){
 
   // LOFT Stroke quality is not one hidden power number. A great strike requires
   // rhythm, centered path, decisive release and useful load.
-  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*.75;
+  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*(c.head==='putter'?.18:.75);
   const finalPath=clamp(metrics.path+pathNoise,-9,9);
-  const skill=
-    metrics.tempoScore*.28+
-    metrics.rhythm*.18+
-    metrics.center*.20+
-    metrics.commitment*.18+
-    metrics.loadScore*.10+
-    metrics.speedScore*.06;
+  const skill=c.head==='putter'
+    ? metrics.tempoScore*.30+metrics.rhythm*.27+metrics.center*.29+metrics.commitment*.14
+    : metrics.tempoScore*.28+metrics.rhythm*.18+metrics.center*.20+metrics.commitment*.18+metrics.loadScore*.10+metrics.speedScore*.06;
 
-  const q=clamp(.48+.52*skill-.010*Math.abs(finalPath)-(1-L.form)*.025,.42,1.0);
+  const q=c.head==='putter'
+    ? clamp(.58+.42*skill-.007*Math.abs(finalPath)-(1-L.form)*.012,.52,1.0)
+    : clamp(.48+.52*skill-.010*Math.abs(finalPath)-(1-L.form)*.025,.42,1.0);
   const direction=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
 
   if(c.head==='putter'){
-    physics.putt({position:ballGroup.position,club:c,power:metrics.power,path:finalPath,aimYaw:aimYaw(),strike:q});
+    physics.putt({position:ballGroup.position,club:c,power:metrics.power,paceFeet:metrics.puttPaceFeet,path:finalPath,aimYaw:aimYaw(),strike:q});
   }else{
     physics.launch({
       position:ballGroup.position,
@@ -354,7 +394,9 @@ function launchShot(metrics){
     club:c.short,
     rhythm:metrics.rhythm,
     tempo:metrics.tempoScore,
-    commitment:metrics.commitment
+    commitment:metrics.commitment,
+    putting:c.head==='putter',
+    paceFeet:metrics.puttPaceFeet??null
   };
   state.phase='flight';state.swingPhase=.60;state.shotCount++;state.strokes++;
   state.landingFX=false;
@@ -365,7 +407,8 @@ function launchShot(metrics){
   cam.beginFlight(aimYaw());
 
   feedback.impact({quality:q,power:metrics.power,position:ballGroup.position,direction,club:c.head});
-  feedback.startFlight(ballGroup.position);
+  if(c.head!=='putter')feedback.startFlight(ballGroup.position);
+  hidePuttPace();
 
   setTimeout(()=>document.getElementById('app')?.classList.remove('swing-focus'),420);
   state.learned.stroke=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
@@ -378,7 +421,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   if(penalty)state.strokes++;
 
   TEE.copy(position);
-  TEE.y=terrainHeight(TEE.x,TEE.z)+.052;
+  TEE.y=terrainHeight(TEE.x,TEE.z)+BALL_VISUAL_R;
   state.currentLie=lieOverride||surfaceAt(TEE.x,TEE.z);
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
 
@@ -388,7 +431,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   chooseAutoClub();
   defaultTarget(false);
   golfer.setPose(0,LEVELS[state.level]);
-  feedback.clear();
+  feedback.clear();hidePuttPace();
 
   lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');
@@ -408,7 +451,7 @@ function startHole(index,{intro=true}={}){
   physics.wind.copy(wind);physics.setCup(pin);
   world.setPin(pin);
 
-  const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.052,holeDef.tee[1]);
+  const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+BALL_VISUAL_R,holeDef.tee[1]);
   topo.setHole(originalTee,pin);
   TEE.copy(originalTee);
   state.currentLie='tee';
@@ -419,7 +462,7 @@ function startHole(index,{intro=true}={}){
 
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
   golfer.setPose(0,LEVELS[state.level]);
-  feedback.clear();lineMesh.visible=true;halo.visible=true;
+  feedback.clear();hidePuttPace();lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');$('round-end').classList.remove('show');
   document.getElementById('app')?.classList.remove('swing-focus','hole-transition');
   cam.resetAim();updateLine();updateHoleHUD();updateTip();
@@ -496,7 +539,7 @@ function handleResultAction(){
 }
 $('again').onclick=handleResultAction;
 $('run-it-back').onclick=()=>{
-  state.holeScores=[];state.shotCount=0;state.learned={camera:true,line:true,stroke:true};
+  state.holeScores=[];state.shotCount=0;state.learned={camera:true,line:true,stroke:true,putt:true};
   startHole(0,{intro:true});
 };
 
@@ -512,9 +555,9 @@ canvas.addEventListener('pointerdown',e=>{
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   const now=performance.now();
-  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,setCue:false,transitionCue:false,releaseCue:false,samples:[{x:e.clientX,y:e.clientY,t:now}]};
+  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,setCue:false,transitionCue:false,releaseCue:false,paceCue:false,putt:isPutting(),puttPaceFeet:0,samples:[{x:e.clientX,y:e.clientY,t:now}]};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
-  if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
+  if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext(gesture.putt?'PACE':'LOAD',9999);$('tip').style.opacity='0';}
 });
 canvas.addEventListener('pointermove',e=>{
   const p=pointers.get(e.pointerId);if(!p)return;e.preventDefault();p.px=p.x;p.py=p.y;p.x=e.clientX;p.y=e.clientY;
