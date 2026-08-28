@@ -86,3 +86,7 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
 
 /* During a hole transition there is no accidental touch-through. */
 #app.hole-transition .club-chip,#app.hole-transition .right-tools,#app.hole-transition .hud,#app.hole-transition .course-map{opacity:0;pointer-events:none}
+
+/* Hole-to-hole cut: a short cream veil, closer to a broadcast/editorial cut than a menu. */
+#app:after{content:"";position:absolute;z-index:88;inset:0;background:var(--cream);opacity:0;pointer-events:none;transition:opacity .24s var(--ease)}
+#app.hole-transition:after{opacity:.94}
