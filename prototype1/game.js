@@ -309,7 +309,7 @@ function classify(q,path){if(Math.abs(path)>5.3)return path>0?'PUSH':'PULL';if(q
 
 function launchShot(metrics){
   if(state.phase!=='ready')return;
-  const c=club(),L=LEVELS[state.level];
+  const c=club(),L=LEVELS[state.level],lie=state.strokes===0?'tee':surfaceAt(TEE.x,TEE.z);
 
   // LOFT Stroke quality is not one hidden power number. A great strike requires
   // rhythm, centered path, decisive release and useful load.
@@ -337,7 +337,8 @@ function launchShot(metrics){
       form:L.form,
       aimYaw:aimYaw(),
       strike:q,
-      release:metrics.commitment
+      release:metrics.commitment,
+      lie
     });
   }
 
