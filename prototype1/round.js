@@ -31,6 +31,8 @@ export const ROUND_HOLES=[
   }
 ];
 
+export const ROWAN_SCORES=[3,3,4];
+
 export function holeYards(h){
   const dx=h.pin[0]-h.tee[0],dz=h.pin[1]-h.tee[1];
   return Math.round(Math.hypot(dx,dz)/0.9144);
