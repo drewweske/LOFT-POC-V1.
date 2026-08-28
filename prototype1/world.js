@@ -17,13 +17,27 @@ export function buildWorld(scene,pin){
   p.needsUpdate=true;terrainGeo.computeVertexNormals();
   const terrain=new THREE.Mesh(terrainGeo,mat(COLORS.rough,.98));terrain.receiveShadow=true;world.add(terrain);
 
-  function ribbon(w,d,color,x,z){
-    const g=new THREE.PlaneGeometry(w,d,16,76);g.rotateX(-Math.PI/2);const a=g.attributes.position;
-    for(let i=0;i<a.count;i++){const lx=a.getX(i),lz=a.getZ(i),wx=x+lx,wz=z+lz;a.setY(i,terrainHeight(wx,wz)+.045);}
-    a.needsUpdate=true;g.computeVertexNormals();const m=new THREE.Mesh(g,mat(color,.98));m.position.set(x,0,z);m.receiveShadow=true;world.add(m);return m;
+  function buildFairway(){
+    const segments=92;
+    const pos=[],idx=[];
+    for(let i=0;i<=segments;i++){
+      const t=i/segments;
+      const z=-2-t*174;
+      const center=-1.0 + Math.sin(t*Math.PI*1.5)*1.8 - Math.sin(t*Math.PI*3.1)*.85;
+      const width=9.5 + 7.2*Math.sin(Math.PI*t) + 1.7*Math.sin(t*Math.PI*3.0);
+      const leftX=center-width, rightX=center+width;
+      pos.push(leftX,terrainHeight(leftX,z)+.048,z,rightX,terrainHeight(rightX,z)+.048,z);
+      if(i<segments){
+        const a=i*2,b=a+1,c=a+2,d=a+3;
+        idx.push(a,c,b,b,c,d);
+      }
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+    const m=new THREE.Mesh(g,mat(COLORS.fair,.98));m.receiveShadow=true;world.add(m);
+    return m;
   }
-  ribbon(32,176,COLORS.fair,-1,-88);
-  ribbon(14,10,COLORS.green,0,2);
+  buildFairway();
 
   const gg=new THREE.CircleGeometry(18,72);gg.rotateX(-Math.PI/2);
   const green=new THREE.Mesh(gg,mat(COLORS.green,.98));green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.06,pin.z);green.receiveShadow=true;world.add(green);
@@ -58,14 +72,14 @@ export function buildWorld(scene,pin){
   const base=new THREE.Mesh(new THREE.BoxGeometry(9,2.3,5.5),mat(0x665c4d,.92));base.position.y=1.15;base.castShadow=true;lodge.add(base);
   const upper=new THREE.Mesh(new THREE.BoxGeometry(7.5,1.7,4.4),mat(0xc6bda9,.94));upper.position.y=3.0;upper.castShadow=true;lodge.add(upper);
   const roof=new THREE.Mesh(new THREE.BoxGeometry(8.3,.28,5.2),mat(COLORS.ink,.84));roof.position.y=4.0;lodge.add(roof);
-  lodge.position.set(15,terrainHeight(15,-184),-184);lodge.rotation.y=-.12;world.add(lodge);
+  lodge.position.set(-23,terrainHeight(-23,-154),-154);lodge.rotation.y=.10;lodge.scale.set(.92,.92,.92);world.add(lodge);
 
   const lighthouse=new THREE.Group();
   const tower=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.9,11.5,16),mat(COLORS.cream,.94));tower.position.y=5.75;tower.castShadow=true;lighthouse.add(tower);
   const band=new THREE.Mesh(new THREE.CylinderGeometry(1.82,1.82,.68,16),mat(COLORS.orange,.82));band.position.y=9.8;lighthouse.add(band);
   const room=new THREE.Mesh(new THREE.CylinderGeometry(1.75,1.75,1.2,16),mat(0x343c3c,.5,.12));room.position.y=11.45;lighthouse.add(room);
   const roof2=new THREE.Mesh(new THREE.ConeGeometry(2.05,2.6,16),mat(COLORS.ink,.82));roof2.position.y=13.3;lighthouse.add(roof2);
-  lighthouse.position.set(29,terrainHeight(29,-191),-191);world.add(lighthouse);
+  lighthouse.position.set(30,terrainHeight(30,-166),-166);lighthouse.scale.set(.90,.90,.90);world.add(lighthouse);
 
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.032,.032,4.5,8),mat(COLORS.cream,.9));pole.position.set(pin.x,pin.y+2.25,pin.z);world.add(pole);
   const fs=new THREE.Shape();fs.moveTo(0,0);fs.lineTo(2.2,.55);fs.lineTo(0,1.1);fs.closePath();
