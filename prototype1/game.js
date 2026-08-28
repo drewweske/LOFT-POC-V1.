@@ -322,7 +322,7 @@ canvas.addEventListener('pointerdown',e=>{
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   const now=performance.now();
-  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,transitionCue:false,releaseCue:false,samples:[{x:e.clientX,y:e.clientY,t:now}]};
+  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,setCue:false,transitionCue:false,releaseCue:false,samples:[{x:e.clientX,y:e.clientY,t:now}]};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
   if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
 });
@@ -365,7 +365,12 @@ canvas.addEventListener('pointermove',e=>{
     const reversal=e.clientY<gesture.deep-10;
 
     if(!reversal){
-      state.swingPhase=clamp(load,0,1)*.38;
+      if(load>.80&&!gesture.setCue){
+        gesture.setCue=true;
+        feedback.loadSet(load);
+      }
+      const loadPose=clamp(load,0,1);
+      state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
       golfer.setPose(state.swingPhase,LEVELS[state.level]);
       if(state.shotCount===0)showContext(load>.78?'SET':'LOAD',9999);
     }else{
