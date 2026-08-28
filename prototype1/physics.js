@@ -169,8 +169,17 @@ export class GolfPhysics{
         if(Math.abs(s.vel.y)>1.8){
           const rest=surface==='green'?.18:surface==='fairway'?.23:surface==='rough'?.11:surface==='sand'?.05:.12;
           const loss=surface==='sand'?.46:surface==='rough'?.68:.82;
-          s.vel.y=-s.vel.y*rest;
-          s.vel.x*=loss;s.vel.z*=loss;
+
+          // Resolve bounce against the actual ground normal so a sloped fairway
+          // kicks the ball downhill instead of behaving like an invisible flat plane.
+          const e=.30;
+          const hx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
+          const hz=(this.terrainHeight(s.pos.x,s.pos.z+e)-this.terrainHeight(s.pos.x,s.pos.z-e))/(2*e);
+          const n=new THREE.Vector3(-hx,1,-hz).normalize();
+          const vn=s.vel.dot(n);
+          const normal=n.clone().multiplyScalar(vn);
+          const tangent=s.vel.clone().sub(normal).multiplyScalar(loss);
+          s.vel.copy(tangent).addScaledVector(n,-vn*rest);
           s.bounced=true;
         }else{
           s.vel.y=0;
