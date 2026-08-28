@@ -49,3 +49,15 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
 .bag-panel,.result-card{background:var(--cream)}
 .course-map{border-radius:18px;border-color:rgba(11,13,13,.075)}
 .course-map .map-head span,.course-map .map-foot span{letter-spacing:.15em}
+
+/* Kinetic polish: motion is brief, physical, and subordinate to the shot. */
+#context.show span{animation:loftCue .18s cubic-bezier(.2,.9,.25,1)}
+#result.show .result-card{animation:loftResult .30s cubic-bezier(.2,.9,.25,1)}
+@keyframes loftCue{
+  0%{transform:translateY(4px) scale(.96);opacity:0}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+@keyframes loftResult{
+  0%{transform:translateY(10px);opacity:0}
+  100%{transform:translateY(0);opacity:1}
+}
