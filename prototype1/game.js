@@ -111,7 +111,14 @@ function updateLine(){
   const next=new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(start,mid,end),52,.022,6,false);
   lineMesh.geometry.dispose();lineMesh.geometry=next;
   halo.position.copy(end);
-  golfer.group.rotation.y=aimYaw();
+
+  // Camera-driven aiming rotates the entire address relationship around the ball.
+  // Keep the model's local address ball (.46m right of stance) pinned to the
+  // actual world ball while the golfer rotates with the chosen shot direction.
+  const yaw=aimYaw();
+  const localAddressBall=new THREE.Vector3(.46,.085,0).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
+  golfer.group.position.copy(ballGroup.position).sub(localAddressBall);
+  golfer.group.rotation.y=yaw;
 }
 updateLine();
 
