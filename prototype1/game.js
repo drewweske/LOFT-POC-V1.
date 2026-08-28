@@ -258,7 +258,7 @@ function syncBag(){
 function selectClub(id){
   const next=CLUBS.find(c=>c.id===id);if(!next)return;
   state.clubId=id;golfer.setClub(next.head);
-  state.targetDistance=next.carry*YARD;
+  state.targetDistance=Math.min(next.carry*YARD,pinDistanceYards()*YARD*1.04);
   syncTargetFromAim();
   updateLine();syncBag();closeBag();showContext(next.name+' · '+next.carry+' YD',650);
 }
@@ -266,6 +266,8 @@ function openBag(){$('bag').classList.add('open');$('bag').setAttribute('aria-hi
 function closeBag(){$('bag').classList.remove('open');$('bag').setAttribute('aria-hidden','true');updateTip();}
 $('club-chip').onclick=openBag;$('bag-close').onclick=closeBag;$('bag').addEventListener('pointerdown',e=>{if(e.target===$('bag'))closeBag();});
 buildBag();
+topo.setHole(TEE,pin);
+updateHoleHUD();
 
 $('level-chip').onclick=()=>{$('level-menu').classList.toggle('open');};
 document.querySelectorAll('#level-menu button').forEach(b=>b.onclick=()=>{
@@ -280,7 +282,7 @@ function setTarget(p){
   const forward=new THREE.Vector3(Math.sin(state.aimYaw),0,-Math.cos(state.aimYaw));
   const local=new THREE.Vector3(p.x-TEE.x,0,p.z-TEE.z);
   const projected=local.dot(forward);
-  const min=Math.max(5,c.carry*YARD*.30),max=c.carry*YARD*1.08;
+  const min=c.head==='putter'?.65:Math.max(2.5,c.carry*YARD*.18),max=c.carry*YARD*1.08;
   state.targetDistance=clamp(projected,min,max);
   syncTargetFromAim();
   state.learned.line=true;updateLine();showContext(Math.round(state.targetDistance/YARD)+' YD',300);updateTip();
@@ -331,7 +333,7 @@ function launchShot(metrics){
     tempo:metrics.tempoScore,
     commitment:metrics.commitment
   };
-  state.phase='flight';state.swingPhase=.60;state.shotCount++;
+  state.phase='flight';state.swingPhase=.60;state.shotCount++;state.strokes++;updateHoleHUD();
   state.landingFX=false;
   state.ballCompression=1;
   state.hitStop=q>.94?.030:q>.82?.022:.014;
@@ -666,7 +668,7 @@ function frame(now){
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
-    const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z);
+    const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?(state.strokes===0?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z)):surfaceAt(ballGroup.position.x,ballGroup.position.z);
     topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface});
     lastMapUpdate=now;
   }
