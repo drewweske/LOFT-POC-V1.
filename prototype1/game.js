@@ -597,11 +597,12 @@ canvas.addEventListener('pointermove',e=>{
           rhythm=clamp(1-cv*.48,.42,1);
         }
 
+        const minPower=club().head==='putter'?.075:.40;
         const power=clamp(
           gesture.load*.66+
           speedScore*.20+
           commitment*.14,
-          .40,1.08
+          minPower,1.08
         );
 
         gesture.impact=true;
