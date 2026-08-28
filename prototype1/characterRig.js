@@ -171,7 +171,39 @@ export class LoftGolferRig{
         shoulderL:[-.54,1.67,-.28],shoulderR:[-.34,1.61,-.05],sleeveL:[-.48,1.58,-.33],sleeveR:[-.27,1.51,-.12],elbowL:[-.41,1.55,-.39],elbowR:[-.23,1.48,-.28],handL:[-.35,1.76,-.45],handR:[-.40,1.73,-.39],club:[-.78,2.05,-.95]}
     };
   }
+  _puttPose(t,level){
+    const base=this._poses().address;
+    const p={};for(const k in base)p[k]=[...base[k]];
+
+    // Compact putting setup: narrower base, eyes quieter, arms hanging under shoulders.
+    p.ankleL[2]=-.14;p.ankleR[2]=.14;
+    p.kneeL[2]=-.13;p.kneeR[2]=.13;
+    p.pelvis[0]=-.48;p.torso[0]=-.37;p.chest[0]=-.31;p.head[0]=-.25;
+    p.head[1]=1.90;
+    p.shoulderL=[-.30,1.51,-.18];p.shoulderR=[-.30,1.51,.18];
+    p.sleeveL=[-.17,1.34,-.15];p.sleeveR=[-.17,1.34,.15];
+    p.elbowL=[-.02,1.17,-.11];p.elbowR=[-.02,1.17,.11];
+
+    const tt=clamp(t,0,1);
+    let phase;
+    if(tt<.38)phase=lerp(0,.24,ease(tt/.38));        // backstroke
+    else if(tt<.60)phase=lerp(.24,0,out((tt-.38)/.22)); // return to impact
+    else phase=lerp(0,-.34,out((tt-.60)/.40));          // roll-through
+
+    const rookie=1-level.form;
+    const wobble=rookie*.025*Math.sin(tt*Math.PI*2.2);
+    p.handL=[.17,.94,-.035+phase*.24+wobble];
+    p.handR=[.18,.935,.038+phase*.24-wobble*.5];
+    p.club=[.40,.055,phase];
+
+    // The shoulders rock; hips stay nearly still.
+    p.shoulderL[1]+=phase*.055;p.shoulderR[1]-=phase*.055;
+    p.head[2]+=rookie*.012*Math.sin(tt*Math.PI);
+    return p;
+  }
+
   _poseAt(t,level){
+    if(this.clubType==='putter')return this._puttPose(t,level);
     const P=this._poses();let p;
     if(t<.16)p=this._mix(P.address,P.takeaway,ease(t/.16));
     else if(t<.38)p=this._mix(P.takeaway,P.top,ease((t-.16)/.22));
