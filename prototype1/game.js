@@ -243,6 +243,7 @@ function launchShot(metrics){
   state.shot={quality:q,label:classify(q,finalPath),path:finalPath,club:c.short};
   state.phase='flight';state.swingPhase=.60;state.shotCount++;
   cam.setSwinging(false);
+  setTimeout(()=>document.getElementById('app')?.classList.remove('swing-focus'),420);
   state.learned.stroke=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
   showContext(state.shot.label,650);impactAudio(q);
 }
@@ -263,7 +264,7 @@ function resetShot(){
   state.phase='ready';state.shot=null;state.swingPhase=0;physics.active=false;physics.state=null;
   ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);
   golfer.group.position.set(0,terrainHeight(0,0),0);golfer.setPose(0,LEVELS[state.level]);
-  lineMesh.visible=true;halo.visible=true;$('result').classList.remove('show');cam.setSwinging(false);cam.reset();defaultTarget();updateLine();updateTip();
+  lineMesh.visible=true;halo.visible=true;$('result').classList.remove('show');document.getElementById('app')?.classList.remove('swing-focus');cam.setSwinging(false);cam.reset();defaultTarget();updateLine();updateTip();
 }
 $('again').onclick=resetShot;
 
@@ -279,7 +280,7 @@ canvas.addEventListener('pointerdown',e=>{
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:performance.now(),lastT:performance.now(),load:0,moved:false,impact:false};
   if(type==='line'){cam.setSwinging(false);showContext('THE LINE',9999);$('tip').style.opacity='0';}
-  if(type==='swing'){state.interaction='swing';cam.setSwinging(true);$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
+  if(type==='swing'){state.interaction='swing';document.getElementById('app')?.classList.add('swing-focus');cam.setSwinging(true);$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
 });
 canvas.addEventListener('pointermove',e=>{
   const p=pointers.get(e.pointerId);if(!p)return;e.preventDefault();p.px=p.x;p.py=p.y;p.x=e.clientX;p.y=e.clientY;
@@ -324,7 +325,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;cam.setSwinging(false);golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('Pull farther back · then accelerate through the ball');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;document.getElementById('app')?.classList.remove('swing-focus');cam.setSwinging(false);golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('Pull farther back · then accelerate through the ball');}
   }
   gesture=null;
 }
