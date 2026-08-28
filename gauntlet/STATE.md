@@ -1,146 +1,137 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 007
+Current build: Prototype 1 / Integration 008
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: The Stroke / putting / cup
-Iteration: integration_007
+Active subsystem: THE SIGNAL / putting / stroke control
+Iteration: integration_008
 
 ## Current provisional score
-95 / 100 — REAL-DEVICE VALIDATION REQUIRED
+95.5 / 100 — REAL-DEVICE VALIDATION REQUIRED
 
-Integration 007 is the first dedicated putting and short-game control pass.
+Integration 008 was triggered by a critical runtime failure and a deeper UX failure.
 
-The triggering user evidence was decisive:
-- close putts required repeated attempts
-- tiny input still produced too much pace
-- there was no readable power / pace reference
-- the flagstick dominated close camera compositions
-- the rendered ball / cup ratio did not convincingly communicate that the ball could fall
-- short-range ball touch could overlap The Line target interaction
-- the HUD reported AIR while a putt was rolling
-- near-green wedge shots still inherited a full-swing minimum energy floor
+User evidence:
+- releasing a putt crashed with:
+  TypeError: null is not an object (evaluating 'this.lastTrailPoint.copy')
+- putting still felt vague
+- power was not obvious enough before impact
+- tiny / medium / long strokes did not yet read as one coherent LOFT control language
+- the user wants every strike to feel authored, controllable and unmistakably LOFT
 
-## Integration 007 wins
+## Critical runtime fix
 
-### PACE — LOFT putting control
-Putting no longer inherits the generic full-swing power formula.
+Root cause:
+Putting intentionally skipped flight-trail initialization, but the frame loop still called the generic flight feedback method. That method attempted to copy into a null lastTrailPoint.
 
-The putter now uses a dedicated backstroke-to-pace model:
-- tiny backstroke = tiny putt
-- longer backstroke = longer roll
-- no hidden minimum-power floor
-- the return stroke still judges path, tempo, smoothness and commitment
+Fix:
+- flight feedback now initializes defensively
+- putts no longer invoke airborne trail feedback at all
 
-The live readout is expressed as golf distance:
-PACE 3.4 FT
-PACE 9.8 FT
-PACE 15 FT
+This removes the reported crash at release.
 
-Not a debug percentage.
+## THE SIGNAL — proprietary LOFT stroke grammar
 
-### In-world pace ghost
-During a putting backstroke, a restrained LOFT pace marker moves down The Line to show the approximate level-green stopping distance.
+The generic concept of a power meter has been rejected.
 
-When the pace marker crosses the player's intended target distance:
-- the marker visually tightens
-- a tiny acoustic cue plays
-- a tiny haptic cue is requested where supported
+LOFT now uses one branded in-world interaction across putts, chips and full swings:
 
-It never auto-locks the shot.
+THE SIGNAL.
 
-### Input precision
-A putt can now be made with approximately an 8 px backstroke on the test iPhone-class viewport.
+Visual language:
+- the Flag Orange signal begins at the ball
+- a quiet path of Scorecard Cream dimples extends behind the ball
+- the signal physically follows the player's backstroke
+- the signal returns toward the ball during the downswing
+- a Cream contact gate tightens at impact
+- the system exists in the world, not in a HUD bar
 
-Representative mapping:
-- ~8 px -> ~1 FT pace
-- ~35 px -> ~3.5 FT
-- ~50 px -> ~5.5 FT
-- ~75 px -> ~9.8 FT
-- ~100 px -> ~15 FT
-- ~150 px -> ~27 FT
+The orange-dimple behavior directly derives from the official LOFT Ball identity.
 
-This creates a large precision band for tap-ins and short putts.
+## Full swing / chip control
 
-### Ball intent priority
-At short range, the ball and The Line target can occupy overlapping touch regions.
+The Line chooses shot intention.
 
-The previous hit-test checked The Line first.
+The Signal translates that intention into a readable stroke.
 
-Integration 007 reverses that:
-touching the ball now wins when those zones overlap.
+A Cream SET mark appears on the dimple path at the approximate backstroke needed for the chosen target distance.
 
-This removes a major near-cup ambiguity.
+When the Orange Signal reaches SET:
+- the mark tightens
+- a tiny branded confirmation appears
+- a restrained audio / haptic cue is requested
 
-### Putting strike quality
-Putting gets its own contact model:
-- calmer ~2:1 rhythm target
-- path accuracy
-- stroke smoothness
-- commitment through impact
-- reduced Level 1 random path contamination
+The game does NOT lock the player there.
 
-Feedback labels include:
-- PURE ROLL
-- CLEAN ROLL
-- SOLID ROLL
-- TOUCH
-- PUSH / PULL
+Distance is now primarily authored by Signal depth:
+- ~90% backstroke depth
+- small release-speed contribution
+- small commitment contribution
 
-### Putter sound / haptics
-The putter no longer shares the full iron impact sound.
+Tempo / path / smoothness / commitment still control strike quality.
 
-It now gets:
-- soft low contact body
-- crisp face tick
-- restrained upper harmonic for exceptional contact
-- shorter tactile response
-- separate transition cue
+This is a major change from the previous opaque power blend.
 
-The cup sound remains a separate physical reward.
+True partial shots are now valid across the bag.
+Short game receives an even larger partial-swing range.
 
-### Cup / flag geometry
-The gameplay ball, cup and flagstick now share a much more believable relative scale.
+## Putting — THE ROLL
 
-- gameplay ball radius reduced
-- visible cup increased to preserve a regulation-like ball/cup ratio
-- cup capture footprint aligned to the visible cup
-- continuous 120 Hz segment capture prevents a centered putt skipping over the hole
-- center pace can be firmer than edge pace
-- hot edge strikes still lip out
-- flagstick is dramatically thinner
-- flagstick has NO ball collision
-- while putting, LOFT automatically tends the pin visually so it cannot dominate the sightline
+Putting uses THE SIGNAL but gets an additional predicted-stop object.
 
-### Putting camera
-Putting has its own:
-- address/read composition
-- swing-lock composition
-- ground-roll tracking composition
+During the backstroke:
+- an actual translucent LOFT-style ghost ball moves down The Line
+- it represents approximate level-green stopping distance
+- the only numeric readout is physical golf distance in feet
+- when predicted stop reaches the player's intended target, the cue reads ON PACE
 
-It is lower, closer and slightly off the direct flag axis.
+There is no percentage bar.
 
-### Full-swing visual control
-A new in-world LOFT Stroke Halo gives full swings a visual load reference without bringing back a generic power bar.
+The player sees:
+1. their finger / golfer backstroke
+2. Orange Signal moving backward
+3. predicted ghost ball moving down the intended roll
+4. feet remaining / ON PACE
+5. Signal returning through contact
 
-The Orange signal moves around a Cream ground halo as load builds.
+This is the current simplest expression of complete control.
 
-### Short game
-Close-range wedge shots no longer inherit a 40% minimum full-swing energy floor.
+## Short-putt precision
 
-Within short-game range:
-- smaller backstrokes are valid
-- partial wedge energy is valid
-- touch shots can be played around the green
+The backstroke curve was widened substantially.
 
-### UI cleanup
-The putter no longer advertises a misleading 25 YD carry.
+The first part of the physical gesture is intentionally generous:
+- tiny gesture = tap-in pace
+- small gesture = short putt
+- medium gesture = normal green putt
+- longer gesture progressively accelerates for lag putts
 
-The equipment surface now presents putter reach as 65 FT.
+No minimum putting power exists.
 
-The course map reports the actual green/fringe lie while a putt is rolling instead of AIR.
+## Cup / pin integrity inherited from Integration 007
+
+- gameplay ball / cup visual ratio corrected
+- cup sweep test prevents tunneling across the hole
+- center capture accepts more pace than edge capture
+- hot edge pace can lip out
+- flagstick is physically non-colliding in the custom ball simulation
+- flagstick is visually tended / faded during putting
+- dedicated putting camera remains active
+
+## Brand integration
+
+THE SIGNAL uses only:
+- Clubhouse Ink
+- Scorecard Cream
+- Flag Orange
+
+The interaction is intentionally based on the official orange-dimple LOFT Ball grammar.
+
+Goal:
+Hide the LOFT logo and the stroke mechanic should still look owned by LOFT.
 
 ## Technical validation
+
 PASS:
 - game.js
 - physics.js
@@ -153,34 +144,43 @@ PASS:
 - equipment.js
 - round.js
 
-DOM contract: PASS
-CSS brace integrity: PASS
+PASS:
+- all custom module syntax
+- DOM ID contract
+- CSS brace integrity
 
 ## Largest meaningful gap
-Real iPhone validation of the new tactile putting loop.
+
+Real iPhone feel validation of THE SIGNAL.
 
 Required tests:
-1. 1–2 FT tap-in
-2. 3 FT putt
-3. 6 FT putt
-4. 10 FT putt
-5. 20+ FT lag putt
-6. pace intentionally short
-7. pace intentionally long
-8. center strike at cup
-9. hot lip-out
-10. aimed break
-11. fringe putt
-12. short rough chip
-13. perfect drive versus mediocre drive
-14. full-swing load halo readability
+1. release a putt — ZERO runtime error
+2. 1–2 FT tap-in
+3. 3 FT putt
+4. 6 FT putt
+5. 10 FT putt
+6. 20+ FT lag putt
+7. intentionally short pace
+8. intentionally long pace
+9. ON PACE cue
+10. center cup capture
+11. hot edge lip-out
+12. short chip
+13. half wedge
+14. partial iron
+15. full 7I
+16. full driver
+17. SET mark readability
+18. whether THE SIGNAL feels intuitive without explanation
 
 ## Critical failures
-Any of these fail Integration 007:
-- tiny putts still launch at near-identical speed
-- touching the ball near the cup grabs The Line
-- a centered reasonable-pace putt visibly passes through the hole
-- flagstick blocks the putting sightline
-- pace readout and actual roll distance are materially disconnected
-- short wedge shots remain impossible
-- full-swing visual feedback reads like a generic power meter
+
+Any of these fail Integration 008:
+- putt release throws any exception
+- a tiny putting backstroke still produces medium / long pace
+- ghost stop indicator materially disagrees with level-green roll
+- touching near the ball manipulates The Line instead
+- reasonable centered putt skips across cup
+- Signal visuals read as a conventional power meter
+- SET mark causes the player to feel auto-aimed / auto-hit
+- partial swings still collapse to one minimum power
