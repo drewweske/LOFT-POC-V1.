@@ -31,7 +31,7 @@ export class GolfPhysics{
     const contactEff=.84+.16*q;
     const releaseEff=.94+.06*clamp(release,0,1);
     const lieMods=lieShotModifiers(lie,club.head);
-    const speed=club.ballSpeed*clamp(power,.42,1.08)*formEff*contactEff*releaseEff*lieMods.speed;
+    const speed=club.ballSpeed*clamp(power,.055,1.08)*formEff*contactEff*releaseEff*lieMods.speed;
 
     // Poor contact and poor lies alter launch/spin as well as speed.
     const launchDeg=club.launch+(1-q)*2.4-(1-release)*1.2+lieMods.launch;
