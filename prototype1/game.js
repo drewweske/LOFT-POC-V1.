@@ -210,8 +210,16 @@ function surfaceAt(x,z){
   if(fairDist<15.5)return'fairway';
   return'rough';
 }
+function playingHeight(x,z){
+  if(surfaceAt(x,z)==='green'){
+    // A subtle authored 0.7% / 0.35% green grade. Small enough to read as a
+    // designed putting surface, large enough for real break to matter.
+    return pin.y+(x-pin.x)*.007+(z-pin.z)*.0035;
+  }
+  return terrainHeight(x,z);
+}
 
-const physics=new GolfPhysics({terrainHeight,surfaceAt,wind});
+const physics=new GolfPhysics({terrainHeight:playingHeight,surfaceAt,wind});
 physics.setCup(pin);
 const cam=new LoftCamera(camera,{terrainHeight});
 const topo=new LoftTopoMap($('course-map'));
