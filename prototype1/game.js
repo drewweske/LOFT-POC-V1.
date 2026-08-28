@@ -16,7 +16,7 @@ let holeIndex=0;
 let holeDef=ROUND_HOLES[holeIndex];
 let pin=new THREE.Vector3(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
 let wind=new THREE.Vector3(holeDef.wind[0],0,holeDef.wind[1]);
-let TEE=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.085,holeDef.tee[1]);
+let TEE=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.052,holeDef.tee[1]);
 let COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
 
 window.addEventListener('error',e=>{
@@ -121,7 +121,7 @@ function showHoleIntro(){
 function syncTargetFromAim(){
   const x=TEE.x+Math.sin(state.aimYaw)*state.targetDistance;
   const z=TEE.z-Math.cos(state.aimYaw)*state.targetDistance;
-  state.target.set(x,terrainHeight(x,z)+.08,z);
+  state.target.set(x,playingHeight?.(x,z)??terrainHeight(x,z)+.04,z);
 }
 function defaultTarget(resetAim=true){
   const c=club();
@@ -196,7 +196,7 @@ function updateLine(){
   // +X for positive yaw. Therefore the golfer MUST rotate by -yaw. Using +yaw
   // was the source of the strange front-on / mirrored address angles seen on iPhone.
   const rigYaw=-yaw;
-  const localAddressBall=new THREE.Vector3(.46,.085,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw);
+  const localAddressBall=new THREE.Vector3(.46,.052,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw);
   golfer.group.position.copy(ballGroup.position).sub(localAddressBall);
   golfer.group.rotation.y=rigYaw;
 }
@@ -373,7 +373,7 @@ function prepareShotAt(position,{penalty=false}={}){
   if(penalty)state.strokes++;
 
   TEE.copy(position);
-  TEE.y=terrainHeight(TEE.x,TEE.z)+.085;
+  TEE.y=terrainHeight(TEE.x,TEE.z)+.052;
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
 
   COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
@@ -402,7 +402,7 @@ function startHole(index,{intro=true}={}){
   physics.wind.copy(wind);physics.setCup(pin);
   world.setPin(pin);
 
-  const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.085,holeDef.tee[1]);
+  const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.052,holeDef.tee[1]);
   topo.setHole(originalTee,pin);
   TEE.copy(originalTee);
 
