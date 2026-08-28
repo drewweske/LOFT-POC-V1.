@@ -92,8 +92,12 @@ const golfer=new LoftGolferRig(COLORS);
 golfer.group.position.set(0,terrainHeight(0,0),0);
 golfer.setClub(club().head);golfer.setPose(0,LEVELS[state.level]);scene.add(golfer.group);
 
-const lineMat=new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.34,depthWrite:false});
-let lineMesh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(new THREE.Vector3(),new THREE.Vector3(0,1,-1)),8,.022,6,false),lineMat);scene.add(lineMesh);
+const LINE_STEPS=56;
+const linePositions=new Float32Array((LINE_STEPS+1)*3);
+const lineGeometry=new THREE.BufferGeometry();
+lineGeometry.setAttribute('position',new THREE.BufferAttribute(linePositions,3));
+const lineMat=new THREE.LineBasicMaterial({color:COLORS.cream,transparent:true,opacity:.38,depthWrite:false});
+const lineMesh=new THREE.Line(lineGeometry,lineMat);scene.add(lineMesh);
 const halo=new THREE.Group();scene.add(halo);
 const ring=new THREE.Mesh(new THREE.TorusGeometry(.82,.038,8,52),new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.82}));
 ring.rotation.x=Math.PI/2;halo.add(ring);
@@ -108,8 +112,17 @@ function updateLine(){
   const mid=start.clone().lerp(end,.52);
   mid.y+=Math.max(4.2,c.launch*.54+start.distanceTo(end)*.032);
   mid.x+=wind.x*.40;
-  const next=new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(start,mid,end),52,.022,6,false);
-  lineMesh.geometry.dispose();lineMesh.geometry=next;
+  // Update a stable line buffer in place. Camera-driven aiming can update every
+  // pointer frame without allocating/discarding geometry.
+  for(let i=0;i<=LINE_STEPS;i++){
+    const t=i/LINE_STEPS,om=1-t;
+    const x=om*om*start.x+2*om*t*mid.x+t*t*end.x;
+    const y=om*om*start.y+2*om*t*mid.y+t*t*end.y;
+    const z=om*om*start.z+2*om*t*mid.z+t*t*end.z;
+    const j=i*3;linePositions[j]=x;linePositions[j+1]=y;linePositions[j+2]=z;
+  }
+  lineGeometry.attributes.position.needsUpdate=true;
+  lineGeometry.computeBoundingSphere();
   halo.position.copy(end);
 
   // Camera-driven aiming rotates the entire address relationship around the ball.
