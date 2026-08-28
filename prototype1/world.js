@@ -82,7 +82,7 @@ export function buildWorld(scene,pin){
   const gg=new THREE.CircleGeometry(18,72);gg.rotateX(-Math.PI/2);
   const greenMat=mat(COLORS.green,.86);greenMat.map=greenTex;
   const green=new THREE.Mesh(gg,greenMat);green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.06,pin.z);green.receiveShadow=true;world.add(green);
-  const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.13,40),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
+  const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.075,40),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
   holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.071,pin.z);world.add(holeDisc);
 
   function bunker(x,z,sx,sz,seed){
