@@ -87,7 +87,7 @@ export class LoftCamera{
     const freePos=ball.clone()
       .addScaledVector(forward,-this.dist*.90)
       .addScaledVector(right,this.dist*.30)
-      .addScaledVector(up,2.40+this.pitch*4.2);
+      .addScaledVector(up,1.78+this.pitch*4.0);
 
     const freeLook=ball.clone()
       .addScaledVector(forward,2.5)
