@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LOFT Gauntlet — Character 001</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#F2EFE8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#app{position:fixed;inset:0;background:linear-gradient(#d8e0df,#c7d1cc)}
+canvas{display:block;width:100%;height:100%}
+.label{position:fixed;left:18px;top:18px;color:#0B0D0D;z-index:3}
+.label b{display:block;font-size:14px;letter-spacing:.14em}.label span{display:block;margin-top:4px;font-size:10px;letter-spacing:.16em;opacity:.5}
+.views{position:fixed;right:16px;bottom:16px;display:flex;gap:6px;z-index:3}
+.views button{border:0;border-radius:14px;background:rgba(242,239,232,.92);padding:10px 12px;font-weight:700;color:#0B0D0D}
+.views button.active{background:#0B0D0D;color:#F2EFE8}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="label"><b>CHARACTER GAUNTLET 001</b><span>LEVEL 1 · ADDRESS SILHOUETTE</span></div>
+<div class="views">
+<button data-view="three" class="active">3/4</button>
+<button data-view="front">FRONT</button>
+<button data-view="side">SIDE</button>
+<button data-view="back">BACK</button>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
