@@ -421,8 +421,11 @@ function screenOf(v){
 }
 
 function showContext(text,duration=520){
-  $('context-text').textContent=text;$('context').classList.add('show');
-  clearTimeout(showContext.timer);showContext.timer=setTimeout(()=>$('context').classList.remove('show'),duration);
+  $('context-text').textContent=text;
+  const el=$('context');
+  el.classList.toggle('signal',text==='SET'||text==='ON PACE');
+  el.classList.add('show');
+  clearTimeout(showContext.timer);showContext.timer=setTimeout(()=>{el.classList.remove('show','signal');},duration);
 }
 function setTip(text){$('tip-text').textContent=text;$('tip').style.opacity='1';}
 function updateTip(){
