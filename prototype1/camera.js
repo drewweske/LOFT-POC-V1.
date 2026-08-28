@@ -85,24 +85,24 @@ export class LoftCamera{
 
     // Semi-free address composition. The shot direction remains readable.
     const freePos=ball.clone()
-      .addScaledVector(forward,-this.dist*.78)
-      .addScaledVector(right,this.dist*.46)
-      .addScaledVector(up,2.25+this.pitch*4.8);
+      .addScaledVector(forward,-this.dist*.90)
+      .addScaledVector(right,this.dist*.30)
+      .addScaledVector(up,2.40+this.pitch*4.2);
 
     const freeLook=ball.clone()
-      .addScaledVector(forward,7.2)
-      .addScaledVector(up,.72);
+      .addScaledVector(forward,2.5)
+      .addScaledVector(up,.65);
 
     // Swing-lock composition: tightly anchored to the ball while keeping
     // the golfer + target line in frame. No user camera transforms during stroke.
     const swingDist=7.0;
     const swingPos=ball.clone()
-      .addScaledVector(forward,-swingDist*.67)
-      .addScaledVector(right,swingDist*.48)
-      .addScaledVector(up,2.18);
+      .addScaledVector(forward,-swingDist*.85)
+      .addScaledVector(right,swingDist*.45)
+      .addScaledVector(up,2.40);
 
     const swingLook=ball.clone()
-      .addScaledVector(forward,1.25)
+      .addScaledVector(forward,1.50)
       .addScaledVector(up,.52);
 
     const desiredPos=freePos.clone().lerp(swingPos,this.swingBlend);
