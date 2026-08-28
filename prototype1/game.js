@@ -367,7 +367,7 @@ canvas.addEventListener('pointermove',e=>{
     if(!reversal){
       state.swingPhase=clamp(load,0,1)*.38;
       golfer.setPose(state.swingPhase,LEVELS[state.level]);
-      showContext(load>.78?'SET':'LOAD',9999);
+      if(state.shotCount===0)showContext(load>.78?'SET':'LOAD',9999);
     }else{
       if(!gesture.transitionCue){
         gesture.transitionCue=true;
@@ -381,7 +381,7 @@ canvas.addEventListener('pointermove',e=>{
       }
       state.swingPhase=.38+through*.22;
       golfer.setPose(state.swingPhase,LEVELS[state.level]);
-      showContext(through>.72?'RELEASE':'STRIKE',9999);
+      if(state.shotCount===0)showContext(through>.72?'RELEASE':'STRIKE',9999);
 
       if(e.clientY<gesture.sy-16&&gesture.load>.35){
         const frameDt=Math.max(8,now-gesture.lastT);
