@@ -102,7 +102,7 @@ function chooseAutoClub(){
   const lie=state.currentLie||surfaceAt(TEE.x,TEE.z);
   const y=pinDistanceYards();
   let id='driver';
-  if(lie==='green')id='putter';
+  if(lie==='green'||lie==='fringe')id='putter';
   else if(y<=92)id='sw';
   else if(y<=118)id='pw';
   else if(y<=140)id='iron9';
@@ -206,7 +206,9 @@ updateLine();
 
 function surfaceAt(x,z){
   const gx=(x-pin.x)/(18*1.36),gz=(z-pin.z)/18;
-  if(gx*gx+gz*gz<=1)return'green';
+  const greenR=gx*gx+gz*gz;
+  if(greenR<=1)return'green';
+  if(greenR<=1.24)return'fringe';
 
   for(const b of BUNKERS){
     const dx=(x-b.x)/b.sx,dz=(z-b.z)/b.sz;
