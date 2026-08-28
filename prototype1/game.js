@@ -219,8 +219,8 @@ strokeContactGate.rotation.x=-Math.PI/2;strokeContactGate.visible=false;scene.ad
 function strokeSignalPoint(t,{putting=isPutting(),shortGame=isShortGame()}={}){
   const forward=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw())).normalize();
   const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
-  const maxBack=putting?.82:(shortGame?1.02:1.52);
-  const side=putting?0:(shortGame?.10:.24);
+  const maxBack=putting ? .82 : (shortGame ? 1.02 : 1.52);
+  const side=putting ? 0 : (shortGame ? .10 : .24);
   const tt=clamp(t,0,1.08);
   const p=ballGroup.position.clone()
     .addScaledVector(forward,-maxBack*tt)
@@ -247,15 +247,15 @@ function beginStrokeSignal({putting=isPutting(),shortGame=isShortGame()}={}){
     const j=i*3;strokeTracePositions[j]=p.x;strokeTracePositions[j+1]=p.y;strokeTracePositions[j+2]=p.z;
   }
   strokeTraceGeo.attributes.position.needsUpdate=true;
-  strokeTraceMat.opacity=putting?.40:.34;
+  strokeTraceMat.opacity=putting ? .40 : .34;
   strokeTrace.visible=true;
   strokeSignalDot.visible=true;
   strokeSignalDot.position.copy(ballGroup.position);strokeSignalDot.position.y+=.032;
-  strokeSignalDot.scale.setScalar(putting?.76:.90);
+  strokeSignalDot.scale.setScalar(putting ? .76 : .90);
   if(!putting){
     const setPoint=strokeSignalPoint(recommendedLoad(),{putting:false,shortGame});
     strokeSetMark.position.copy(setPoint);strokeSetMark.position.y+=.018;
-    strokeSetMark.scale.setScalar(shortGame?.84:1);
+    strokeSetMark.scale.setScalar(shortGame ? .84 : 1);
     strokeSetMark.material.opacity=.66;
     strokeSetMark.visible=true;
   }else strokeSetMark.visible=false;
@@ -271,12 +271,12 @@ function updateStrokeSignal(t,{putting=isPutting(),shortGame=isShortGame(),retur
   if(!putting&&strokeSetMark.visible){
     const setDelta=Math.abs(clamp(t,0,1)-recommendedLoad());
     const onSet=setDelta<.045&&!returning;
-    strokeSetMark.material.opacity=onSet?.98:.66;
-    strokeSetMark.scale.setScalar((shortGame?.84:1)*(onSet?1.20:1));
+    strokeSetMark.material.opacity=onSet ? .98 : .66;
+    strokeSetMark.scale.setScalar((shortGame ? .84 : 1)*(onSet?1.20:1));
   }
-  strokeContactGate.material.opacity=nearImpact?.72:.26;
+  strokeContactGate.material.opacity=nearImpact ? .72 : .26;
   strokeContactGate.scale.setScalar(nearImpact?1.16:1);
-  strokeSignalDot.scale.setScalar((putting?.76:.90)*(nearImpact?1.18:1));
+  strokeSignalDot.scale.setScalar((putting ? .76 : .90)*(nearImpact?1.18:1));
 }
 
 function hideStrokeSignal(){
@@ -376,9 +376,9 @@ function updatePuttPaceGhost(feet){
   const intended=intendedPuttFeet();
   const err=Math.abs(feet-intended);
   const close=err<=Math.max(.50,intended*.05);
-  puttPaceRing.material.opacity=close?.92:.42;
+  puttPaceRing.material.opacity=close ? .92 : .42;
   puttPaceRing.scale.setScalar(close?1.18:1);
-  puttGhostBall.material.opacity=close?.92:.68;
+  puttGhostBall.material.opacity=close ? .92 : .68;
   puttGhostBall.scale.setScalar(close?1.13:1);
   puttGhostSignal.scale.setScalar(close?1.18:1);
   puttPaceGhost.visible=true;
@@ -487,7 +487,7 @@ function launchShot(metrics){
 
   // LOFT Stroke quality is not one hidden power number. A great strike requires
   // rhythm, centered path, decisive release and useful load.
-  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*(c.head==='putter'?.18:.75);
+  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*(c.head==='putter' ? .18 : .75);
   const finalPath=clamp(metrics.path+pathNoise,-9,9);
   const skill=c.head==='putter'
     ? metrics.tempoScore*.30+metrics.rhythm*.27+metrics.center*.29+metrics.commitment*.14
@@ -528,7 +528,7 @@ function launchShot(metrics){
   state.phase='flight';state.swingPhase=.60;state.shotCount++;state.strokes++;
   state.landingFX=false;
   state.ballCompression=1;
-  state.hitStop=q>.94?.030:q>.82?.022:.014;
+  state.hitStop=q>.94 ? .030 : q>.82 ? .022 : .014;
 
   cam.impact(.70+.30*q);
   cam.beginFlight(aimYaw());
