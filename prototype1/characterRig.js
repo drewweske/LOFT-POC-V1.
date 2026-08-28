@@ -120,6 +120,15 @@ export class LoftGolferRig{
     const downswing=Math.max(0,1-Math.abs(t-.55)/.22);
     const back=Math.max(0,1-Math.abs(t-.34)/.34);
     const fin=clamp((t-.72)/.28,0,1);
+    const setupBias=1-.42*t;
+
+    // Even before motion begins, mastery is visible in posture and base.
+    p.head[0]+=rookie*.035*setupBias;
+    p.torso[0]+=rookie*.028*setupBias;
+    p.chest[0]+=rookie*.022*setupBias;
+    p.handL[1]+=rookie*.020*setupBias;p.handR[1]+=rookie*.020*setupBias;
+    p.ankleL[2]+=rookie*.018*setupBias;p.ankleR[2]-=rookie*.018*setupBias;
+    p.kneeL[0]+=rookie*.018*setupBias;p.kneeR[0]+=rookie*.018*setupBias;
 
     // Beginner form is visibly inefficient rather than merely slower.
     p.head[0]+=Math.sin(t*Math.PI*2.1)*level.sway;
