@@ -174,7 +174,7 @@ const puttPaceRing=new THREE.Mesh(
 );
 puttPaceRing.rotation.x=Math.PI/2;puttPaceGhost.add(puttPaceRing);
 const puttPaceDot=new THREE.Mesh(
-  new THREE.SphereGeometry(.052,18,12),
+  new THREE.SphereGeometry(.035,18,12),
   new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
 );
 puttPaceDot.position.set(-.22,.045,.22);puttPaceGhost.add(puttPaceDot);
@@ -186,7 +186,7 @@ const strokeHaloRing=new THREE.Mesh(
 );
 strokeHaloRing.rotation.x=Math.PI/2;strokeHalo.add(strokeHaloRing);
 const strokeHaloDot=new THREE.Mesh(
-  new THREE.SphereGeometry(.045,16,12),
+  new THREE.SphereGeometry(.032,16,12),
   new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
 );
 strokeHalo.add(strokeHaloDot);
@@ -371,13 +371,22 @@ function setTarget(p){
   const forward=new THREE.Vector3(Math.sin(state.aimYaw),0,-Math.cos(state.aimYaw));
   const local=new THREE.Vector3(p.x-TEE.x,0,p.z-TEE.z);
   const projected=local.dot(forward);
-  const min=c.head==='putter'?.65:Math.max(2.5,c.carry*YARD*.18),max=c.carry*YARD*1.08;
+  const min=c.head==='putter'?.30:(isShortGame()?.45:Math.max(2.5,c.carry*YARD*.18)),max=c.carry*YARD*1.08;
   state.targetDistance=clamp(projected,min,max);
   syncTargetFromAim();
   state.learned.line=true;updateLine();showContext(Math.round(state.targetDistance/YARD)+' YD',300);updateTip();
 }
 
 function classify(q,path){if(Math.abs(path)>5.3)return path>0?'PUSH':'PULL';if(q>.965)return'PURE';if(q>.90)return'FLUSH';if(q>.80)return'SOLID';if(q>.69)return'PLAYABLE';return'HEAVY';}
+function classifyPutt(q,path,paceFeet){
+  if(Math.abs(path)>4.2)return path>0?'PUSH':'PULL';
+  const target=Math.max(.5,cupDistanceFeet());
+  const paceErr=Math.abs((paceFeet??target)-target)/target;
+  if(q>.965&&paceErr<.07)return'PURE ROLL';
+  if(q>.92)return'CLEAN ROLL';
+  if(q>.82)return'SOLID ROLL';
+  return'TOUCH';
+}
 
 function launchShot(metrics){
   if(state.phase!=='ready')return;
@@ -414,7 +423,7 @@ function launchShot(metrics){
 
   state.shot={
     quality:q,
-    label:classify(q,finalPath),
+    label:c.head==='putter'?classifyPutt(q,finalPath,metrics.puttPaceFeet):classify(q,finalPath),
     path:finalPath,
     club:c.short,
     rhythm:metrics.rhythm,
@@ -441,7 +450,7 @@ function launchShot(metrics){
 }
 
 function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
-  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;state.cupSink=0;state.cupSink=0;
+  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;state.cupSink=0;
   physics.active=false;physics.state=null;
   if(penalty)state.strokes++;
 
@@ -703,7 +712,7 @@ canvas.addEventListener('pointermove',e=>{
       }
     }else{
       // FULL SWING: power emerges from load + acceleration + commitment.
-      const load=clamp(backPx/(r.height*(gesture.shortGame?.17:.265)),0,1.08);
+      const load=clamp(backPx/(r.height*(gesture.shortGame ? .17 : .265)),0,1.08);
       gesture.load=Math.max(gesture.load,load);
       updateStrokeHalo(load);
       const reversal=e.clientY<gesture.deep-(gesture.shortGame?6:10);
@@ -732,14 +741,14 @@ canvas.addEventListener('pointermove',e=>{
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
         if(state.shotCount===0)showContext(through>.72?'RELEASE':'STRIKE',9999);
 
-        if(e.clientY<gesture.sy-(gesture.shortGame?6:16)&&gesture.load>(gesture.shortGame?.07:.35)){
+        if(e.clientY<gesture.sy-(gesture.shortGame?6:16)&&gesture.load>(gesture.shortGame ? .07 : .35)){
           const frameDt=Math.max(8,now-gesture.lastT);
           const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt;
           const backswingMs=Math.max(120,gesture.deepT-gesture.startT);
           const downswingMs=Math.max(55,now-gesture.deepT);
           const ratio=backswingMs/downswingMs;
           const tempoTarget=gesture.shortGame?2.20:2.65;
-          const tempoWindow=gesture.shortGame?.82:.90;
+          const tempoWindow=gesture.shortGame ? .82 : .90;
           const tempoScore=Math.exp(-Math.pow((ratio-tempoTarget)/tempoWindow,2));
 
           const pathPx=e.clientX-gesture.sx;
