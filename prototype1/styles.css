@@ -24,3 +24,8 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
 .course-map svg{display:block;width:100%;height:96px;margin:4px 0 2px}
 .map-ground{fill:#d9ddd2}.map-water{fill:#7e9695;opacity:.82}.map-fair{fill:#aab995}.map-green{fill:#92a77e}.map-bunker{fill:#ded0ac}.contours path{fill:none;stroke:#0B0D0D;stroke-width:.55;opacity:.12}.map-pin line{stroke:#0B0D0D;stroke-width:.7}.map-pin path{fill:#FF6A2A}.map-player{fill:#FF6A2A}.map-player-core{fill:#F2EFE8}.map-target-ring{fill:none;stroke:#0B0D0D;stroke-width:.8;opacity:.42}.map-target-dot{fill:#F2EFE8;stroke:#0B0D0D;stroke-width:.6}.course-map #map-aim{stroke:#0B0D0D;stroke-width:.7;stroke-dasharray:2 2;opacity:.28}
 @media(max-width:430px){.course-map{width:108px;padding:7px;border-radius:20px}.course-map svg{height:90px}.map-head span,.map-foot span{font-size:6.5px}.map-head b{font-size:8.5px}}
+
+/* Gauntlet UX: The Stroke is communicated by golfer motion, not a debug-like power bar. */
+#swing-meter{display:none!important}
+#context{top:18%}
+#context span{padding:6px 10px;font-size:9px;letter-spacing:.12em;background:rgba(11,13,13,.76)}
