@@ -46,9 +46,9 @@ export function buildWorld(scene,pin){
   const greenTex=makeSurfaceTexture(8,8,.032);
   const sandTex=makeSurfaceTexture(7,7,.070);
 
-  const terrainGeo=new THREE.PlaneGeometry(150,250,64,100);terrainGeo.rotateX(-Math.PI/2);
+  const terrainGeo=new THREE.PlaneGeometry(150,290,64,116);terrainGeo.rotateX(-Math.PI/2);
   const p=terrainGeo.attributes.position;
-  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i)-105;p.setZ(i,z);p.setY(i,terrainHeight(x,z));}
+  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i)-115;p.setZ(i,z);p.setY(i,terrainHeight(x,z));}
   p.needsUpdate=true;terrainGeo.computeVertexNormals();
   const roughMat=mat(COLORS.rough,.94);roughMat.map=roughTex;
   const terrain=new THREE.Mesh(terrainGeo,roughMat);terrain.receiveShadow=true;world.add(terrain);
@@ -95,8 +95,8 @@ export function buildWorld(scene,pin){
   }
   bunker(-14,pin.z+8,8,4.1,.4);bunker(17,pin.z-3,7.2,3.6,1.7);bunker(12,-94,5.3,2.7,2.8);
 
-  const water=new THREE.Mesh(new THREE.PlaneGeometry(126,250),new THREE.MeshStandardMaterial({color:COLORS.water,roughness:.32,metalness:.04,transparent:true,opacity:.94}));
-  water.rotation.x=-Math.PI/2;water.position.set(94,-.38,-105);world.add(water);
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(126,290),new THREE.MeshStandardMaterial({color:COLORS.water,roughness:.32,metalness:.04,transparent:true,opacity:.94}));
+  water.rotation.x=-Math.PI/2;water.position.set(94,-.38,-115);world.add(water);
 
   function cliff(x,z,w,d,h,rot=0){
     const g=new THREE.BoxGeometry(w,h,d,3,3,3);const m=new THREE.Mesh(g,mat(COLORS.rock,.94));m.position.set(x,terrainHeight(x,z)+h*.36,z);m.rotation.y=rot;m.castShadow=true;m.receiveShadow=true;world.add(m);
