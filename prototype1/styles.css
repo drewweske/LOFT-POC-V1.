@@ -29,3 +29,10 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
 #swing-meter{display:none!important}
 #context{top:18%}
 #context span{padding:6px 10px;font-size:9px;letter-spacing:.12em;background:rgba(11,13,13,.76)}
+
+/* Gauntlet UI critic 007: keep the course as the hero, not HUD chrome. */
+.hud section{padding:7px 9px;border-radius:16px}
+.hud section span{font-size:7px;line-height:9px}
+.hud section strong{font-size:12px;line-height:15px}
+.result-card{width:min(390px,100%)}
+.result-card button{min-height:44px;padding:0 16px;font-size:13px}
