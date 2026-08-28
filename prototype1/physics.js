@@ -8,6 +8,7 @@ const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
 const CUP_RADIUS=.054;
 const CUP_CAPTURE=.047;
+const CONTACT_HEIGHT=.052;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class GolfPhysics{
@@ -157,7 +158,7 @@ export class GolfPhysics{
       s.spinOmega*=.9994;
 
       const surface=this.surfaceAt(s.pos.x,s.pos.z);
-      const ground=surface==='water'?-0.16:this.terrainHeight(s.pos.x,s.pos.z)+.085;
+      const ground=surface==='water'?-0.16:this.terrainHeight(s.pos.x,s.pos.z)+CONTACT_HEIGHT;
 
       if(s.pos.y<=ground&&s.vel.y<0){
         s.pos.y=ground;
@@ -219,7 +220,7 @@ export class GolfPhysics{
       }
 
       s.pos.addScaledVector(s.vel,FIXED);
-      s.pos.y=this.terrainHeight(s.pos.x,s.pos.z)+.085;
+      s.pos.y=this.terrainHeight(s.pos.x,s.pos.z)+CONTACT_HEIGHT;
 
       if(Math.hypot(s.vel.x,s.vel.z)<.055){
         s.vel.set(0,0,0);
