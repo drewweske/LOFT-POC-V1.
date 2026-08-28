@@ -186,18 +186,27 @@ export class GolfPhysics{
       const e=.35;
       const dx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
       const dz=(this.terrainHeight(s.pos.x,s.pos.z+e)-this.terrainHeight(s.pos.x,s.pos.z-e))/(2*e);
-      const slope=surface==='green'?.42:surface==='fairway'?.24:.12;
 
-      s.vel.x+=-dx*G*FIXED*slope;
-      s.vel.z+=-dz*G*FIXED*slope;
+      // Rolling acceleration follows the actual local grade. Friction is
+      // approximately Coulomb-like (constant deceleration), not arbitrary
+      // frame-rate damping. The green value corresponds to a lively ~10–11 ft
+      // Stimp-style prototype surface.
+      s.vel.x+=-dx*G*FIXED;
+      s.vel.z+=-dz*G*FIXED;
       s.vel.y=0;
 
-      const decay=surface==='green'?.988:surface==='fairway'?.974:surface==='rough'?.915:surface==='sand'?.80:.90;
-      s.vel.multiplyScalar(Math.pow(decay,FIXED*60));
+      const hs=Math.hypot(s.vel.x,s.vel.z);
+      const mu=surface==='green'?.050:surface==='fairway'?.115:surface==='rough'?.285:surface==='sand'?.58:.22;
+      if(hs>0){
+        const drop=Math.min(hs,mu*G*FIXED);
+        const k=(hs-drop)/hs;
+        s.vel.x*=k;s.vel.z*=k;
+      }
+
       s.pos.addScaledVector(s.vel,FIXED);
       s.pos.y=this.terrainHeight(s.pos.x,s.pos.z)+.085;
 
-      if(s.vel.length()<.20){
+      if(Math.hypot(s.vel.x,s.vel.z)<.055){
         s.vel.set(0,0,0);
         s.stopped=true;
       }
