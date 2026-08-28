@@ -129,9 +129,15 @@ function updateLine(){
   // Keep the model's local address ball (.46m right of stance) pinned to the
   // actual world ball while the golfer rotates with the chosen shot direction.
   const yaw=aimYaw();
-  const localAddressBall=new THREE.Vector3(.46,.085,0).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
+
+  // The rig's authored local target direction is -Z. Three.js +Y rotation maps
+  // local -Z toward -X for positive angles, while our gameplay heading uses
+  // +X for positive yaw. Therefore the golfer MUST rotate by -yaw. Using +yaw
+  // was the source of the strange front-on / mirrored address angles seen on iPhone.
+  const rigYaw=-yaw;
+  const localAddressBall=new THREE.Vector3(.46,.085,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw);
   golfer.group.position.copy(ballGroup.position).sub(localAddressBall);
-  golfer.group.rotation.y=yaw;
+  golfer.group.rotation.y=rigYaw;
 }
 updateLine();
 
