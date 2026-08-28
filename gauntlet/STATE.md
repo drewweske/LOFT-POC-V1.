@@ -1,130 +1,186 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 006
+Current build: Prototype 1 / Integration 007
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: terrain / landing / rollout
-Iteration: integration_006
+Active subsystem: The Stroke / putting / cup
+Iteration: integration_007
 
 ## Current provisional score
-94 / 100 — REAL-DEVICE VALIDATION REQUIRED
+95 / 100 — REAL-DEVICE VALIDATION REQUIRED
 
-Integration 006 is the first dedicated terrain-behavior pass.
+Integration 007 is the first dedicated putting and short-game control pass.
 
-The largest gap from Integration 005 was not airborne physics. It was what happened AFTER the ball touched the ground:
-too much retained horizontal speed, too little surface identity, and too little static settling.
+The triggering user evidence was decisive:
+- close putts required repeated attempts
+- tiny input still produced too much pace
+- there was no readable power / pace reference
+- the flagstick dominated close camera compositions
+- the rendered ball / cup ratio did not convincingly communicate that the ball could fall
+- short-range ball touch could overlap The Line target interaction
+- the HUD reported AIR while a putt was rolling
+- near-green wedge shots still inherited a full-swing minimum energy floor
 
-## Integration 006 terrain model
+## Integration 007 wins
 
-### Canonical surface physics
-Surface properties now live in /prototype1/surfaces.js.
+### PACE — LOFT putting control
+Putting no longer inherits the generic full-swing power formula.
 
-Each cut owns:
-- normal restitution
-- tangential impact retention
-- rolling deceleration
-- static settling grade
-- stop threshold
-- spin/turf grip
-- cut-to-cut transition bite
-- lie launch speed
-- lie spin retention
-- lie launch bias
+The putter now uses a dedicated backstroke-to-pace model:
+- tiny backstroke = tiny putt
+- longer backstroke = longer roll
+- no hidden minimum-power floor
+- the return stroke still judges path, tempo, smoothness and commitment
 
-Surfaces:
-- tee
-- fairway
-- green
-- fringe
-- rough
-- sand
-- water
+The live readout is expressed as golf distance:
+PACE 3.4 FT
+PACE 9.8 FT
+PACE 15 FT
 
-### Landing behavior
-The ball no longer uses a mostly-global bounce/slide model.
+Not a debug percentage.
 
-Landing resolves against:
-- actual local terrain normal
-- current surface restitution
-- surface tangential retention
-- spin/contact slip
-- surface spin grip
+### In-world pace ghost
+During a putting backstroke, a restrained LOFT pace marker moves down The Line to show the approximate level-green stopping distance.
 
-Result target:
-- fairway: one readable hop + controlled release
-- green: low bounce + wedge check
-- fringe: intermediate first-cut behavior
-- rough: obvious grab
-- sand: immediate deadening
+When the pace marker crosses the player's intended target distance:
+- the marker visually tightens
+- a tiny acoustic cue plays
+- a tiny haptic cue is requested where supported
 
-### Rolling behavior
-Frame-rate damping is not used as the primary stopping mechanism.
+It never auto-locks the shot.
 
-Roll now uses:
-- gravity along local grade
-- calibrated rolling resistance in m/s²
-- surface transition losses
-- static friction / settling
+### Input precision
+A putt can now be made with approximately an 8 px backstroke on the test iPhone-class viewport.
 
-The static-friction layer is critical:
-a nearly stopped ball on ordinary fairway, rough or sand now RESTS instead of creeping indefinitely down small geometry slopes.
+Representative mapping:
+- ~8 px -> ~1 FT pace
+- ~35 px -> ~3.5 FT
+- ~50 px -> ~5.5 FT
+- ~75 px -> ~9.8 FT
+- ~100 px -> ~15 FT
+- ~150 px -> ~27 FT
 
-### Gameplay calibration
-Level-ground target stopping behavior after the ball is already rolling:
+This creates a large precision band for tap-ins and short putts.
 
-At 3 m/s:
-- green ≈ 6.3 m
-- fringe ≈ 4.3 m
-- fairway ≈ 2.8 m
-- rough ≈ 1.2 m
-- sand ≈ 0.7 m
+### Ball intent priority
+At short range, the ball and The Line target can occupy overlapping touch regions.
 
-Actual shot rollout is shorter because landing impact and cut transitions shed additional speed first.
+The previous hit-test checked The Line first.
 
-### Cut transitions
-Crossing cuts now has physical consequence:
-- fairway → rough grabs
-- fringe → green remains smooth
-- rough → sand deadens dramatically
+Integration 007 reverses that:
+touching the ball now wins when those zones overlap.
 
-Small restrained audio cues reinforce the surface change.
+This removes a major near-cup ambiguity.
 
-### Visual / physical alignment
-- fairway physics uses the same authored fairway profile as the rendered fairway
-- bunker render footprints now use the shared bunker definitions
-- green receives a real playable fringe
-- rendered green slope now matches putting physics
-- green fringe is visually distinct
-- bunkers have a subtle carved/lip read
-- fairway receives restrained mowing-band texture behavior
+### Putting strike quality
+Putting gets its own contact model:
+- calmer ~2:1 rhythm target
+- path accuracy
+- stroke smoothness
+- commitment through impact
+- reduced Level 1 random path contamination
+
+Feedback labels include:
+- PURE ROLL
+- CLEAN ROLL
+- SOLID ROLL
+- TOUCH
+- PUSH / PULL
+
+### Putter sound / haptics
+The putter no longer shares the full iron impact sound.
+
+It now gets:
+- soft low contact body
+- crisp face tick
+- restrained upper harmonic for exceptional contact
+- shorter tactile response
+- separate transition cue
+
+The cup sound remains a separate physical reward.
+
+### Cup / flag geometry
+The gameplay ball, cup and flagstick now share a much more believable relative scale.
+
+- gameplay ball radius reduced
+- visible cup increased to preserve a regulation-like ball/cup ratio
+- cup capture footprint aligned to the visible cup
+- continuous 120 Hz segment capture prevents a centered putt skipping over the hole
+- center pace can be firmer than edge pace
+- hot edge strikes still lip out
+- flagstick is dramatically thinner
+- flagstick has NO ball collision
+- while putting, LOFT automatically tends the pin visually so it cannot dominate the sightline
+
+### Putting camera
+Putting has its own:
+- address/read composition
+- swing-lock composition
+- ground-roll tracking composition
+
+It is lower, closer and slightly off the direct flag axis.
+
+### Full-swing visual control
+A new in-world LOFT Stroke Halo gives full swings a visual load reference without bringing back a generic power bar.
+
+The Orange signal moves around a Cream ground halo as load builds.
+
+### Short game
+Close-range wedge shots no longer inherit a 40% minimum full-swing energy floor.
+
+Within short-game range:
+- smaller backstrokes are valid
+- partial wedge energy is valid
+- touch shots can be played around the green
+
+### UI cleanup
+The putter no longer advertises a misleading 25 YD carry.
+
+The equipment surface now presents putter reach as 65 FT.
+
+The course map reports the actual green/fringe lie while a putt is rolling instead of AIR.
 
 ## Technical validation
 PASS:
-- surfaces.js
-- physics.js
-- world.js
 - game.js
+- physics.js
 - feedback.js
+- camera.js
+- world.js
+- surfaces.js
+- characterRig.js
+- topoMap.js
+- equipment.js
+- round.js
 
-All modified custom modules parse successfully.
+DOM contract: PASS
+CSS brace integrity: PASS
 
 ## Largest meaningful gap
-Real iPhone validation of:
-- driver fairway rollout
-- iron stopping distance
-- wedge green check
-- rough grab
-- bunker deadening
-- putt pace
-- fringe transition
-- ball settling on small slopes
+Real iPhone validation of the new tactile putting loop.
+
+Required tests:
+1. 1–2 FT tap-in
+2. 3 FT putt
+3. 6 FT putt
+4. 10 FT putt
+5. 20+ FT lag putt
+6. pace intentionally short
+7. pace intentionally long
+8. center strike at cup
+9. hot lip-out
+10. aimed break
+11. fringe putt
+12. short rough chip
+13. perfect drive versus mediocre drive
+14. full-swing load halo readability
 
 ## Critical failures
-Any of these fail Integration 006:
-- ball continues creeping after visibly losing momentum
-- rough behaves like fairway
-- sand behaves like grass
-- green approach shots skate unrealistically
-- ordinary fairway drives roll cartoonishly far
-- rendered surface and physical lie disagree
-- putts die instantly or remain excessively fast
+Any of these fail Integration 007:
+- tiny putts still launch at near-identical speed
+- touching the ball near the cup grabs The Line
+- a centered reasonable-pace putt visibly passes through the hole
+- flagstick blocks the putting sightline
+- pace readout and actual roll distance are materially disconnected
+- short wedge shots remain impossible
+- full-swing visual feedback reads like a generic power meter
