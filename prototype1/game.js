@@ -5,6 +5,7 @@ import {LoftGolferRig} from './characterRig.js';
 import {GolfPhysics} from './physics.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
+import {LoftFeedback} from './feedback.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -56,7 +57,9 @@ const state={
   swingPhase:0,
   learned:{camera:false,line:false,stroke:false},
   interaction:null,
-  shotCount:0
+  shotCount:0,
+  landingFX:false,
+  ballCompression:0
 };
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
@@ -154,6 +157,7 @@ function surfaceAt(x,z){
 const physics=new GolfPhysics({terrainHeight,surfaceAt,wind});
 const cam=new LoftCamera(camera,{terrainHeight});
 const topo=new LoftTopoMap($('course-map'));
+const feedback=new LoftFeedback(scene,COLORS);
 
 const raycaster=new THREE.Raycaster();
 const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
@@ -224,33 +228,64 @@ function setTarget(p){
   state.learned.line=true;updateLine();showContext(Math.round(state.targetDistance/YARD)+' YD',300);updateTip();
 }
 
-function impactAudio(q){
-  try{
-    const A=window.AudioContext||window.webkitAudioContext;if(!A)return;
-    const ac=new A(),n=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(480+q*430,n);o.frequency.exponentialRampToValueAtTime(150,n+.075);g.gain.setValueAtTime(.085,n);g.gain.exponentialRampToValueAtTime(.0001,n+.10);o.connect(g).connect(ac.destination);o.start(n);o.stop(n+.11);
-    setTimeout(()=>ac.close(),180);
-  }catch{}
-  try{navigator.vibrate?.(12);}catch{}
-}
 function classify(q,path){if(Math.abs(path)>5.3)return path>0?'PUSH':'PULL';if(q>.965)return'PURE';if(q>.90)return'FLUSH';if(q>.80)return'SOLID';if(q>.69)return'PLAYABLE';return'HEAVY';}
 
 function launchShot(metrics){
   if(state.phase!=='ready')return;
   const c=club(),L=LEVELS[state.level];
-  const tempoScore=1-Math.min(1,Math.abs(metrics.tempo-94)/50);
-  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*1.1;
-  const finalPath=clamp(metrics.path+pathNoise,-9,9);
-  const q=clamp(.72+.18*tempoScore+.10*metrics.speedScore-.016*Math.abs(finalPath)-(1-L.form)*.03,.54,1.01);
-  const physicsTempo=tempoScore;
-  if(c.head==='putter')physics.putt({position:ballGroup.position,club:c,power:metrics.power,path:finalPath,aimYaw:aimYaw()});
-  else physics.launch({position:ballGroup.position,club:c,power:metrics.power,tempo:physicsTempo,path:finalPath,form:L.form,aimYaw:aimYaw()});
 
-  state.shot={quality:q,label:classify(q,finalPath),path:finalPath,club:c.short};
+  // LOFT Stroke quality is not one hidden power number. A great strike requires
+  // rhythm, centered path, decisive release and useful load.
+  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*.75;
+  const finalPath=clamp(metrics.path+pathNoise,-9,9);
+  const skill=
+    metrics.tempoScore*.28+
+    metrics.rhythm*.18+
+    metrics.center*.20+
+    metrics.commitment*.18+
+    metrics.loadScore*.10+
+    metrics.speedScore*.06;
+
+  const q=clamp(.48+.52*skill-.010*Math.abs(finalPath)-(1-L.form)*.025,.42,1.0);
+  const direction=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
+
+  if(c.head==='putter'){
+    physics.putt({position:ballGroup.position,club:c,power:metrics.power,path:finalPath,aimYaw:aimYaw(),strike:q});
+  }else{
+    physics.launch({
+      position:ballGroup.position,
+      club:c,
+      power:metrics.power,
+      path:finalPath,
+      form:L.form,
+      aimYaw:aimYaw(),
+      strike:q,
+      release:metrics.commitment
+    });
+  }
+
+  state.shot={
+    quality:q,
+    label:classify(q,finalPath),
+    path:finalPath,
+    club:c.short,
+    rhythm:metrics.rhythm,
+    tempo:metrics.tempoScore,
+    commitment:metrics.commitment
+  };
   state.phase='flight';state.swingPhase=.60;state.shotCount++;
+  state.landingFX=false;
+  state.ballCompression=1;
+
+  cam.impact(.70+.30*q);
   cam.beginFlight(aimYaw());
+
+  feedback.impact({quality:q,power:metrics.power,position:ballGroup.position,direction,club:c.head});
+  feedback.startFlight(ballGroup.position);
+
   setTimeout(()=>document.getElementById('app')?.classList.remove('swing-focus'),420);
   state.learned.stroke=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
-  showContext(state.shot.label,650);impactAudio(q);
+  showContext(state.shot.label,q>.94?780:560);
 }
 
 function finishShot(){
@@ -267,9 +302,10 @@ function finishShot(){
   $('result').classList.add('show');updateTip();
 }
 function resetShot(){
-  state.phase='ready';state.shot=null;state.swingPhase=0;physics.active=false;physics.state=null;
+  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;physics.active=false;physics.state=null;
   ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);
   golfer.group.position.set(0,terrainHeight(0,0),0);golfer.setPose(0,LEVELS[state.level]);
+  feedback.clear();ballGroup.scale.set(1,1,1);
   lineMesh.visible=true;halo.visible=true;$('result').classList.remove('show');document.getElementById('app')?.classList.remove('swing-focus');cam.resetAim();defaultTarget();updateLine();updateTip();
 }
 $('again').onclick=resetShot;
@@ -277,6 +313,7 @@ $('again').onclick=resetShot;
 const pointers=new Map();
 let gesture=null;
 canvas.addEventListener('pointerdown',e=>{
+  feedback.unlock();
   if($('bag').classList.contains('open'))return;
   canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY});
   if(pointers.size===2){
@@ -284,7 +321,8 @@ canvas.addEventListener('pointerdown',e=>{
   }
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
-  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:performance.now(),lastT:performance.now(),load:0,moved:false,impact:false};
+  const now=performance.now();
+  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,transitionCue:false,samples:[{x:e.clientX,y:e.clientY,t:now}]};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
   if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
 });
@@ -299,6 +337,11 @@ canvas.addEventListener('pointermove',e=>{
     state.learned.camera=true;gesture.lastDist=dist;gesture.lastMid=mid;updateTip();return;
   }
   if(!gesture||gesture.id!==e.pointerId)return;
+  const nowSample=performance.now();
+  if(gesture.samples){
+    gesture.samples.push({x:e.clientX,y:e.clientY,t:nowSample});
+    if(gesture.samples.length>48)gesture.samples.shift();
+  }
   const dx=e.clientX-gesture.lx,dy=e.clientY-gesture.ly,total=Math.hypot(e.clientX-gesture.sx,e.clientY-gesture.sy);if(total>5)gesture.moved=true;
   if(gesture.type==='orbit'){
     if(state.phase==='ready'&&!cam.isSwingLocked){
@@ -311,23 +354,76 @@ canvas.addEventListener('pointermove',e=>{
   }
   if(gesture.type==='line'){const g=rayGround(e.clientX,e.clientY);if(g&&g.z<-4)setTarget(g);}
   if(gesture.type==='swing'&&!gesture.impact){
-    const now=performance.now();if(e.clientY>gesture.deep){gesture.deep=e.clientY;gesture.deepT=now;}
-    const r=canvas.getBoundingClientRect(),load=clamp((gesture.deep-gesture.sy)/(r.height*.265),0,1.08);gesture.load=Math.max(gesture.load,load);$('swing-fill').style.height=(clamp(load,0,1)*100)+'%';
+    const now=performance.now();
+    if(e.clientY>gesture.deep){gesture.deep=e.clientY;gesture.deepT=now;}
+
+    const r=canvas.getBoundingClientRect();
+    const load=clamp((gesture.deep-gesture.sy)/(r.height*.265),0,1.08);
+    gesture.load=Math.max(gesture.load,load);
+    $('swing-fill').style.height=(clamp(load,0,1)*100)+'%';
+
     const reversal=e.clientY<gesture.deep-10;
+
     if(!reversal){
       state.swingPhase=clamp(load,0,1)*.38;
       golfer.setPose(state.swingPhase,LEVELS[state.level]);
-      showContext(load>.76?'TURN':'LOAD',9999);
+      showContext(load>.78?'SET':'LOAD',9999);
     }else{
+      if(!gesture.transitionCue){
+        gesture.transitionCue=true;
+        feedback.transition(gesture.load);
+      }
+
       const through=clamp((gesture.deep-e.clientY)/(r.height*.255),0,1.18);
       state.swingPhase=.38+through*.22;
       golfer.setPose(state.swingPhase,LEVELS[state.level]);
-      showContext('STRIKE',9999);
+      showContext(through>.72?'RELEASE':'STRIKE',9999);
+
       if(e.clientY<gesture.sy-16&&gesture.load>.35){
-        const frameDt=Math.max(8,now-gesture.lastT),pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt,transition=Math.max(70,now-gesture.deepT),L=LEVELS[state.level];
-        const tempo=clamp(100-Math.abs(238-transition)*.18+Math.sin(now*.015)*L.tempoJitter*10,42,100);
-        const path=clamp((e.clientX-gesture.sx)/(r.width*.058),-8,8),speedScore=clamp(pixelSpeed/1.10,.64,1.13),power=clamp(gesture.load*.78+speedScore*.22,.45,1.08);
-        gesture.impact=true;$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';launchShot({power,tempo,path,speedScore});
+        const frameDt=Math.max(8,now-gesture.lastT);
+        const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt;
+        const backswingMs=Math.max(120,gesture.deepT-gesture.startT);
+        const downswingMs=Math.max(55,now-gesture.deepT);
+        const ratio=backswingMs/downswingMs;
+
+        // Ideal LOFT rhythm is a calm load with a much faster committed release.
+        // The window is learnable, but not automatic.
+        const tempoScore=Math.exp(-Math.pow((ratio-2.65)/.90,2));
+
+        const pathPx=e.clientX-gesture.sx;
+        const path=clamp(pathPx/(r.width*.058),-8,8);
+        const center=Math.exp(-Math.pow(path/3.4,2));
+
+        const speedScore=clamp(pixelSpeed/1.12,.48,1.08);
+        const commitment=clamp(through/.98,0,1);
+        const loadScore=Math.exp(-Math.pow((gesture.load-.88)/.24,2));
+
+        // Downswing smoothness from recent samples. Jerky reversals lose compression.
+        const down=(gesture.samples||[]).filter(s=>s.t>=gesture.deepT);
+        const speeds=[];
+        for(let i=1;i<down.length;i++){
+          const dtS=Math.max(6,down[i].t-down[i-1].t);
+          speeds.push(Math.hypot(down[i].x-down[i-1].x,down[i].y-down[i-1].y)/dtS);
+        }
+        let rhythm=.78;
+        if(speeds.length>=3){
+          const mean=speeds.reduce((a,b)=>a+b,0)/speeds.length;
+          const variance=speeds.reduce((a,b)=>a+(b-mean)*(b-mean),0)/speeds.length;
+          const cv=Math.sqrt(variance)/Math.max(.08,mean);
+          rhythm=clamp(1-cv*.48,.42,1);
+        }
+
+        const power=clamp(
+          gesture.load*.66+
+          speedScore*.20+
+          commitment*.14,
+          .40,1.08
+        );
+
+        gesture.impact=true;
+        $('swing-meter').classList.remove('show');
+        $('swing-fill').style.height='0';
+        launchShot({power,path,speedScore,tempoScore,center,commitment,loadScore,rhythm});
       }
     }
   }
@@ -367,8 +463,30 @@ function frame(now){
   }else if(state.phase==='flight'){
     const L=LEVELS[state.level];state.swingPhase=clamp(state.swingPhase+dt*lerp(.70,1.15,L.form),.60,1);golfer.setPose(state.swingPhase,L);
     const ps=physics.step(dt);
-    if(ps){ballGroup.position.copy(ps.pos);ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin});if(ps.stopped)finishShot();}
+    if(ps){
+      ballGroup.position.copy(ps.pos);
+      ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;
+      feedback.flight(ballGroup.position,state.shot?.quality||.8);
+      cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin});
+
+      if(ps.lastImpactSurface&&!state.landingFX){
+        state.landingFX=true;
+        feedback.land({surface:ps.lastImpactSurface,position:ballGroup.position,quality:state.shot?.quality||.8});
+      }
+
+      if(ps.stopped)finishShot();
+    }
   }else if(state.phase==='result')cam.updateResult(dt,{ball:ballGroup.position,pin});
+  if(state.ballCompression>0){
+    state.ballCompression=Math.max(0,state.ballCompression-dt*18);
+    const k=state.ballCompression;
+    ballGroup.scale.set(1+.055*k,1-.090*k,1+.055*k);
+  }else if(ballGroup.scale.x!==1){
+    ballGroup.scale.lerp(new THREE.Vector3(1,1,1),1-Math.exp(-18*dt));
+  }
+
+  feedback.update(dt);
+
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
     const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z);
