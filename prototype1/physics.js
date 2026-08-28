@@ -186,7 +186,22 @@ export class GolfPhysics{
           const vn=s.vel.dot(n);
           const normal=n.clone().multiplyScalar(vn);
           const tangent=s.vel.clone().sub(normal).multiplyScalar(loss);
+
+          // Spin/ground coupling: contact-point slip creates the check/skip
+          // difference between a high-spin wedge and a low-spin driver.
+          const omega=s.spinAxis.clone().multiplyScalar(s.spinOmega);
+          const contactArm=n.clone().multiplyScalar(-BALL_RADIUS);
+          const contactSlip=tangent.clone().add(new THREE.Vector3().crossVectors(omega,contactArm));
+          contactSlip.y=0;
+          const grip=surface==='green'?.075:surface==='fairway'?.050:surface==='rough'?.028:surface==='sand'?.11:.04;
+          const maxImpulse=Math.max(0,Math.abs(vn))*grip;
+          if(contactSlip.lengthSq()>.0001){
+            const impulse=Math.min(contactSlip.length(),maxImpulse);
+            tangent.addScaledVector(contactSlip.normalize(),-impulse);
+          }
+
           s.vel.copy(tangent).addScaledVector(n,-vn*rest);
+          s.spinOmega*=surface==='green'?.72:surface==='fairway'?.78:surface==='rough'?.68:surface==='sand'?.42:.7;
           s.bounced=true;
         }else{
           s.vel.y=0;
