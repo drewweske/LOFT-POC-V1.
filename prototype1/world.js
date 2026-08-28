@@ -42,7 +42,7 @@ function makeSurfaceTexture(repeatX=18,repeatY=34,grain=.055){
 export function buildWorld(scene,pin){
   const world=new THREE.Group();scene.add(world);
   const roughTex=makeSurfaceTexture(18,32,.045);
-  const fairTex=makeSurfaceTexture(8,44,.040);
+  const fairTex=makeSurfaceTexture(5,2,.040);
   const greenTex=makeSurfaceTexture(8,8,.032);
   const sandTex=makeSurfaceTexture(7,7,.070);
 
