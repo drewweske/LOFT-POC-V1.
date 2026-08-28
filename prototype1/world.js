@@ -62,7 +62,7 @@ export function buildWorld(scene,pin){
       const center=-1.0 + Math.sin(t*Math.PI*1.5)*1.8 - Math.sin(t*Math.PI*3.1)*.85;
       const width=9.5 + 7.2*Math.sin(Math.PI*t) + 1.7*Math.sin(t*Math.PI*3.0);
       const leftX=center-width, rightX=center+width;
-      pos.push(leftX,terrainHeight(leftX,z)+.048,z,rightX,terrainHeight(rightX,z)+.048,z);
+      pos.push(leftX,terrainHeight(leftX,z)+.006,z,rightX,terrainHeight(rightX,z)+.006,z);
       uv.push(0,t*18,1,t*18);
       if(i<segments){
         const a=i*2,b=a+1,c=a+2,d=a+3;
@@ -81,9 +81,9 @@ export function buildWorld(scene,pin){
 
   const gg=new THREE.CircleGeometry(18,72);gg.rotateX(-Math.PI/2);
   const greenMat=mat(COLORS.green,.86);greenMat.map=greenTex;
-  const green=new THREE.Mesh(gg,greenMat);green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.06,pin.z);green.receiveShadow=true;world.add(green);
+  const green=new THREE.Mesh(gg,greenMat);green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.008,pin.z);green.receiveShadow=true;world.add(green);
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.075,40),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
-  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.071,pin.z);world.add(holeDisc);
+  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.012,pin.z);world.add(holeDisc);
 
   function bunker(x,z,sx,sz,seed){
     const sh=new THREE.Shape();const pts=[];
@@ -91,7 +91,7 @@ export function buildWorld(scene,pin){
     sh.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)sh.lineTo(pts[i].x,pts[i].y);sh.closePath();
     const g=new THREE.ShapeGeometry(sh);g.rotateX(-Math.PI/2);
     const bunkerMat=mat(COLORS.sand,.97);bunkerMat.map=sandTex;
-    const b=new THREE.Mesh(g,bunkerMat);b.position.set(x,terrainHeight(x,z)+.075,z);b.receiveShadow=true;world.add(b);
+    const b=new THREE.Mesh(g,bunkerMat);b.position.set(x,terrainHeight(x,z)+.009,z);b.receiveShadow=true;world.add(b);
   }
   bunker(-14,pin.z+8,8,4.1,.4);bunker(17,pin.z-3,7.2,3.6,1.7);bunker(12,-94,5.3,2.7,2.8);
 
@@ -131,8 +131,8 @@ export function buildWorld(scene,pin){
   const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),new THREE.MeshStandardMaterial({color:COLORS.orange,side:THREE.DoubleSide,roughness:.82}));flag.position.set(pin.x,pin.y+3.9,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
-    green.position.set(next.x,next.y+.06,next.z);
-    holeDisc.position.set(next.x,next.y+.071,next.z);
+    green.position.set(next.x,next.y+.008,next.z);
+    holeDisc.position.set(next.x,next.y+.012,next.z);
     pole.position.set(next.x,next.y+2.25,next.z);
     flag.position.set(next.x,next.y+3.9,next.z);
   }
