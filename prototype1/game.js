@@ -146,7 +146,7 @@ function surfaceAt(x,z){
 }
 
 const physics=new GolfPhysics({terrainHeight,surfaceAt,wind});
-const cam=new LoftCamera(camera);
+const cam=new LoftCamera(camera,{terrainHeight});
 const topo=new LoftTopoMap($('course-map'));
 
 const raycaster=new THREE.Raycaster();
@@ -205,7 +205,7 @@ document.querySelectorAll('#level-menu button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#level-menu button').forEach(x=>x.classList.toggle('active',x===b));
   $('level-menu').classList.remove('open');golfer.setPose(0,LEVELS[state.level]);showContext(LEVELS[state.level].name,500);
 });
-$('camera-reset').onclick=()=>{state.aimYawTarget=COURSE_YAW;cam.reset();showContext('PIN LINE',360);};
+$('camera-reset').onclick=()=>{state.aimYawTarget=COURSE_YAW;cam.resetAim();showContext('PIN LINE',360);};
 
 function setTarget(p){
   const c=club();
@@ -241,7 +241,7 @@ function launchShot(metrics){
 
   state.shot={quality:q,label:classify(q,finalPath),path:finalPath,club:c.short};
   state.phase='flight';state.swingPhase=.60;state.shotCount++;
-  cam.setSwinging(false);
+  cam.beginFlight(aimYaw());
   setTimeout(()=>document.getElementById('app')?.classList.remove('swing-focus'),420);
   state.learned.stroke=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
   showContext(state.shot.label,650);impactAudio(q);
@@ -250,6 +250,7 @@ function launchShot(metrics){
 function finishShot(){
   if(state.phase==='result')return;
   state.phase='result';
+  cam.beginResult(ballGroup.position,pin);
   const feet=Math.hypot(ballGroup.position.x-pin.x,ballGroup.position.z-pin.z)*3.28084;
   const surface=surfaceAt(ballGroup.position.x,ballGroup.position.z);
   $('result-kicker').textContent=state.shot.label+' · '+state.shot.club;
@@ -263,7 +264,7 @@ function resetShot(){
   state.phase='ready';state.shot=null;state.swingPhase=0;physics.active=false;physics.state=null;
   ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);
   golfer.group.position.set(0,terrainHeight(0,0),0);golfer.setPose(0,LEVELS[state.level]);
-  lineMesh.visible=true;halo.visible=true;$('result').classList.remove('show');document.getElementById('app')?.classList.remove('swing-focus');cam.setSwinging(false);cam.reset();defaultTarget();updateLine();updateTip();
+  lineMesh.visible=true;halo.visible=true;$('result').classList.remove('show');document.getElementById('app')?.classList.remove('swing-focus');cam.resetAim();defaultTarget();updateLine();updateTip();
 }
 $('again').onclick=resetShot;
 
@@ -278,8 +279,8 @@ canvas.addEventListener('pointerdown',e=>{
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:performance.now(),lastT:performance.now(),load:0,moved:false,impact:false};
-  if(type==='line'){cam.setSwinging(false);showContext('THE LINE',9999);$('tip').style.opacity='0';}
-  if(type==='swing'){state.interaction='swing';document.getElementById('app')?.classList.add('swing-focus');cam.setSwinging(true);$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
+  if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
+  if(type==='swing'){state.interaction='swing';document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
 });
 canvas.addEventListener('pointermove',e=>{
   const p=pointers.get(e.pointerId);if(!p)return;e.preventDefault();p.px=p.x;p.py=p.y;p.x=e.clientX;p.y=e.clientY;
@@ -287,18 +288,18 @@ canvas.addEventListener('pointermove',e=>{
     const a=[...pointers.values()].slice(0,2),dist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),mid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
     if(gesture?.type!=='pinch')gesture={type:'pinch',lastDist:dist,lastMid:mid};
     const dd=dist-gesture.lastDist,dx=mid.x-gesture.lastMid.x,dy=mid.y-gesture.lastMid.y;
-    if(state.phase==='ready'&&!cam.swinging){cam.zoom(dd,false);cam.aimVertical(dy*.45);}
-    else{cam.zoom(dd,true);cam.flightOrbit(dx*.35,dy*.35);}
+    if(state.phase==='ready'&&!cam.isSwingLocked){cam.aimZoom(dd);cam.aimPitchBy(dy*.45);}
+    else if(state.phase==='result'){cam.resultZoom(dd);cam.resultOrbitBy(dx*.20,dy*.20);}
     state.learned.camera=true;gesture.lastDist=dist;gesture.lastMid=mid;updateTip();return;
   }
   if(!gesture||gesture.id!==e.pointerId)return;
   const dx=e.clientX-gesture.lx,dy=e.clientY-gesture.ly,total=Math.hypot(e.clientX-gesture.sx,e.clientY-gesture.sy);if(total>5)gesture.moved=true;
   if(gesture.type==='orbit'){
-    if(state.phase==='ready'&&!cam.swinging){
-      state.aimYawTarget=clamp(state.aimYawTarget-dx*.0045,COURSE_YAW-1.15,COURSE_YAW+1.15);
-      cam.aimVertical(dy);
-    }else{
-      cam.flightOrbit(dx,dy);
+    if(state.phase==='ready'&&!cam.isSwingLocked){
+      state.aimYawTarget=clamp(state.aimYawTarget-dx*.0041,COURSE_YAW-.98,COURSE_YAW+.98);
+      cam.aimPitchBy(dy);
+    }else if(state.phase==='result'){
+      cam.resultOrbitBy(dx,dy);
     }
     state.learned.camera=true;updateTip();
   }
@@ -324,7 +325,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;document.getElementById('app')?.classList.remove('swing-focus');cam.setSwinging(false);golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('Pull farther back · then accelerate through the ball');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('Pull farther back · then accelerate through the ball');}
   }
   gesture=null;
 }
@@ -338,7 +339,7 @@ let lastMapUpdate=0;
 function frame(now){
   const dt=Math.min(.03,(now-last)/1000||.016);last=now;
 
-  if(state.phase==='ready'&&!cam.swinging){
+  if(state.phase==='ready'&&!cam.isSwingLocked){
     const nextYaw=state.aimYaw+(state.aimYawTarget-state.aimYaw)*(1-Math.exp(-14*dt));
     if(Math.abs(nextYaw-state.aimYaw)>.00001){
       state.aimYaw=nextYaw;
@@ -348,12 +349,14 @@ function frame(now){
   }
 
   const yaw=aimYaw();
-  if(state.phase==='ready')cam.address(dt,ballGroup.position,yaw);
-  else if(state.phase==='flight'){
+  if(state.phase==='ready'){
+    if(cam.isSwingLocked)cam.updateSwing(dt,{ball:ballGroup.position,aimYaw:yaw,swingProgress:state.swingPhase});
+    else cam.updateAim(dt,{ball:ballGroup.position,aimYaw:yaw});
+  }else if(state.phase==='flight'){
     const L=LEVELS[state.level];state.swingPhase=clamp(state.swingPhase+dt*lerp(.70,1.15,L.form),.60,1);golfer.setPose(state.swingPhase,L);
     const ps=physics.step(dt);
-    if(ps){ballGroup.position.copy(ps.pos);ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;cam.flight(dt,ballGroup.position,ps.vel,yaw);if(ps.stopped)finishShot();}
-  }else if(state.phase==='result')cam.result(dt,ballGroup.position,pin,yaw);
+    if(ps){ballGroup.position.copy(ps.pos);ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin});if(ps.stopped)finishShot();}
+  }else if(state.phase==='result')cam.updateResult(dt,{ball:ballGroup.position,pin});
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
     const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z);
