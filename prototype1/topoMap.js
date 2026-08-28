@@ -8,6 +8,8 @@ export class LoftTopoMap{
     this.aim=root.querySelector('#map-aim');
     this.distance=root.querySelector('#map-distance');
     this.lie=root.querySelector('#map-lie');
+    this.svg=root.querySelector('svg');
+    this.pinMark=root.querySelector('.map-pin');
     this.tee={x:0,z:0};
     this.pin={x:0,z:-156};
     this.fx=0;this.fz=-1;this.rx=1;this.rz=0;this.length=156;
@@ -18,6 +20,10 @@ export class LoftTopoMap{
     this.length=Math.max(1,Math.hypot(dx,dz));
     this.fx=dx/this.length;this.fz=dz/this.length;
     this.rx=-this.fz;this.rz=this.fx;
+    if(this.pinMark){
+      const p=this.project(pin.x,pin.z);
+      this.pinMark.setAttribute('transform',`translate(${p.x} ${p.y})`);
+    }
   }
   project(x,z){
     const dx=x-this.tee.x,dz=z-this.tee.z;
@@ -29,6 +35,27 @@ export class LoftTopoMap{
       y:clamp(108-t*94,8,112)
     };
   }
+
+  unproject(x,y){
+    const sx=clamp(x,8,86),sy=clamp(y,8,112);
+    const lateral=(sx-47)/.82;
+    const t=clamp((108-sy)/94,0,1.08);
+    const along=t*this.length;
+    return {
+      x:this.tee.x+this.fx*along+this.rx*lateral,
+      z:this.tee.z+this.fz*along+this.rz*lateral
+    };
+  }
+
+  worldFromClient(clientX,clientY){
+    if(!this.svg)return null;
+    const r=this.svg.getBoundingClientRect();
+    if(r.width<1||r.height<1)return null;
+    const x=(clientX-r.left)/r.width*94;
+    const y=(clientY-r.top)/r.height*120;
+    return this.unproject(x,y);
+  }
+
   update({ball,target,pin,surface='TEE'}){
     const p=this.project(ball.x,ball.z);
     const t=this.project(target.x,target.z);
