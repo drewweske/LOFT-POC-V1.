@@ -146,8 +146,8 @@ function showContext(text,duration=520){
 }
 function setTip(text){$('tip-text').textContent=text;$('tip').style.opacity='1';}
 function updateTip(){
-  if(state.phase==='result'){setTip('Drag to inspect · ONE MORE when ready');return;}
-  if(!state.learned.camera)setTip('Drag to look · pinch to zoom');
+  if(state.phase==='result'){$('tip').style.opacity='0';return;}
+  if(!state.learned.camera)setTip('Drag to aim · pinch to zoom');
   else if(!state.learned.line)setTip('Drag the orange landing mark to shape The Line');
   else if(!state.learned.stroke)setTip('Touch near the ball · pull back · drive through');
   else $('tip').style.opacity='0';
