@@ -227,7 +227,7 @@ function updateLine(){
   }
   lineGeometry.attributes.position.needsUpdate=true;
   halo.position.copy(end);
-  halo.scale.setScalar(isPutting()?.42:1);
+  halo.scale.setScalar(isPutting() ? .42 : 1);
 
   // Camera-driven aiming rotates the entire address relationship around the ball.
   // Keep the model's local address ball (.46m right of stance) pinned to the
@@ -380,7 +380,7 @@ function setTarget(p){
   const forward=new THREE.Vector3(Math.sin(state.aimYaw),0,-Math.cos(state.aimYaw));
   const local=new THREE.Vector3(p.x-TEE.x,0,p.z-TEE.z);
   const projected=local.dot(forward);
-  const min=c.head==='putter'?.30:(isShortGame()?.45:Math.max(2.5,c.carry*YARD*.18)),max=c.carry*YARD*1.08;
+  const min=c.head==='putter' ? .30 : (isShortGame() ? .45 : Math.max(2.5,c.carry*YARD*.18)),max=c.carry*YARD*1.08;
   state.targetDistance=clamp(projected,min,max);
   syncTargetFromAim();
   state.learned.line=true;updateLine();showContext(Math.round(state.targetDistance/YARD)+' YD',300);updateTip();
@@ -389,7 +389,7 @@ function setTarget(p){
 function classify(q,path){if(Math.abs(path)>5.3)return path>0?'PUSH':'PULL';if(q>.965)return'PURE';if(q>.90)return'FLUSH';if(q>.80)return'SOLID';if(q>.69)return'PLAYABLE';return'HEAVY';}
 function classifyPutt(q,path,paceFeet){
   if(Math.abs(path)>4.2)return path>0?'PUSH':'PULL';
-  const target=Math.max(.5,cupDistanceFeet());
+  const target=intendedPuttFeet();
   const paceErr=Math.abs((paceFeet??target)-target)/target;
   if(q>.965&&paceErr<.07)return'PURE ROLL';
   if(q>.92)return'CLEAN ROLL';
