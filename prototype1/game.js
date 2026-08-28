@@ -591,82 +591,161 @@ canvas.addEventListener('pointermove',e=>{
     if(e.clientY>gesture.deep){gesture.deep=e.clientY;gesture.deepT=now;}
 
     const r=canvas.getBoundingClientRect();
-    const load=clamp((gesture.deep-gesture.sy)/(r.height*.265),0,1.08);
-    gesture.load=Math.max(gesture.load,load);
-    $('swing-fill').style.height=(clamp(load,0,1)*100)+'%';
+    const backPx=Math.max(0,gesture.deep-gesture.sy);
 
-    const reversal=e.clientY<gesture.deep-10;
+    if(gesture.putt){
+      // PUTTING: the backstroke itself authors pace. Tiny strokes remain tiny.
+      // There is deliberately no hidden minimum-power floor.
+      const pace=puttPaceFromPull(backPx,r.height);
+      gesture.load=Math.max(gesture.load,pace.norm);
+      gesture.puttPaceFeet=Math.max(gesture.puttPaceFeet,pace.feet);
+      const reversal=e.clientY<gesture.deep-4;
 
-    if(!reversal){
-      if(load>.80&&!gesture.setCue){
-        gesture.setCue=true;
-        feedback.loadSet(load);
+      if(!reversal){
+        const loadPose=clamp(pace.norm/.82,0,1);
+        state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
+        golfer.setPose(state.swingPhase,LEVELS[state.level]);
+
+        const close=updatePuttPaceGhost(pace.feet);
+        const paceText=pace.feet<10?pace.feet.toFixed(1):String(Math.round(pace.feet));
+        showContext('PACE '+paceText+' FT',9999);
+
+        if(close&&!gesture.paceCue){
+          gesture.paceCue=true;
+          feedback.paceLock();
+        }
+      }else{
+        if(!gesture.transitionCue){
+          gesture.transitionCue=true;
+          feedback.puttTransition(pace.norm);
+        }
+
+        const strokeSpan=Math.max(16,backPx);
+        const through=clamp((gesture.deep-e.clientY)/(strokeSpan*1.08),0,1.25);
+        state.swingPhase=.38+through*.22;
+        golfer.setPose(state.swingPhase,LEVELS[state.level]);
+
+        const paceText=gesture.puttPaceFeet<10?gesture.puttPaceFeet.toFixed(1):String(Math.round(gesture.puttPaceFeet));
+        showContext('ROLL '+paceText+' FT',9999);
+
+        // A putt can be genuinely tiny: ~8px backstroke is enough to produce
+        // a tap-in. Impact occurs as the finger returns through its start point.
+        if(e.clientY<gesture.sy-3&&backPx>7){
+          const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/Math.max(8,now-gesture.lastT);
+          const backswingMs=Math.max(100,gesture.deepT-gesture.startT);
+          const downswingMs=Math.max(55,now-gesture.deepT);
+          const ratio=backswingMs/downswingMs;
+
+          // Putting rhythm is calmer than a full swing. Around 2:1 feels
+          // intentional while still allowing a broad human window.
+          const tempoScore=Math.exp(-Math.pow((ratio-2.0)/.72,2));
+
+          const pathPx=e.clientX-gesture.sx;
+          const path=clamp(pathPx/(r.width*.078),-6,6);
+          const center=Math.exp(-Math.pow(path/2.8,2));
+
+          const down=(gesture.samples||[]).filter(s=>s.t>=gesture.deepT);
+          const speeds=[];
+          for(let i=1;i<down.length;i++){
+            const dtS=Math.max(6,down[i].t-down[i-1].t);
+            speeds.push(Math.hypot(down[i].x-down[i-1].x,down[i].y-down[i-1].y)/dtS);
+          }
+          let rhythm=.86;
+          if(speeds.length>=3){
+            const mean=speeds.reduce((a,b)=>a+b,0)/speeds.length;
+            const variance=speeds.reduce((a,b)=>a+(b-mean)*(b-mean),0)/speeds.length;
+            const cv=Math.sqrt(variance)/Math.max(.06,mean);
+            rhythm=clamp(1-cv*.42,.54,1);
+          }
+
+          const commitment=clamp(through/.92,0,1);
+          const speedScore=clamp(pixelSpeed/.70,.45,1.05);
+          const power=clamp(gesture.puttPaceFeet/55,.025,1.0);
+
+          gesture.impact=true;
+          launchShot({
+            power,
+            path,
+            speedScore,
+            tempoScore,
+            center,
+            commitment,
+            loadScore:1,
+            rhythm,
+            puttPaceFeet:gesture.puttPaceFeet
+          });
+        }
       }
-      const loadPose=clamp(load,0,1);
-      state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
-      golfer.setPose(state.swingPhase,LEVELS[state.level]);
-      if(state.shotCount===0)showContext(load>.78?'SET':'LOAD',9999);
     }else{
-      if(!gesture.transitionCue){
-        gesture.transitionCue=true;
-        feedback.transition(gesture.load);
-      }
+      // FULL SWING: power emerges from load + acceleration + commitment.
+      const load=clamp(backPx/(r.height*.265),0,1.08);
+      gesture.load=Math.max(gesture.load,load);
+      const reversal=e.clientY<gesture.deep-10;
 
-      const through=clamp((gesture.deep-e.clientY)/(r.height*.255),0,1.18);
-      if(through>.43&&!gesture.releaseCue){
-        gesture.releaseCue=true;
-        feedback.release(clamp(through,0,1.1));
-      }
-      state.swingPhase=.38+through*.22;
-      golfer.setPose(state.swingPhase,LEVELS[state.level]);
-      if(state.shotCount===0)showContext(through>.72?'RELEASE':'STRIKE',9999);
-
-      if(e.clientY<gesture.sy-16&&gesture.load>.35){
-        const frameDt=Math.max(8,now-gesture.lastT);
-        const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt;
-        const backswingMs=Math.max(120,gesture.deepT-gesture.startT);
-        const downswingMs=Math.max(55,now-gesture.deepT);
-        const ratio=backswingMs/downswingMs;
-
-        // Ideal LOFT rhythm is a calm load with a much faster committed release.
-        // The window is learnable, but not automatic.
-        const tempoScore=Math.exp(-Math.pow((ratio-2.65)/.90,2));
-
-        const pathPx=e.clientX-gesture.sx;
-        const path=clamp(pathPx/(r.width*.058),-8,8);
-        const center=Math.exp(-Math.pow(path/3.4,2));
-
-        const speedScore=clamp(pixelSpeed/1.12,.48,1.08);
-        const commitment=clamp(through/.98,0,1);
-        const loadScore=Math.exp(-Math.pow((gesture.load-.88)/.24,2));
-
-        // Downswing smoothness from recent samples. Jerky reversals lose compression.
-        const down=(gesture.samples||[]).filter(s=>s.t>=gesture.deepT);
-        const speeds=[];
-        for(let i=1;i<down.length;i++){
-          const dtS=Math.max(6,down[i].t-down[i-1].t);
-          speeds.push(Math.hypot(down[i].x-down[i-1].x,down[i].y-down[i-1].y)/dtS);
+      if(!reversal){
+        if(load>.80&&!gesture.setCue){
+          gesture.setCue=true;
+          feedback.loadSet(load);
         }
-        let rhythm=.78;
-        if(speeds.length>=3){
-          const mean=speeds.reduce((a,b)=>a+b,0)/speeds.length;
-          const variance=speeds.reduce((a,b)=>a+(b-mean)*(b-mean),0)/speeds.length;
-          const cv=Math.sqrt(variance)/Math.max(.08,mean);
-          rhythm=clamp(1-cv*.48,.42,1);
+        const loadPose=clamp(load,0,1);
+        state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
+        golfer.setPose(state.swingPhase,LEVELS[state.level]);
+        if(state.shotCount===0)showContext(load>.78?'SET':'LOAD',9999);
+      }else{
+        if(!gesture.transitionCue){
+          gesture.transitionCue=true;
+          feedback.transition(gesture.load);
         }
 
-        const minPower=club().head==='putter'?.075:.40;
-        const power=clamp(
-          gesture.load*.66+
-          speedScore*.20+
-          commitment*.14,
-          minPower,1.08
-        );
+        const through=clamp((gesture.deep-e.clientY)/(r.height*.255),0,1.18);
+        if(through>.43&&!gesture.releaseCue){
+          gesture.releaseCue=true;
+          feedback.release(clamp(through,0,1.1));
+        }
+        state.swingPhase=.38+through*.22;
+        golfer.setPose(state.swingPhase,LEVELS[state.level]);
+        if(state.shotCount===0)showContext(through>.72?'RELEASE':'STRIKE',9999);
 
-        gesture.impact=true;
-        $('swing-meter').classList.remove('show');
-        $('swing-fill').style.height='0';
-        launchShot({power,path,speedScore,tempoScore,center,commitment,loadScore,rhythm});
+        if(e.clientY<gesture.sy-16&&gesture.load>.35){
+          const frameDt=Math.max(8,now-gesture.lastT);
+          const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt;
+          const backswingMs=Math.max(120,gesture.deepT-gesture.startT);
+          const downswingMs=Math.max(55,now-gesture.deepT);
+          const ratio=backswingMs/downswingMs;
+          const tempoScore=Math.exp(-Math.pow((ratio-2.65)/.90,2));
+
+          const pathPx=e.clientX-gesture.sx;
+          const path=clamp(pathPx/(r.width*.058),-8,8);
+          const center=Math.exp(-Math.pow(path/3.4,2));
+
+          const speedScore=clamp(pixelSpeed/1.12,.48,1.08);
+          const commitment=clamp(through/.98,0,1);
+          const loadScore=Math.exp(-Math.pow((gesture.load-.88)/.24,2));
+
+          const down=(gesture.samples||[]).filter(s=>s.t>=gesture.deepT);
+          const speeds=[];
+          for(let i=1;i<down.length;i++){
+            const dtS=Math.max(6,down[i].t-down[i-1].t);
+            speeds.push(Math.hypot(down[i].x-down[i-1].x,down[i].y-down[i-1].y)/dtS);
+          }
+          let rhythm=.78;
+          if(speeds.length>=3){
+            const mean=speeds.reduce((a,b)=>a+b,0)/speeds.length;
+            const variance=speeds.reduce((a,b)=>a+(b-mean)*(b-mean),0)/speeds.length;
+            const cv=Math.sqrt(variance)/Math.max(.08,mean);
+            rhythm=clamp(1-cv*.48,.42,1);
+          }
+
+          const power=clamp(
+            gesture.load*.66+
+            speedScore*.20+
+            commitment*.14,
+            .40,1.08
+          );
+
+          gesture.impact=true;
+          launchShot({power,path,speedScore,tempoScore,center,commitment,loadScore,rhythm});
+        }
       }
     }
   }
