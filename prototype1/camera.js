@@ -53,6 +53,11 @@ export class LoftCamera{
     this.flightPitchT=clamp(this.flightPitchT+dy*.0026,-.06,.52);
   }
 
+  _setFov(target,dt){
+    this.camera.fov=smooth(this.camera.fov,target,7,dt);
+    this.camera.updateProjectionMatrix();
+  }
+
   _smooth(dt){
     this.pitch=smooth(this.pitch,this.pitchT,10,dt);
     this.dist=smooth(this.dist,this.distT,11,dt);
@@ -72,6 +77,7 @@ export class LoftCamera{
   */
   address(dt,ball,aimYaw){
     this._smooth(dt);
+    this._setFov(this.swinging?38:40,dt);
 
     const forward=new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
@@ -109,6 +115,7 @@ export class LoftCamera{
 
   flight(dt,ball,velocity,aimYaw){
     this._smooth(dt);
+    this._setFov(43,dt);
     const horizontal=velocity.clone();horizontal.y=0;
     const base=horizontal.lengthSq()>.02?Math.atan2(horizontal.x,-horizontal.z):aimYaw;
     const yaw=base+this.flightYaw;
@@ -127,6 +134,7 @@ export class LoftCamera{
 
   result(dt,ball,pin,aimYaw){
     this._smooth(dt);
+    this._setFov(40,dt);
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):aimYaw;
     const yaw=base+this.flightYaw;
