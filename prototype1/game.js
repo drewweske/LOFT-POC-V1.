@@ -76,6 +76,7 @@ const state={
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
 function isPutting(){return club()?.head==='putter';}
+function isShortGame(){return club()?.head==='wedge'&&pinDistanceYards()<45;}
 function aimYaw(){return state.aimYaw;}
 function pinDistanceYards(){return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)/YARD;}
 function scoreToParText(strokes=state.strokes,par=holeDef.par){const d=strokes-par;return d===0?'E':d>0?'+'+d:String(d);}
@@ -177,6 +178,30 @@ const puttPaceDot=new THREE.Mesh(
   new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
 );
 puttPaceDot.position.set(-.22,.045,.22);puttPaceGhost.add(puttPaceDot);
+
+const strokeHalo=new THREE.Group();strokeHalo.visible=false;scene.add(strokeHalo);
+const strokeHaloRing=new THREE.Mesh(
+  new THREE.TorusGeometry(.43,.018,8,52),
+  new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.46,depthWrite:false})
+);
+strokeHaloRing.rotation.x=Math.PI/2;strokeHalo.add(strokeHaloRing);
+const strokeHaloDot=new THREE.Mesh(
+  new THREE.SphereGeometry(.045,16,12),
+  new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
+);
+strokeHalo.add(strokeHaloDot);
+function updateStrokeHalo(load){
+  if(isPutting()){strokeHalo.visible=false;return;}
+  const t=clamp(load,0,1);
+  const a=(-Math.PI*.82)+t*(Math.PI*1.64);
+  strokeHalo.position.copy(ballGroup.position);strokeHalo.position.y+=.025;
+  strokeHaloDot.position.set(Math.cos(a)*.43,.045,Math.sin(a)*.43);
+  strokeHaloRing.material.opacity=.30+.24*t;
+  strokeHaloDot.scale.setScalar(.80+.34*t);
+  strokeHalo.visible=true;
+}
+function hideStrokeHalo(){strokeHalo.visible=false;}
+
 
 
 function updateLine(){
@@ -408,7 +433,7 @@ function launchShot(metrics){
 
   feedback.impact({quality:q,power:metrics.power,position:ballGroup.position,direction,club:c.head});
   if(c.head!=='putter')feedback.startFlight(ballGroup.position);
-  hidePuttPace();
+  hidePuttPace();hideStrokeHalo();
 
   setTimeout(()=>document.getElementById('app')?.classList.remove('swing-focus'),420);
   state.learned.stroke=true;if(c.head==='putter')state.learned.putt=true;lineMesh.visible=false;halo.visible=false;$('tip').style.opacity='0';
@@ -431,7 +456,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   chooseAutoClub();
   defaultTarget(false);
   golfer.setPose(0,LEVELS[state.level]);
-  feedback.clear();hidePuttPace();
+  feedback.clear();hidePuttPace();hideStrokeHalo();
 
   lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');
@@ -462,7 +487,7 @@ function startHole(index,{intro=true}={}){
 
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
   golfer.setPose(0,LEVELS[state.level]);
-  feedback.clear();hidePuttPace();lineMesh.visible=true;halo.visible=true;
+  feedback.clear();hidePuttPace();hideStrokeHalo();lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');$('round-end').classList.remove('show');
   document.getElementById('app')?.classList.remove('swing-focus','hole-transition');
   cam.resetAim();updateLine();updateHoleHUD();updateTip();
@@ -555,9 +580,9 @@ canvas.addEventListener('pointerdown',e=>{
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   const now=performance.now();
-  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,setCue:false,transitionCue:false,releaseCue:false,paceCue:false,putt:isPutting(),puttPaceFeet:0,samples:[{x:e.clientX,y:e.clientY,t:now}]};
+  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,setCue:false,transitionCue:false,releaseCue:false,paceCue:false,putt:isPutting(),shortGame:isShortGame(),puttPaceFeet:0,samples:[{x:e.clientX,y:e.clientY,t:now}]};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
-  if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext(gesture.putt?'PACE':'LOAD',9999);$('tip').style.opacity='0';}
+  if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext(gesture.putt?'PACE':(gesture.shortGame?'TOUCH':'LOAD'),9999);if(!gesture.putt)updateStrokeHalo(0);$('tip').style.opacity='0';}
 });
 canvas.addEventListener('pointermove',e=>{
   const p=pointers.get(e.pointerId);if(!p)return;e.preventDefault();p.px=p.x;p.py=p.y;p.x=e.clientX;p.y=e.clientY;
@@ -678,9 +703,10 @@ canvas.addEventListener('pointermove',e=>{
       }
     }else{
       // FULL SWING: power emerges from load + acceleration + commitment.
-      const load=clamp(backPx/(r.height*.265),0,1.08);
+      const load=clamp(backPx/(r.height*(gesture.shortGame?.17:.265)),0,1.08);
       gesture.load=Math.max(gesture.load,load);
-      const reversal=e.clientY<gesture.deep-10;
+      updateStrokeHalo(load);
+      const reversal=e.clientY<gesture.deep-(gesture.shortGame?6:10);
 
       if(!reversal){
         if(load>.80&&!gesture.setCue){
@@ -690,7 +716,7 @@ canvas.addEventListener('pointermove',e=>{
         const loadPose=clamp(load,0,1);
         state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
-        if(state.shotCount===0)showContext(load>.78?'SET':'LOAD',9999);
+        if(state.shotCount===0)showContext(gesture.shortGame?(load>.60?'SET':'TOUCH'):(load>.78?'SET':'LOAD'),9999);
       }else{
         if(!gesture.transitionCue){
           gesture.transitionCue=true;
@@ -706,13 +732,15 @@ canvas.addEventListener('pointermove',e=>{
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
         if(state.shotCount===0)showContext(through>.72?'RELEASE':'STRIKE',9999);
 
-        if(e.clientY<gesture.sy-16&&gesture.load>.35){
+        if(e.clientY<gesture.sy-(gesture.shortGame?6:16)&&gesture.load>(gesture.shortGame?.07:.35)){
           const frameDt=Math.max(8,now-gesture.lastT);
           const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt;
           const backswingMs=Math.max(120,gesture.deepT-gesture.startT);
           const downswingMs=Math.max(55,now-gesture.deepT);
           const ratio=backswingMs/downswingMs;
-          const tempoScore=Math.exp(-Math.pow((ratio-2.65)/.90,2));
+          const tempoTarget=gesture.shortGame?2.20:2.65;
+          const tempoWindow=gesture.shortGame?.82:.90;
+          const tempoScore=Math.exp(-Math.pow((ratio-tempoTarget)/tempoWindow,2));
 
           const pathPx=e.clientX-gesture.sx;
           const path=clamp(pathPx/(r.width*.058),-8,8);
@@ -736,12 +764,9 @@ canvas.addEventListener('pointermove',e=>{
             rhythm=clamp(1-cv*.48,.42,1);
           }
 
-          const power=clamp(
-            gesture.load*.66+
-            speedScore*.20+
-            commitment*.14,
-            .40,1.08
-          );
+          const power=gesture.shortGame
+            ? clamp(gesture.load*.74+speedScore*.08+commitment*.18,.055,.74)
+            : clamp(gesture.load*.66+speedScore*.20+commitment*.14,.40,1.08);
 
           gesture.impact=true;
           launchShot({power,path,speedScore,tempoScore,center,commitment,loadScore,rhythm});
@@ -755,7 +780,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);hidePuttPace();$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip(gesture.putt?'PULL FOR PACE · RETURN THROUGH BALL':'PULL FARTHER · DRIVE THROUGH');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);hidePuttPace();hideStrokeHalo();$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip(gesture.putt?'PULL FOR PACE · RETURN THROUGH BALL':'PULL FARTHER · DRIVE THROUGH');}
   }
   gesture=null;
 }
