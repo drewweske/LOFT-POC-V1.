@@ -1,4 +1,5 @@
 import * as THREE from '../vendor/three.module.js';
+import {surfacePhysics,lieShotModifiers} from './surfaces.js';
 
 const G=9.80665;
 const FIXED=1/120;
@@ -29,13 +30,11 @@ export class GolfPhysics{
     const formEff=.92+.08*clamp(form,0,1);
     const contactEff=.84+.16*q;
     const releaseEff=.94+.06*clamp(release,0,1);
-    const lieSpeed=lie==='rough'?.92:lie==='sand'?(club.head==='wedge'?.82:.70):1;
-    const lieLaunch=lie==='rough'?1.2:lie==='sand'?(club.head==='wedge'?5.2:3.0):0;
-    const lieSpin=lie==='rough'?.78:lie==='sand'?(club.head==='wedge'?.88:.55):1;
-    const speed=club.ballSpeed*clamp(power,.42,1.08)*formEff*contactEff*releaseEff*lieSpeed;
+    const lieMods=lieShotModifiers(lie,club.head);
+    const speed=club.ballSpeed*clamp(power,.42,1.08)*formEff*contactEff*releaseEff*lieMods.speed;
 
     // Poor contact and poor lies alter launch/spin as well as speed.
-    const launchDeg=club.launch+(1-q)*2.4-(1-release)*1.2+lieLaunch;
+    const launchDeg=club.launch+(1-q)*2.4-(1-release)*1.2+lieMods.launch;
     const launch=launchDeg*Math.PI/180;
 
     const faceError=path*(.32+.15*(1-q));
@@ -54,7 +53,7 @@ export class GolfPhysics{
     const tilt=tiltDeg*Math.PI/180;
     const axis=right.multiplyScalar(Math.cos(tilt)).add(new THREE.Vector3(0,Math.sin(tilt),0)).normalize();
 
-    const spinEfficiency=(.82+.18*q)*lieSpin;
+    const spinEfficiency=(.82+.18*q)*lieMods.spin;
     this.state={
       pos:position.clone(),
       vel:velocity,
@@ -66,7 +65,8 @@ export class GolfPhysics{
       lastImpactSurface:null,
       bounced:false,
       holed:false,
-      lipTouched:false
+      lipTouched:false,
+      lastSurface:null
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -87,7 +87,8 @@ export class GolfPhysics{
       lastImpactSurface:null,
       bounced:false,
       holed:false,
-      lipTouched:false
+      lipTouched:false,
+      lastSurface:this.surfaceAt(position.x,position.z)
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -173,63 +174,80 @@ export class GolfPhysics{
           return;
         }
 
-        if(Math.abs(s.vel.y)>1.8){
-          const rest=surface==='green'?.18:surface==='fairway'?.23:surface==='rough'?.11:surface==='sand'?.05:.12;
-          const loss=surface==='sand'?.46:surface==='rough'?.68:.82;
+        const material=surfacePhysics(surface);
 
-          // Resolve bounce against the actual ground normal so a sloped fairway
-          // kicks the ball downhill instead of behaving like an invisible flat plane.
+        if(Math.abs(s.vel.y)>1.45){
+          // Resolve against the actual terrain normal. Surface identity now
+          // determines bounce, skid, and spin grab instead of one global slide.
           const e=.30;
           const hx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
           const hz=(this.terrainHeight(s.pos.x,s.pos.z+e)-this.terrainHeight(s.pos.x,s.pos.z-e))/(2*e);
           const n=new THREE.Vector3(-hx,1,-hz).normalize();
           const vn=s.vel.dot(n);
           const normal=n.clone().multiplyScalar(vn);
-          const tangent=s.vel.clone().sub(normal).multiplyScalar(loss);
+          const tangent=s.vel.clone().sub(normal).multiplyScalar(material.tangentRetain);
 
-          // Spin/ground coupling: contact-point slip creates the check/skip
-          // difference between a high-spin wedge and a low-spin driver.
+          // Spin/ground coupling: greens grab wedges, fairways release,
+          // rough absorbs, and sand kills the skid.
           const omega=s.spinAxis.clone().multiplyScalar(s.spinOmega);
           const contactArm=n.clone().multiplyScalar(-BALL_RADIUS);
           const contactSlip=tangent.clone().add(new THREE.Vector3().crossVectors(omega,contactArm));
           contactSlip.y=0;
-          const grip=surface==='green'?.075:surface==='fairway'?.050:surface==='rough'?.028:surface==='sand'?.11:.04;
-          const maxImpulse=Math.max(0,Math.abs(vn))*grip;
-          if(contactSlip.lengthSq()>.0001){
+          const maxImpulse=Math.max(0,Math.abs(vn))*material.spinGrip;
+          if(contactSlip.lengthSq()>.0001&&maxImpulse>0){
             const impulse=Math.min(contactSlip.length(),maxImpulse);
             tangent.addScaledVector(contactSlip.normalize(),-impulse);
           }
 
-          s.vel.copy(tangent).addScaledVector(n,-vn*rest);
-          s.spinOmega*=surface==='green'?.72:surface==='fairway'?.78:surface==='rough'?.68:surface==='sand'?.42:.7;
+          s.vel.copy(tangent).addScaledVector(n,-vn*material.restitution);
+          s.spinOmega*=surface==='green'?.70:surface==='fairway'?.76:surface==='rough'?.60:surface==='sand'?.34:.68;
+          s.lastSurface=surface;
           s.bounced=true;
         }else{
           s.vel.y=0;
           s.surface=surface;
+          s.lastSurface=surface;
         }
       }
     }else{
       const surface=this.surfaceAt(s.pos.x,s.pos.z);
       s.surface=surface;
+      const material=surfacePhysics(surface);
 
       if(this._tryCup(s,surface))return;
+
+      // Crossing from one cut into another has a physical bite. A ball leaving
+      // fairway for rough loses momentum immediately; entering sand is dramatic.
+      if(s.lastSurface&&surface!==s.lastSurface){
+        const retain=material.transitionRetain;
+        s.vel.x*=retain;s.vel.z*=retain;
+      }
+      s.lastSurface=surface;
 
       const e=.35;
       const dx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
       const dz=(this.terrainHeight(s.pos.x,s.pos.z+e)-this.terrainHeight(s.pos.x,s.pos.z-e))/(2*e);
+      const grade=Math.hypot(dx,dz);
+      const hs0=Math.hypot(s.vel.x,s.vel.z);
 
-      // Rolling acceleration follows the actual local grade. Friction is
-      // approximately Coulomb-like (constant deceleration), not arbitrary
-      // frame-rate damping. The green value corresponds to a lively ~10–11 ft
-      // Stimp-style prototype surface.
+      // Static friction matters. Once a ball has almost finished, ordinary
+      // fairway/rough slopes should hold it instead of letting it creep forever.
+      if(hs0<material.settleSpeed&&grade<material.staticGrade){
+        s.vel.set(0,0,0);
+        s.stopped=true;
+        return;
+      }
+
+      // Gravity follows the local grade.
       s.vel.x+=-dx*G*FIXED;
       s.vel.z+=-dz*G*FIXED;
       s.vel.y=0;
 
+      // Rolling resistance is a calibrated physical deceleration in m/s².
+      // It makes grass cuts meaningfully different without arbitrary frame damping.
       const hs=Math.hypot(s.vel.x,s.vel.z);
-      const mu=surface==='green'?.050:surface==='fairway'?.115:surface==='rough'?.285:surface==='sand'?.58:.22;
       if(hs>0){
-        const drop=Math.min(hs,mu*G*FIXED);
+        const drop=Math.min(hs,material.rollingDecel*FIXED);
         const k=(hs-drop)/hs;
         s.vel.x*=k;s.vel.z*=k;
       }
@@ -237,7 +255,7 @@ export class GolfPhysics{
       s.pos.addScaledVector(s.vel,FIXED);
       s.pos.y=this.terrainHeight(s.pos.x,s.pos.z)+CONTACT_HEIGHT;
 
-      if(Math.hypot(s.vel.x,s.vel.z)<.055){
+      if(Math.hypot(s.vel.x,s.vel.z)<material.settleSpeed&&grade<material.staticGrade){
         s.vel.set(0,0,0);
         s.stopped=true;
       }
