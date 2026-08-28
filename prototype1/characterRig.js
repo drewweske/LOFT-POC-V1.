@@ -76,8 +76,9 @@ export class LoftGolferRig{
 
     this.neck=this._shape(new THREE.CylinderGeometry(.068,.075,.165,18),this.skin);
     this.head=this._shape(new THREE.SphereGeometry(.137,30,22),this.skin,[0,0,0],[.82,1.04,.88]);
-    this.jaw=this._shape(new THREE.SphereGeometry(.101,24,18),this.skin,[0,0,0],[.86,.50,.78]);
-    this.nose=this._shape(new THREE.SphereGeometry(.034,18,14),this.skin,[0,0,0],[1.20,.76,.78]);
+    this.jaw=this._shape(new THREE.SphereGeometry(.088,24,18),this.skin,[0,0,0],[.78,.38,.72]);
+    this.jaw.visible=false;
+    this.nose=this._shape(new THREE.SphereGeometry(.030,18,14),this.skin,[0,0,0],[1.06,.66,.72]);
     this.earL=this._shape(new THREE.SphereGeometry(.022,14,10),this.skin,[0,0,0],[.65,1,.52]);
     this.earR=this._shape(new THREE.SphereGeometry(.022,14,10),this.skin,[0,0,0],[.65,1,.52]);
 
@@ -93,8 +94,9 @@ export class LoftGolferRig{
     this.eyeR=this._shape(new THREE.SphereGeometry(.0065,10,8),this.ink,[0,0,0],[1,.90,.65]);
     this.browL=this._shape(new THREE.BoxGeometry(.027,.006,.008),this.hair);
     this.browR=this._shape(new THREE.BoxGeometry(.027,.006,.008),this.hair);
-    this.collar=this._shape(new THREE.TorusGeometry(.081,.012,8,26),this.stone,[0,0,0],[1,1,.88],[Math.PI/2,0,0]);
-    this.chestSignal=this._shape(new THREE.SphereGeometry(.010,10,8),this.orange);
+    this.collar=this._shape(new THREE.TorusGeometry(.076,.009,8,26),this.stone,[0,0,0],[1,1,.88],[Math.PI/2,0,0]);
+    this.collar.visible=false;
+    this.chestSignal=this._shape(new THREE.SphereGeometry(.009,10,8),this.orange);
 
     this.grip=this._segment(.023,this.ink,.96,12);
     this.shaft=this._segment(.0105,this.steel,.98,12);
@@ -159,6 +161,19 @@ export class LoftGolferRig{
     const fin=clamp((t-.72)/.28,0,1);
     const setupBias=1-.42*t;
 
+    // Athletic golf posture is present at every level: hip hinge toward the ball,
+    // soft knees, shorter neck and arms hanging naturally from the shoulders.
+    // Skill changes the QUALITY of that posture, not whether it looks like golf.
+    const hinge=.075+.032*level.form;
+    p.head[0]+=hinge;
+    p.head[1]-=.050;
+    p.chest[0]+=hinge*.78;
+    p.torso[0]+=hinge*.58;
+    p.shoulderL[0]+=hinge*.72;p.shoulderR[0]+=hinge*.72;
+    p.sleeveL[0]+=hinge*.55;p.sleeveR[0]+=hinge*.55;
+    p.kneeL[0]+=.026;p.kneeR[0]+=.026;
+    p.kneeL[1]-=.010;p.kneeR[1]-=.010;
+
     // Even before motion begins, mastery is visible in posture and base.
     p.head[0]+=rookie*.035*setupBias;
     p.torso[0]+=rookie*.028*setupBias;
@@ -220,16 +235,16 @@ export class LoftGolferRig{
     this.handL.position.copy(V('handL'));this.handR.position.copy(V('handR'));
 
     const H=V('head');
-    this.neck.position.copy(H).add(new THREE.Vector3(-.035,-.178,0));this.neck.rotation.z=-.08;
+    this.neck.position.copy(H).add(new THREE.Vector3(-.030,-.154,0));this.neck.scale.set(.94,.78,.94);this.neck.rotation.z=-.10;
     this.head.position.copy(H);
     this.jaw.position.copy(H).add(new THREE.Vector3(.024,-.074,0));
-    this.nose.position.copy(H).add(new THREE.Vector3(.116,.002,0));
+    this.nose.position.copy(H).add(new THREE.Vector3(.104,.000,0));
     this.earL.position.copy(H).add(new THREE.Vector3(-.015,-.002,-.112));this.earR.position.copy(H).add(new THREE.Vector3(-.015,-.002,.112));
 
     this.hairMass.position.copy(H).add(new THREE.Vector3(-.018,.080,0));
-    this.cap.position.copy(H).add(new THREE.Vector3(-.010,.126,0));
-    this.capDome.position.copy(H).add(new THREE.Vector3(-.010,.166,0));
-    this.brim.position.copy(H).add(new THREE.Vector3(.112,.120,0));this.brim.rotation.z=-.035;
+    this.cap.position.copy(H).add(new THREE.Vector3(-.010,.118,0));
+    this.capDome.position.copy(H).add(new THREE.Vector3(-.010,.154,0));
+    this.brim.position.copy(H).add(new THREE.Vector3(.108,.113,0));this.brim.rotation.z=-.035;
     this.capSignal.position.copy(H).add(new THREE.Vector3(.083,.168,-.034));
 
     this.eyeL.position.copy(H).add(new THREE.Vector3(.113,.020,-.040));this.eyeR.position.copy(H).add(new THREE.Vector3(.113,.020,.040));
