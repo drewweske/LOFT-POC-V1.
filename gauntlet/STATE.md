@@ -1,13 +1,13 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 002
+Current build: Prototype 1 / Integration 003
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
 Active subsystem: Real-device integrated validation
-Iteration: integration_002
+Iteration: integration_003
 
 ## Current provisional score
-87 / 100 — NOT GRADUATED
+89 / 100 — NOT GRADUATED
 
 The score increased because the user-provided iPhone evidence exposed structural camera/UI/character problems and those systems were rebuilt rather than patched cosmetically. Final scoring remains blocked on the newly rendered device artifact.
 
@@ -115,3 +115,18 @@ Real-device validation of Integration 002.
 
 ## Boundary
 Source inspection and mathematical projection cannot certify physical iPhone touch feel, rendering, browser chrome interaction or frame rate. The next Gauntlet judgment must use the newly rendered iPhone build.
+
+
+## Integration 003 delta
+- portrait camera framing was mathematically calibrated after Camera 002 failed projection
+- camera horizontal drag now defines heading and character address
+- address geometry stays pinned to the ball during rotation
+- swing camera is state-locked to ball
+- topographic map is live
+- visible power meter is gone
+- golfer proportions and equipment scale refined
+- Level 1 vs Level 50 form divergence increased
+- course silhouette and elevation strengthened
+- repeated pointer-frame allocations reduced
+
+The score is capped below graduation until real-device evidence is received.
