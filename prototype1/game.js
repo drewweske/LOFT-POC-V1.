@@ -49,6 +49,7 @@ const state={
   clubId:DEFAULT_CLUB,
   level:1,
   aimYaw:COURSE_YAW,
+  aimYawTarget:COURSE_YAW,
   targetDistance:160*YARD,
   target:new THREE.Vector3(),
   shot:null,
@@ -68,7 +69,7 @@ function syncTargetFromAim(){
 }
 function defaultTarget(resetAim=true){
   const c=club();
-  if(resetAim)state.aimYaw=COURSE_YAW;
+  if(resetAim){state.aimYaw=COURSE_YAW;state.aimYawTarget=COURSE_YAW;}
   state.targetDistance=Math.min(c.carry*YARD,Math.hypot(pin.x-TEE.x,pin.z-TEE.z));
   syncTargetFromAim();
 }
@@ -294,9 +295,8 @@ canvas.addEventListener('pointermove',e=>{
   const dx=e.clientX-gesture.lx,dy=e.clientY-gesture.ly,total=Math.hypot(e.clientX-gesture.sx,e.clientY-gesture.sy);if(total>5)gesture.moved=true;
   if(gesture.type==='orbit'){
     if(state.phase==='ready'&&!cam.swinging){
-      state.aimYaw=clamp(state.aimYaw-dx*.0045,COURSE_YAW-1.15,COURSE_YAW+1.15);
+      state.aimYawTarget=clamp(state.aimYawTarget-dx*.0045,COURSE_YAW-1.15,COURSE_YAW+1.15);
       cam.aimVertical(dy);
-      syncTargetFromAim();updateLine();
     }else{
       cam.flightOrbit(dx,dy);
     }
@@ -337,6 +337,16 @@ let last=performance.now();
 let lastMapUpdate=0;
 function frame(now){
   const dt=Math.min(.03,(now-last)/1000||.016);last=now;
+
+  if(state.phase==='ready'&&!cam.swinging){
+    const nextYaw=state.aimYaw+(state.aimYawTarget-state.aimYaw)*(1-Math.exp(-14*dt));
+    if(Math.abs(nextYaw-state.aimYaw)>.00001){
+      state.aimYaw=nextYaw;
+      syncTargetFromAim();
+      updateLine();
+    }
+  }
+
   const yaw=aimYaw();
   if(state.phase==='ready')cam.address(dt,ballGroup.position,yaw);
   else if(state.phase==='flight'){
