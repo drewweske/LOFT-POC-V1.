@@ -115,7 +115,7 @@ export function buildWorld(scene,pin){
   fringe.scale.set(1.36,1,1);fringe.position.set(pin.x,pin.y+.005,pin.z);fringe.receiveShadow=true;world.add(fringe);
 
   const green=new THREE.Mesh(gg,greenMat);green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.008,pin.z);green.receiveShadow=true;world.add(green);
-  const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.075,40),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
+  const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.086,48),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
   holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.012,pin.z);world.add(holeDisc);
 
   function bunker(x,z,sx,sz,seed){
@@ -164,9 +164,11 @@ export function buildWorld(scene,pin){
   const roof2=new THREE.Mesh(new THREE.ConeGeometry(2.05,2.6,16),mat(COLORS.ink,.82));roof2.position.y=13.3;lighthouse.add(roof2);
   lighthouse.position.set(30,terrainHeight(30,-166),-166);lighthouse.scale.set(.90,.90,.90);world.add(lighthouse);
 
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.032,.032,4.5,8),mat(COLORS.cream,.9));pole.position.set(pin.x,pin.y+2.25,pin.z);world.add(pole);
+  const poleMat=mat(COLORS.cream,.90);poleMat.transparent=true;
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.010,.010,4.5,10),poleMat);pole.position.set(pin.x,pin.y+2.25,pin.z);world.add(pole);
   const fs=new THREE.Shape();fs.moveTo(0,0);fs.lineTo(2.2,.55);fs.lineTo(0,1.1);fs.closePath();
-  const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),new THREE.MeshStandardMaterial({color:COLORS.orange,side:THREE.DoubleSide,roughness:.82}));flag.position.set(pin.x,pin.y+3.9,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
+  const flagMat=new THREE.MeshStandardMaterial({color:COLORS.orange,side:THREE.DoubleSide,roughness:.82,transparent:true});
+  const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+3.9,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
     green.position.set(next.x,next.y+.008,next.z);
@@ -176,5 +178,14 @@ export function buildWorld(scene,pin){
     flag.position.set(next.x,next.y+3.9,next.z);
   }
 
-  return {world,green,fringe,holeDisc,pole,flag,setPin};
+  let pinAlpha=1;
+  function setPinFade(alpha){
+    pinAlpha=Math.max(.08,Math.min(1,alpha));
+    pole.material.opacity=pinAlpha;
+    flag.material.opacity=pinAlpha;
+    pole.renderOrder=pinAlpha<.5?2:0;
+    flag.renderOrder=pinAlpha<.5?2:0;
+  }
+
+  return {world,green,fringe,holeDisc,pole,flag,setPin,setPinFade};
 }
