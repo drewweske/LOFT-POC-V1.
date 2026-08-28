@@ -2,6 +2,20 @@ import * as THREE from '../vendor/three.module.js';
 
 export const COLORS={ink:0x0B0D0D,cream:0xF2EFE8,stone:0xB8B1A6,orange:0xFF6A2A,rough:0x496548,fair:0x7e9a70,green:0x91ab7e,sand:0xd7c39a,water:0x4f7178,rock:0x817566,sky:0xcbd8d7};
 
+export const BUNKERS=[
+  {x:-14,z:-148,sx:8.8,sz:4.9,seed:.4},
+  {x:17,z:-160,sx:7.8,sz:4.2,seed:1.7},
+  {x:12,z:-94,sx:6.0,sz:3.3,seed:2.8},
+  {x:-8,z:-202,sx:6.4,sz:3.1,seed:3.7}
+];
+
+export function fairwayProfile(z){
+  const t=Math.max(0,Math.min(1,(-z-2)/220));
+  const center=-1.0+Math.sin(t*Math.PI*1.5)*1.8-Math.sin(t*Math.PI*3.1)*.85;
+  const width=9.5+7.2*Math.sin(Math.PI*t)+1.7*Math.sin(t*Math.PI*3.0);
+  return {t,center,width,insideRange:z<=-2&&z>=-222};
+}
+
 export function terrainHeight(x,z){
   const micro=
     .32*Math.sin((z+28)*.034)+
@@ -24,10 +38,16 @@ export function terrainHeight(x,z){
 
 const mat=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 
-function makeSurfaceTexture(repeatX=18,repeatY=34,grain=.055){
+function makeSurfaceTexture(repeatX=18,repeatY=34,grain=.055,{bands=false}={}){
   const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
   const x=canvas.getContext('2d');
   x.fillStyle='#f4f2ec';x.fillRect(0,0,128,128);
+  if(bands){
+    for(let y=0;y<128;y+=16){
+      x.fillStyle=(Math.floor(y/16)%2===0)?'rgba(255,255,255,.030)':'rgba(90,90,90,.028)';
+      x.fillRect(0,y,128,16);
+    }
+  }
   for(let i=0;i<1700;i++){
     const v=225+Math.floor(Math.random()*25);
     x.fillStyle='rgba('+v+','+v+','+v+','+(grain*(.45+Math.random()*.75))+')';
@@ -42,7 +62,7 @@ function makeSurfaceTexture(repeatX=18,repeatY=34,grain=.055){
 export function buildWorld(scene,pin){
   const world=new THREE.Group();scene.add(world);
   const roughTex=makeSurfaceTexture(18,32,.045);
-  const fairTex=makeSurfaceTexture(5,2,.040);
+  const fairTex=makeSurfaceTexture(5,2,.040,{bands:true});
   const greenTex=makeSurfaceTexture(8,8,.032);
   const sandTex=makeSurfaceTexture(7,7,.070);
 
@@ -59,8 +79,8 @@ export function buildWorld(scene,pin){
     for(let i=0;i<=segments;i++){
       const t=i/segments;
       const z=-2-t*220;
-      const center=-1.0 + Math.sin(t*Math.PI*1.5)*1.8 - Math.sin(t*Math.PI*3.1)*.85;
-      const width=9.5 + 7.2*Math.sin(Math.PI*t) + 1.7*Math.sin(t*Math.PI*3.0);
+      const profile=fairwayProfile(z);
+      const center=profile.center,width=profile.width;
       const leftX=center-width, rightX=center+width;
       pos.push(leftX,terrainHeight(leftX,z)+.006,z,rightX,terrainHeight(rightX,z)+.006,z);
       uv.push(0,t*18,1,t*18);
@@ -81,6 +101,12 @@ export function buildWorld(scene,pin){
 
   const gg=new THREE.CircleGeometry(18,72);gg.rotateX(-Math.PI/2);
   const greenMat=mat(COLORS.green,.86);greenMat.map=greenTex;
+  const fringe=new THREE.Mesh(
+    new THREE.RingGeometry(18.1,20.2,72),
+    new THREE.MeshStandardMaterial({color:0x779269,roughness:.94,transparent:true,opacity:.96})
+  );
+  fringe.rotation.x=-Math.PI/2;fringe.scale.set(1.36,1,1);fringe.position.set(pin.x,pin.y+.005,pin.z);fringe.receiveShadow=true;world.add(fringe);
+
   const green=new THREE.Mesh(gg,greenMat);green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.008,pin.z);green.receiveShadow=true;world.add(green);
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.075,40),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
   holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.012,pin.z);world.add(holeDisc);
@@ -89,11 +115,16 @@ export function buildWorld(scene,pin){
     const sh=new THREE.Shape();const pts=[];
     for(let i=0;i<24;i++){const a=i/24*Math.PI*2,w=1+.14*Math.sin(a*3+seed)+.06*Math.cos(a*5-seed);pts.push(new THREE.Vector2(Math.cos(a)*sx*w,Math.sin(a)*sz*w));}
     sh.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)sh.lineTo(pts[i].x,pts[i].y);sh.closePath();
+    const lipPts=pts.map(v=>new THREE.Vector2(v.x*1.055,v.y*1.055));
+    const lipShape=new THREE.Shape();lipShape.moveTo(lipPts[0].x,lipPts[0].y);for(let i=1;i<lipPts.length;i++)lipShape.lineTo(lipPts[i].x,lipPts[i].y);lipShape.closePath();
+    const lipGeo=new THREE.ShapeGeometry(lipShape);lipGeo.rotateX(-Math.PI/2);
+    const lip=new THREE.Mesh(lipGeo,mat(0xbba77d,.99));lip.position.set(x,terrainHeight(x,z)+.004,z);lip.receiveShadow=true;world.add(lip);
+
     const g=new THREE.ShapeGeometry(sh);g.rotateX(-Math.PI/2);
-    const bunkerMat=mat(COLORS.sand,.97);bunkerMat.map=sandTex;
+    const bunkerMat=mat(COLORS.sand,.99);bunkerMat.map=sandTex;
     const b=new THREE.Mesh(g,bunkerMat);b.position.set(x,terrainHeight(x,z)+.009,z);b.receiveShadow=true;world.add(b);
   }
-  bunker(-14,pin.z+8,8,4.1,.4);bunker(17,pin.z-3,7.2,3.6,1.7);bunker(12,-94,5.3,2.7,2.8);
+  BUNKERS.forEach(b=>bunker(b.x,b.z,b.sx*.92,b.sz*.88,b.seed));
 
   const water=new THREE.Mesh(new THREE.PlaneGeometry(126,290),new THREE.MeshStandardMaterial({color:COLORS.water,roughness:.32,metalness:.04,transparent:true,opacity:.94}));
   water.rotation.x=-Math.PI/2;water.position.set(94,-.38,-115);world.add(water);
@@ -132,10 +163,11 @@ export function buildWorld(scene,pin){
 
   function setPin(next){
     green.position.set(next.x,next.y+.008,next.z);
+    fringe.position.set(next.x,next.y+.005,next.z);
     holeDisc.position.set(next.x,next.y+.012,next.z);
     pole.position.set(next.x,next.y+2.25,next.z);
     flag.position.set(next.x,next.y+3.9,next.z);
   }
 
-  return {world,green,holeDisc,pole,flag,setPin};
+  return {world,green,fringe,holeDisc,pole,flag,setPin};
 }
