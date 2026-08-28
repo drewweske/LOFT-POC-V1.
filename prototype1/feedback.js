@@ -181,6 +181,20 @@ export class LoftFeedback{
     this.trailMat.opacity=.08+.10*clamp(quality,0,1);
   }
 
+  cup({position,score=0}={}){
+    if(position){
+      this.landLife=1;
+      this.landRing.position.copy(position);this.landRing.position.y+=.02;
+      this.landRing.scale.setScalar(.42);this.landRing.material.opacity=.42;
+    }
+    // The LOFT cup sound is intentionally small and physical: ball, liner, flagstick.
+    this._tone(410,188,.085,.050,'triangle');
+    this._tone(780,330,.075,.038,'sine',.025);
+    this._noise({freq:1450,q:1.2,dur:.10,gain:.025,delay:.018});
+    if(score<0)this._tone(1180,620,.13,.026,'sine',.095);
+    this._vibrate(score<0?[7,18,10,24,16]:[8,18,12]);
+  }
+
   land({surface='fairway',position,quality=.8}){
     this.landLife=1;
     this.landRing.position.copy(position);this.landRing.position.y+=.018;
