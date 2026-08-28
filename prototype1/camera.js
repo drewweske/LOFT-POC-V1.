@@ -129,22 +129,23 @@ export class LoftCamera{
     if(this.mode!==CAMERA_MODE.AIM)this._enter(CAMERA_MODE.AIM);
     this.aimPitch=smooth(this.aimPitch,this.aimPitchT,10,dt);
     this.aimDist=smooth(this.aimDist,this.aimDistT,11,dt);
-    this._setFov(putting?36.6:38.5,dt);
+    this._setFov(putting ? 36.6 : 38.5,dt);
 
     const forward=new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
 
-    // Putting gets its own quiet reading camera: lower, closer and slightly
-    // off the flag line so the ball/cup relationship stays readable.
-    const viewDist=putting?clamp(5.7+(this.aimDist-8.7)*.34,4.8,6.5):this.aimDist;
+    // PUTT READ: camera axis is the intended roll axis.
+    // No cinematic side angle here — the player must visually trust that
+    // straight on screen means straight in the simulation.
+    const viewDist=putting ? clamp(5.9+(this.aimDist-8.7)*.30,5.15,6.45) : this.aimDist;
     const desiredPos=ball.clone()
-      .addScaledVector(forward,-viewDist*(putting?.96:.93))
-      .addScaledVector(right,viewDist*(putting?.15:.024))
-      .add(new THREE.Vector3(0,(putting?1.34:1.70)+this.aimPitch*(putting?2.15:3.45),0));
+      .addScaledVector(forward,-viewDist*(putting ? .985 : .93))
+      .addScaledVector(right,putting ? .06 : viewDist*.024)
+      .add(new THREE.Vector3(0,(putting ? 1.24 : 1.70)+this.aimPitch*(putting ? 1.72 : 3.45),0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,putting?1.75:2.85)
-      .add(new THREE.Vector3(0,putting?.24:.58,0));
+      .addScaledVector(forward,putting ? 2.45 : 2.85)
+      .add(new THREE.Vector3(0,putting ? .16 : .58,0));
 
     this._safeY(desiredPos,1.12);
     this._commit(desiredPos,desiredLook,11.5,12.5,dt);
@@ -152,7 +153,7 @@ export class LoftCamera{
 
   updateSwing(dt,{ball,swingProgress=0,putting=false}){
     if(this.mode!==CAMERA_MODE.SWING)return;
-    this._setFov(putting?36.8:39.2,dt);
+    this._setFov(putting ? 36.8 : 39.2,dt);
 
     const forward=new THREE.Vector3(Math.sin(this.lockedAimYaw),0,-Math.cos(this.lockedAimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
@@ -160,13 +161,13 @@ export class LoftCamera{
     const turn=Math.sin(clamp(swingProgress,0,1)*Math.PI);
     const impactPulse=Math.exp(-Math.pow((swingProgress-.58)/.12,2));
     const desiredPos=ball.clone()
-      .addScaledVector(forward,putting?(-5.05+impactPulse*.05):(-6.55+impactPulse*.16))
-      .addScaledVector(right,putting?(1.00+turn*.05):(1.12+turn*.14))
-      .add(new THREE.Vector3(0,putting?(1.42-impactPulse*.02):(2.28-impactPulse*.04),0));
+      .addScaledVector(forward,putting ? (-5.70+impactPulse*.04) : (-6.55+impactPulse*.16))
+      .addScaledVector(right,putting ? .07 : (1.12+turn*.14))
+      .add(new THREE.Vector3(0,putting ? (1.25-impactPulse*.015) : (2.28-impactPulse*.04),0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,putting?(1.25+impactPulse*.10):(1.55+impactPulse*.22))
-      .add(new THREE.Vector3(0,putting?.22:.58,0));
+      .addScaledVector(forward,putting ? (2.20+impactPulse*.08) : (1.55+impactPulse*.22))
+      .add(new THREE.Vector3(0,putting ? .16 : .58,0));
 
     this._safeY(desiredPos,1.18);
     this._commit(desiredPos,desiredLook,17,18,dt);
@@ -186,7 +187,7 @@ export class LoftCamera{
     const speed=horizontal.length();
     const height=Math.max(0,ball.y-this.terrainHeight(ball.x,ball.z));
     const rolling=height<.28&&speed<8.0;
-    const dynamicDist=putting?clamp(3.8+speed*.34,3.9,5.5):(rolling?clamp(4.9+speed*.28,5.0,7.1):clamp(8.2+speed*.045+height*.022,8.4,12.3));
+    const dynamicDist=putting ? clamp(3.8+speed*.34,3.9,5.5) : (rolling ? clamp(4.9+speed*.28,5.0,7.1) : clamp(8.2+speed*.045+height*.022,8.4,12.3));
     this.flightDist=smooth(this.flightDist,dynamicDist,rolling?6.2:4.8,dt);
 
     const forward=new THREE.Vector3(Math.sin(this.flightHeading),0,-Math.cos(this.flightHeading)).normalize();
@@ -194,8 +195,8 @@ export class LoftCamera{
 
     const desiredPos=ball.clone()
       .addScaledVector(forward,-this.flightDist*.88-this.impactKick*.28)
-      .addScaledVector(right,this.flightDist*(putting?.10:(rolling?.045:.095)))
-      .add(new THREE.Vector3(0,(putting?1.08:(rolling?1.58:2.70))+clamp(height*.085,0,1.95)+this.impactKick*.05,0));
+      .addScaledVector(right,this.flightDist*(putting ? .012 : (rolling ? .045 : .095)))
+      .add(new THREE.Vector3(0,(putting ? .92 : (rolling ? 1.58 : 2.70))+clamp(height*.085,0,1.95)+this.impactKick*.05,0));
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const pinBias=toPin.lengthSq()>.01?toPin.normalize():forward;
