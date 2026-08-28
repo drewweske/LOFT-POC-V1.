@@ -322,7 +322,7 @@ canvas.addEventListener('pointerdown',e=>{
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   const now=performance.now();
-  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,transitionCue:false,samples:[{x:e.clientX,y:e.clientY,t:now}]};
+  gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,transitionCue:false,releaseCue:false,samples:[{x:e.clientX,y:e.clientY,t:now}]};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
   if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
 });
@@ -375,6 +375,10 @@ canvas.addEventListener('pointermove',e=>{
       }
 
       const through=clamp((gesture.deep-e.clientY)/(r.height*.255),0,1.18);
+      if(through>.43&&!gesture.releaseCue){
+        gesture.releaseCue=true;
+        feedback.release(clamp(through,0,1.1));
+      }
       state.swingPhase=.38+through*.22;
       golfer.setPose(state.swingPhase,LEVELS[state.level]);
       showContext(through>.72?'RELEASE':'STRIKE',9999);
