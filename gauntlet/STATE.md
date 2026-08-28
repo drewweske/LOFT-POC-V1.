@@ -1,106 +1,169 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 004
+Current build: Prototype 1 / Integration 005
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Real-device integrated validation
-Iteration: integration_004
+Active subsystem: Real-device feel / visual validation
+Iteration: integration_005
 
 ## Current provisional score
-92 / 100 — NOT GRADUATED
+93 / 100 — NOT GRADUATED
 
-This candidate is materially ahead of Integration 003 at source/architecture level, but final graduation is still blocked on the newly rendered iPhone artifact.
+Integration 005 is the first pass explicitly centered on THE LOFT ACTION:
+the setup → load → transition → strike → release → flight → land sequence.
 
-## Integration 004 wins
+The build is materially ahead of Integration 004 in game feel, shot skill architecture,
+camera centering, character silhouette and surface/material polish.
 
-### Camera intelligence
-- explicit AIM / SWING_LOCK / FLIGHT / RESULT state machine
-- heading/camera/character transform bug fixed
-- camera remains in a stable trailing golf composition during aim
-- horizontal drag defines heading
-- vertical drag adjusts pitch
-- pinch adjusts aim distance
-- swing input locks camera to ball/golfer relationship
-- no user camera transforms during swing or flight
-- automatic flight camera follows ball direction with capped yaw response
-- result camera returns semi-free lie inspection
-- state-specific FOV, damping and distance clamps
-- ground/floor protection
-- stable world-up horizon
-- full-club finish framing checked before handoff
+Final graduation remains blocked on the actual iPhone artifact.
 
-### Critical transform fix
-The rig's authored shot direction is local -Z.
-Gameplay heading uses positive yaw toward +X.
-The previous implementation rotated the golfer by +aimYaw, mirroring golfer orientation relative to the target/camera.
+## Integration 005 wins
 
-Integration 004 now uses:
-rigYaw = -aimYaw
+### THE STROKE
+A shot now evaluates:
+- backswing load
+- backswing/downstroke tempo relationship
+- centered path
+- downswing smoothness
+- speed
+- commitment through impact
+- release depth
 
-The address ball offset uses the same rigYaw.
+Power alone cannot produce a PURE strike.
 
-This removes the front-on / mirrored camera-angle pathology visible in Integration 003 screenshots.
+### Physics coupling
+Strike quality now affects:
+- ball-speed efficiency
+- launch efficiency
+- spin efficiency
+- face error
+- spin-axis tilt
+- release efficiency
+
+A good gesture and a poor gesture should create visibly different golf, not merely different UI labels.
+
+### Kinetic feedback
+The swing now has an authored physical feedback sequence:
+
+LOAD
+- elastic pose curve
+- subtle loaded-at-the-top cue
+
+TRANSITION
+- restrained tactile/acoustic cue
+
+RELEASE
+- pre-impact air/club whoosh
+
+IMPACT
+- club-specific compression body
+- metallic face click
+- air transient
+- higher-frequency PURE compression note
+- mobile vibration pattern where platform supports it
+- deterministic camera recoil
+- ball compression
+- micro impact hold
+- restrained cream impact ring
+- one Flag Orange contact signal
+- club-aware turf response
+
+FLIGHT
+- subtle cream atmospheric trail
+- automatic camera with constrained yaw
+
+LAND
+- surface-specific sound/tactile response
+- restrained landing ring
+
+No neon trails, explosions, random camera shake or arcade clutter were introduced.
+
+### Camera
+- address moved to an almost direct down-line composition
+- lateral bias reduced again
+- ball is the horizontal anchor
+- swing rail remains close to the actual shot line
+- result camera moved closer/lower to inspect the lie
+- impact recoil is deterministic and quality-driven
 
 ### Character
-- spherical toy torso replaced by tapered authored LatheGeometry volumes
-- pelvis, torso, chest and waist now taper like clothing/body masses
-- tapered limbs
-- knee/elbow joint caps
-- capsule shoes
-- smaller hands
-- reduced head/jaw/nose
-- controlled micro facial features
-- proper low-profile golf cap instead of beret-like cap
-- smaller clubheads
-- quiet collar
-- micro Flag Orange signal only
+- stacked barrel torso rejected
+- one authored elliptical shirt body replaces torso/chest/waist primitive stack
+- narrow waist / broader attainable shoulders / believable shirt depth
+- pelvis depth reduced
+- shorter neck
+- jaw blob removed
+- floating collar artifact removed
+- smaller nose
+- lower-profile cap
+- stronger athletic hip hinge
+- softer knees
+- lower, more natural hanging hands
 
-### Brand lock
-- Clubhouse Ink #0B0D0D
-- Scorecard Cream #F2EFE8
-- Fairway Stone #B8B1A6
-- Flag Orange #FF6A2A
-- glass/backdrop-filter styling removed
-- primary UI surfaces are solid Ink/Cream
-- course map uses Cream/Stone/Ink identity language
-- world greens remain in the game world, not core UI identity
-- no logo geometry changes
-- interaction copy tightened
-- HUD/map nearly disappear during The Stroke
+### LOFT Ball / Brand
+- official Ink / Cream / Stone / Orange system remains locked
+- ball surface dimple response strengthened
+- Orange mark is visually recessed rather than treated as a raised decorative dot
+- Flag Orange remains signal only
+- learned swings suppress coaching copy so the motion becomes the interface
+
+### World
+- rough / fairway / green / sand receive subtle tactile surface grain
+- fairway UVs added
+- mobile grain frequency calibrated to avoid moire
+- world remains stylized rather than photoreal
 
 ### Technical validation
-- all custom JS modules parse successfully
-- CSS braces balanced
-- zero stale Camera 003 API references
-- no backdrop-filter/glass styling remains
+PASS:
+- feedback.js
+- camera.js
+- game.js
+- physics.js
+- characterRig.js
+- world.js
+- topoMap.js
+- equipment.js
+
+All custom modules parse successfully.
 
 ## Graduated systems
-None at final 94/100 integrated graduation level yet.
+None at final integrated graduation level yet.
 
 ## Largest meaningful gap
-Real-device evidence for Integration 004.
+Real iPhone evaluation of Integration 005.
+
+Specifically:
+- perceived strike satisfaction
+- WebAudio latency
+- whether Safari exposes vibration on the device
+- camera centering under real touch
+- visual quality of the rebuilt procedural golfer
+- whether PURE / FLUSH / poor strikes feel meaningfully different
+- whether the follow-through and landing sequence create actual "one more" desire
 
 ## Next critic fixture
-1. default address screenshot
-2. aim 45° left
-3. aim 45° right
-4. Level 1 top-of-backswing
-5. Level 50 top-of-backswing
-6. Level 1 finish
-7. Level 50 finish
-8. ball flight
-9. result camera
-10. topographic map / HUD hierarchy
+1. default address
+2. slow incomplete backswing
+3. ideal loaded backswing
+4. poor jerky downswing
+5. centered PURE attempt
+6. obvious push/pull
+7. Level 1 full swing
+8. Level 50 full swing
+9. ball flight
+10. first landing
+11. result camera
+12. immediate ONE MORE
 
-## Critical failures that still automatically fail the build
-- golfer flips to face camera while merely aiming
-- golfer/ball relationship shifts as heading rotates
-- swing camera clips head, feet or club
-- camera accepts orbit input during The Stroke
-- flight camera corkscrews from spin/bounce
-- result camera creates empty-ground framing
-- character still reads as a primitive toy/mannequin
-- cap reads like a beret
-- any limb detaches/disappears
-- UI drifts outside official Ink/Cream/Stone/Orange brand system
-- mobile Safari interaction breaks
+## Critical failures
+Any of these fail the build:
+- address still reads as pre-aimed diagonally
+- ball is not visually centered on the intended shot line
+- golfer remains visibly toy/mannequin quality
+- club does not remain connected through the hands
+- PURE strike sounds/feels no better than a mediocre strike
+- swing feedback feels like arcade VFX rather than physical golf
+- camera jumps during impact/flight
+- result camera returns to giant empty-ground framing
+- UI or effects drift outside LOFT restraint
+- mobile Safari input breaks
