@@ -187,16 +187,17 @@ export class LoftCamera{
 
     const speed=horizontal.length();
     const height=Math.max(0,ball.y-this.terrainHeight(ball.x,ball.z));
-    const dynamicDist=clamp(8.2+speed*.045+height*.022,8.4,12.3);
-    this.flightDist=smooth(this.flightDist,dynamicDist,4.8,dt);
+    const rolling=height<.28&&speed<8.0;
+    const dynamicDist=rolling?clamp(4.9+speed*.28,5.0,7.1):clamp(8.2+speed*.045+height*.022,8.4,12.3);
+    this.flightDist=smooth(this.flightDist,dynamicDist,rolling?6.2:4.8,dt);
 
     const forward=new THREE.Vector3(Math.sin(this.flightHeading),0,-Math.cos(this.flightHeading)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
 
     const desiredPos=ball.clone()
       .addScaledVector(forward,-this.flightDist*.88-this.impactKick*.28)
-      .addScaledVector(right,this.flightDist*.095)
-      .add(new THREE.Vector3(0,2.70+clamp(height*.085,0,1.95)+this.impactKick*.05,0));
+      .addScaledVector(right,this.flightDist*(rolling?.045:.095))
+      .add(new THREE.Vector3(0,(rolling?1.58:2.70)+clamp(height*.085,0,1.95)+this.impactKick*.05,0));
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const pinBias=toPin.lengthSq()>.01?toPin.normalize():forward;
