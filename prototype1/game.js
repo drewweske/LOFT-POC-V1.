@@ -1,12 +1,13 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB} from './equipment.js';
-import {COLORS,terrainHeight,buildWorld} from './world.js';
+import {COLORS,BUNKERS,fairwayProfile,terrainHeight,buildWorld} from './world.js';
 import {LoftGolferRig} from './characterRig.js';
 import {GolfPhysics} from './physics.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
 import {ROUND_HOLES,ROWAN_SCORES,holeYards,scoreName,relativeScore} from './round.js';
+import {surfaceDisplay} from './surfaces.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -203,21 +204,22 @@ function updateLine(){
 }
 updateLine();
 
-const bunkerDefs=[[-14,-148,8.8,4.9],[17,-160,7.8,4.2],[12,-94,6,3.3],[-8,-202,6.4,3.1]];
-function distanceToSegment(px,pz,ax,az,bx,bz){
-  const vx=bx-ax,vz=bz-az,wx=px-ax,wz=pz-az;
-  const vv=vx*vx+vz*vz||1;
-  const t=clamp((wx*vx+wz*vz)/vv,0,1);
-  return Math.hypot(px-(ax+vx*t),pz-(az+vz*t));
-}
 function surfaceAt(x,z){
   const gx=(x-pin.x)/(18*1.36),gz=(z-pin.z)/18;
   if(gx*gx+gz*gz<=1)return'green';
-  for(const [bx,bz,sx,sz] of bunkerDefs){const dx=(x-bx)/sx,dz=(z-bz)/sz;if(dx*dx+dz*dz<=1)return'sand';}
+
+  for(const b of BUNKERS){
+    const dx=(x-b.x)/b.sx,dz=(z-b.z)/b.sz;
+    if(dx*dx+dz*dz<=1)return'sand';
+  }
+
   if(x>38&&z<-18)return'water';
-  const ht=holeDef.tee,hp=holeDef.pin;
-  const fairDist=distanceToSegment(x,z,ht[0],ht[1],hp[0],hp[1]);
-  if(fairDist<15.5)return'fairway';
+
+  // Physics now uses the exact same authored fairway ribbon as the renderer.
+  // If it looks like fairway, it IS fairway.
+  const profile=fairwayProfile(z);
+  if(profile.insideRange&&Math.abs(x-profile.center)<=profile.width)return'fairway';
+
   return'rough';
 }
 function playingHeight(x,z){
@@ -468,8 +470,8 @@ function finishShot(){
     state.resultAction='waterDrop';
   }else{
     if(feet<2.5){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent='AT THE CUP · FINISH IT';}
-    else if(feet<45){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent=(feet<12?'DIALED':'ON '+surface.toUpperCase())+' · '+(ballGroup.position.z<pin.z?'LONG':'SHORT');}
-    else{$('result-head').textContent=Math.round(feet/3)+' YDS';$('result-sub').textContent='TO PIN · '+surface.toUpperCase();}
+    else if(feet<45){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent=(feet<12?'DIALED':'ON '+surfaceDisplay(surface))+' · '+(ballGroup.position.z<pin.z?'LONG':'SHORT');}
+    else{$('result-head').textContent=Math.round(feet/3)+' YDS';$('result-sub').textContent='TO PIN · '+surfaceDisplay(surface);}
     $('again').textContent='NEXT SHOT';
     state.resultAction='continue';
   }
