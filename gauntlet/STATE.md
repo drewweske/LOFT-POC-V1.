@@ -1,169 +1,130 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 005
+Current build: Prototype 1 / Integration 006
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Real-device feel / visual validation
-Iteration: integration_005
+Active subsystem: terrain / landing / rollout
+Iteration: integration_006
 
 ## Current provisional score
-93 / 100 — NOT GRADUATED
+94 / 100 — REAL-DEVICE VALIDATION REQUIRED
 
-Integration 005 is the first pass explicitly centered on THE LOFT ACTION:
-the setup → load → transition → strike → release → flight → land sequence.
+Integration 006 is the first dedicated terrain-behavior pass.
 
-The build is materially ahead of Integration 004 in game feel, shot skill architecture,
-camera centering, character silhouette and surface/material polish.
+The largest gap from Integration 005 was not airborne physics. It was what happened AFTER the ball touched the ground:
+too much retained horizontal speed, too little surface identity, and too little static settling.
 
-Final graduation remains blocked on the actual iPhone artifact.
+## Integration 006 terrain model
 
-## Integration 005 wins
+### Canonical surface physics
+Surface properties now live in /prototype1/surfaces.js.
 
-### THE STROKE
-A shot now evaluates:
-- backswing load
-- backswing/downstroke tempo relationship
-- centered path
-- downswing smoothness
-- speed
-- commitment through impact
-- release depth
+Each cut owns:
+- normal restitution
+- tangential impact retention
+- rolling deceleration
+- static settling grade
+- stop threshold
+- spin/turf grip
+- cut-to-cut transition bite
+- lie launch speed
+- lie spin retention
+- lie launch bias
 
-Power alone cannot produce a PURE strike.
+Surfaces:
+- tee
+- fairway
+- green
+- fringe
+- rough
+- sand
+- water
 
-### Physics coupling
-Strike quality now affects:
-- ball-speed efficiency
-- launch efficiency
-- spin efficiency
-- face error
-- spin-axis tilt
-- release efficiency
+### Landing behavior
+The ball no longer uses a mostly-global bounce/slide model.
 
-A good gesture and a poor gesture should create visibly different golf, not merely different UI labels.
+Landing resolves against:
+- actual local terrain normal
+- current surface restitution
+- surface tangential retention
+- spin/contact slip
+- surface spin grip
 
-### Kinetic feedback
-The swing now has an authored physical feedback sequence:
+Result target:
+- fairway: one readable hop + controlled release
+- green: low bounce + wedge check
+- fringe: intermediate first-cut behavior
+- rough: obvious grab
+- sand: immediate deadening
 
-LOAD
-- elastic pose curve
-- subtle loaded-at-the-top cue
+### Rolling behavior
+Frame-rate damping is not used as the primary stopping mechanism.
 
-TRANSITION
-- restrained tactile/acoustic cue
+Roll now uses:
+- gravity along local grade
+- calibrated rolling resistance in m/s²
+- surface transition losses
+- static friction / settling
 
-RELEASE
-- pre-impact air/club whoosh
+The static-friction layer is critical:
+a nearly stopped ball on ordinary fairway, rough or sand now RESTS instead of creeping indefinitely down small geometry slopes.
 
-IMPACT
-- club-specific compression body
-- metallic face click
-- air transient
-- higher-frequency PURE compression note
-- mobile vibration pattern where platform supports it
-- deterministic camera recoil
-- ball compression
-- micro impact hold
-- restrained cream impact ring
-- one Flag Orange contact signal
-- club-aware turf response
+### Gameplay calibration
+Level-ground target stopping behavior after the ball is already rolling:
 
-FLIGHT
-- subtle cream atmospheric trail
-- automatic camera with constrained yaw
+At 3 m/s:
+- green ≈ 6.3 m
+- fringe ≈ 4.3 m
+- fairway ≈ 2.8 m
+- rough ≈ 1.2 m
+- sand ≈ 0.7 m
 
-LAND
-- surface-specific sound/tactile response
-- restrained landing ring
+Actual shot rollout is shorter because landing impact and cut transitions shed additional speed first.
 
-No neon trails, explosions, random camera shake or arcade clutter were introduced.
+### Cut transitions
+Crossing cuts now has physical consequence:
+- fairway → rough grabs
+- fringe → green remains smooth
+- rough → sand deadens dramatically
 
-### Camera
-- address moved to an almost direct down-line composition
-- lateral bias reduced again
-- ball is the horizontal anchor
-- swing rail remains close to the actual shot line
-- result camera moved closer/lower to inspect the lie
-- impact recoil is deterministic and quality-driven
+Small restrained audio cues reinforce the surface change.
 
-### Character
-- stacked barrel torso rejected
-- one authored elliptical shirt body replaces torso/chest/waist primitive stack
-- narrow waist / broader attainable shoulders / believable shirt depth
-- pelvis depth reduced
-- shorter neck
-- jaw blob removed
-- floating collar artifact removed
-- smaller nose
-- lower-profile cap
-- stronger athletic hip hinge
-- softer knees
-- lower, more natural hanging hands
+### Visual / physical alignment
+- fairway physics uses the same authored fairway profile as the rendered fairway
+- bunker render footprints now use the shared bunker definitions
+- green receives a real playable fringe
+- rendered green slope now matches putting physics
+- green fringe is visually distinct
+- bunkers have a subtle carved/lip read
+- fairway receives restrained mowing-band texture behavior
 
-### LOFT Ball / Brand
-- official Ink / Cream / Stone / Orange system remains locked
-- ball surface dimple response strengthened
-- Orange mark is visually recessed rather than treated as a raised decorative dot
-- Flag Orange remains signal only
-- learned swings suppress coaching copy so the motion becomes the interface
-
-### World
-- rough / fairway / green / sand receive subtle tactile surface grain
-- fairway UVs added
-- mobile grain frequency calibrated to avoid moire
-- world remains stylized rather than photoreal
-
-### Technical validation
+## Technical validation
 PASS:
-- feedback.js
-- camera.js
-- game.js
+- surfaces.js
 - physics.js
-- characterRig.js
 - world.js
-- topoMap.js
-- equipment.js
+- game.js
+- feedback.js
 
-All custom modules parse successfully.
-
-## Graduated systems
-None at final integrated graduation level yet.
+All modified custom modules parse successfully.
 
 ## Largest meaningful gap
-Real iPhone evaluation of Integration 005.
-
-Specifically:
-- perceived strike satisfaction
-- WebAudio latency
-- whether Safari exposes vibration on the device
-- camera centering under real touch
-- visual quality of the rebuilt procedural golfer
-- whether PURE / FLUSH / poor strikes feel meaningfully different
-- whether the follow-through and landing sequence create actual "one more" desire
-
-## Next critic fixture
-1. default address
-2. slow incomplete backswing
-3. ideal loaded backswing
-4. poor jerky downswing
-5. centered PURE attempt
-6. obvious push/pull
-7. Level 1 full swing
-8. Level 50 full swing
-9. ball flight
-10. first landing
-11. result camera
-12. immediate ONE MORE
+Real iPhone validation of:
+- driver fairway rollout
+- iron stopping distance
+- wedge green check
+- rough grab
+- bunker deadening
+- putt pace
+- fringe transition
+- ball settling on small slopes
 
 ## Critical failures
-Any of these fail the build:
-- address still reads as pre-aimed diagonally
-- ball is not visually centered on the intended shot line
-- golfer remains visibly toy/mannequin quality
-- club does not remain connected through the hands
-- PURE strike sounds/feels no better than a mediocre strike
-- swing feedback feels like arcade VFX rather than physical golf
-- camera jumps during impact/flight
-- result camera returns to giant empty-ground framing
-- UI or effects drift outside LOFT restraint
-- mobile Safari input breaks
+Any of these fail Integration 006:
+- ball continues creeping after visibly losing momentum
+- rough behaves like fairway
+- sand behaves like grass
+- green approach shots skate unrealistically
+- ordinary fairway drives roll cartoonishly far
+- rendered surface and physical lie disagree
+- putts die instantly or remain excessively fast
