@@ -23,16 +23,18 @@ export class GolfPhysics{
 
   setCup(position){this.cup=position?position.clone():null;}
 
-  launch({position,club,power,path,form,aimYaw=0,strike=.8,release=.8}){
+  launch({position,club,power,path,form,aimYaw=0,strike=.8,release=.8,lie='fairway'}){
     const q=clamp(strike,0,1);
     const formEff=.92+.08*clamp(form,0,1);
     const contactEff=.84+.16*q;
     const releaseEff=.94+.06*clamp(release,0,1);
-    const speed=club.ballSpeed*clamp(power,.42,1.08)*formEff*contactEff*releaseEff;
+    const lieSpeed=lie==='rough'?.92:lie==='sand'?(club.head==='wedge'?.82:.70):1;
+    const lieLaunch=lie==='rough'?1.2:lie==='sand'?(club.head==='wedge'?5.2:3.0):0;
+    const lieSpin=lie==='rough'?.78:lie==='sand'?(club.head==='wedge'?.88:.55):1;
+    const speed=club.ballSpeed*clamp(power,.42,1.08)*formEff*contactEff*releaseEff*lieSpeed;
 
-    // Poor contact does not just lose speed. It changes launch and spin efficiency,
-    // so the gesture has a physically readable consequence.
-    const launchDeg=club.launch+(1-q)*2.4-(1-release)*1.2;
+    // Poor contact and poor lies alter launch/spin as well as speed.
+    const launchDeg=club.launch+(1-q)*2.4-(1-release)*1.2+lieLaunch;
     const launch=launchDeg*Math.PI/180;
 
     const faceError=path*(.32+.15*(1-q));
@@ -51,7 +53,7 @@ export class GolfPhysics{
     const tilt=tiltDeg*Math.PI/180;
     const axis=right.multiplyScalar(Math.cos(tilt)).add(new THREE.Vector3(0,Math.sin(tilt),0)).normalize();
 
-    const spinEfficiency=.82+.18*q;
+    const spinEfficiency=(.82+.18*q)*lieSpin;
     this.state={
       pos:position.clone(),
       vel:velocity,
