@@ -166,7 +166,7 @@ export class LoftCamera{
 
   updateSwing(dt,{ball,swingProgress=0}){
     if(this.mode!==CAMERA_MODE.SWING)return;
-    this._setFov(37.5,dt);
+    this._setFov(40.5,dt);
 
     const forward=new THREE.Vector3(Math.sin(this.lockedAimYaw),0,-Math.cos(this.lockedAimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
