@@ -90,3 +90,20 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
 /* Hole-to-hole cut: a short cream veil, closer to a broadcast/editorial cut than a menu. */
 #app:after{content:"";position:absolute;z-index:88;inset:0;background:var(--cream);opacity:0;pointer-events:none;transition:opacity .24s var(--ease)}
 #app.hole-transition:after{opacity:.94}
+
+/* Integration 008 — THE SIGNAL.
+   Confirmation is a Cream object with one Flag Orange dimple: the brand grammar
+   itself becomes gameplay feedback instead of another meter. */
+#context.signal span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:rgba(242,239,232,.97);
+  color:var(--ink);
+  box-shadow:0 10px 26px rgba(11,13,13,.10);
+}
+#context.signal span:before{
+  content:"";
+  width:7px;height:7px;border-radius:50%;
+  flex:0 0 auto;background:var(--orange);
+}
