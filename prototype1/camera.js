@@ -148,7 +148,7 @@ export class LoftCamera{
       .add(new THREE.Vector3(0,putting ? .16 : .58,0));
 
     this._safeY(desiredPos,1.12);
-    this._commit(desiredPos,desiredLook,11.5,12.5,dt);
+    this._commit(desiredPos,desiredLook,putting ? 8.8 : 11.5,putting ? 10.4 : 12.5,dt);
   }
 
   updateSwing(dt,{ball,swingProgress=0,putting=false}){
@@ -170,7 +170,7 @@ export class LoftCamera{
       .add(new THREE.Vector3(0,putting ? .16 : .58,0));
 
     this._safeY(desiredPos,1.18);
-    this._commit(desiredPos,desiredLook,17,18,dt);
+    this._commit(desiredPos,desiredLook,putting ? 12.5 : 17,putting ? 14 : 18,dt);
   }
 
   updateFlight(dt,{ball,velocity,pin,putting=false}){
