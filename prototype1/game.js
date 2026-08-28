@@ -167,9 +167,9 @@ function showContext(text,duration=520){
 function setTip(text){$('tip-text').textContent=text;$('tip').style.opacity='1';}
 function updateTip(){
   if(state.phase==='result'){$('tip').style.opacity='0';return;}
-  if(!state.learned.camera)setTip('Drag to aim · pinch to zoom');
-  else if(!state.learned.line)setTip('Drag the orange landing mark to shape The Line');
-  else if(!state.learned.stroke)setTip('Touch near the ball · pull back · drive through');
+  if(!state.learned.camera)setTip('DRAG TO AIM · PINCH TO ZOOM');
+  else if(!state.learned.line)setTip('LANDING MARK · SET DISTANCE');
+  else if(!state.learned.stroke)setTip('PULL BACK · DRIVE THROUGH');
   else $('tip').style.opacity='0';
 }
 
@@ -325,7 +325,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('Pull farther back · then accelerate through the ball');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('PULL FARTHER · DRIVE THROUGH');}
   }
   gesture=null;
 }
