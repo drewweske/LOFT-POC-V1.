@@ -9,15 +9,25 @@ export class LoftGolferRig{
   constructor(C){
     this.C=C;this.group=new THREE.Group();this.group.name='LOFT_GOLFER';
     this.mat=(c,r=.84,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
-    this.skin=this.mat(0xc99372,.78);this.ink=this.mat(C.ink,.82);this.cream=this.mat(C.cream,.92);this.stone=this.mat(C.stone,.9);this.hair=this.mat(0x2b211b,.92);this.orange=this.mat(C.orange,.72);this.steel=this.mat(0xbcbdb7,.35,.58);
+    this.skin=this.mat(0xb98263,.76);
+    this.ink=this.mat(C.ink,.84);
+    this.cream=this.mat(C.cream,.93);
+    this.stone=this.mat(C.stone,.91);
+    this.hair=this.mat(0x29211c,.93);
+    this.orange=this.mat(C.orange,.74);
+    this.steel=this.mat(0xb6b8b4,.32,.60);
     this.parts=[];this._build();this.setPose(0,{form:.18,sway:.11,earlyExt:.11,plane:.20,balance:.48,finish:.58});
   }
   _add(mesh){mesh.castShadow=true;this.group.add(mesh);this.parts.push(mesh);return mesh;}
   _shape(geo,mat,pos=[0,0,0],scale=[1,1,1],rot=[0,0,0]){
     const m=this._add(new THREE.Mesh(geo,mat));m.position.set(...pos);m.scale.set(...scale);m.rotation.set(...rot);return m;
   }
-  _segment(r,mat){
-    const m=this._add(new THREE.Mesh(new THREE.CylinderGeometry(r,r*.96,1,12),mat));
+  _lathe(profile,mat,segments=24){
+    const pts=profile.map(([r,y])=>new THREE.Vector2(r,y));
+    return this._add(new THREE.Mesh(new THREE.LatheGeometry(pts,segments),mat));
+  }
+  _segment(r,mat,taper=.88,segments=14){
+    const m=this._add(new THREE.Mesh(new THREE.CylinderGeometry(r*taper,r,1,segments),mat));
     m.userData.baseRadius=r;
     return m;
   }
@@ -28,56 +38,83 @@ export class LoftGolferRig{
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
   }
   _build(){
-    this.pelvis=this._shape(new THREE.SphereGeometry(.255,24,18),this.ink);
-    this.torso=this._shape(new THREE.CapsuleGeometry(.19,.30,8,18),this.cream);
-    this.chest=this._shape(new THREE.SphereGeometry(.28,28,20),this.cream);
-    this.waist=this._shape(new THREE.SphereGeometry(.22,24,18),this.cream);
-    this.belt=this._shape(new THREE.CylinderGeometry(.215,.215,.050,24),this.ink);
+    // Authored LOFT body volumes: tapered, human, athletic, not toy-spherical.
+    this.pelvis=this._lathe([
+      [.165,-.16],[.195,-.11],[.208,-.02],[.202,.08],[.174,.16]
+    ],this.ink,26);
 
-    this.thighL=this._segment(.092,this.ink);this.thighR=this._segment(.092,this.ink);
-    this.calfL=this._segment(.074,this.ink);this.calfR=this._segment(.074,this.ink);
-    this.shoeL=this._shape(new THREE.SphereGeometry(.16,20,14),this.stone,[0,0,0],[1.05,.38,.58]);
-    this.shoeR=this._shape(new THREE.SphereGeometry(.16,20,14),this.stone,[0,0,0],[1.05,.38,.58]);
+    this.torso=this._lathe([
+      [.165,-.34],[.178,-.29],[.190,-.18],[.208,-.02],[.236,.17],[.248,.27],[.222,.34]
+    ],this.cream,28);
 
-    this.sleeveL=this._segment(.084,this.cream);this.sleeveR=this._segment(.084,this.cream);
-    this.upperL=this._segment(.058,this.skin);this.upperR=this._segment(.058,this.skin);
-    this.foreL=this._segment(.050,this.skin);this.foreR=this._segment(.050,this.skin);
-    this.handL=this._shape(new THREE.SphereGeometry(.063,18,12),this.skin,[0,0,0],[.88,.95,.72]);
-    this.handR=this._shape(new THREE.SphereGeometry(.063,18,12),this.skin,[0,0,0],[.88,.95,.72]);
+    this.chest=this._lathe([
+      [.205,-.13],[.236,-.07],[.255,.03],[.246,.12],[.215,.16]
+    ],this.cream,28);
 
-    this.neck=this._shape(new THREE.CylinderGeometry(.075,.082,.17,16),this.skin);
-    this.head=this._shape(new THREE.SphereGeometry(.145,30,22),this.skin,[0,0,0],[.87,1.04,.88]);
-    this.jaw=this._shape(new THREE.SphereGeometry(.112,24,18),this.skin,[0,0,0],[.90,.58,.82]);
-    this.nose=this._shape(new THREE.ConeGeometry(.026,.075,12),this.skin,[0,0,0],[1,1,1],[0,0,-Math.PI/2]);
-    this.earL=this._shape(new THREE.SphereGeometry(.026,14,10),this.skin,[0,0,0],[.7,1,.55]);
-    this.earR=this._shape(new THREE.SphereGeometry(.026,14,10),this.skin,[0,0,0],[.7,1,.55]);
-    this.hairMass=this._shape(new THREE.SphereGeometry(.148,26,18),this.hair,[0,0,0],[.91,.44,.90]);
-    this.cap=this._shape(new THREE.SphereGeometry(.154,28,16),this.ink,[0,0,0],[.98,.40,1.02]);
-    this.brim=this._shape(new THREE.BoxGeometry(.165,.026,.118),this.ink);
-    this.capSignal=this._shape(new THREE.SphereGeometry(.017,12,8),this.orange);
+    this.waist=this._lathe([
+      [.155,-.11],[.176,-.07],[.183,.02],[.170,.11]
+    ],this.cream,24);
 
-    this.eyeL=this._shape(new THREE.SphereGeometry(.010,10,8),this.ink,[0,0,0],[1,1,.7]);
-    this.eyeR=this._shape(new THREE.SphereGeometry(.010,10,8),this.ink,[0,0,0],[1,1,.7]);
-    this.placket=this._shape(new THREE.BoxGeometry(.012,.115,.024),this.orange);
+    this.belt=this._shape(new THREE.CylinderGeometry(.198,.198,.048,26),this.ink);
 
-    this.grip=this._segment(.027,this.ink);
-    this.shaft=this._segment(.013,this.steel);
-    this.clubHead=this._shape(new THREE.BoxGeometry(.12,.055,.17),this.steel);
+    // Tapered limbs with joint caps remove the segmented mannequin read.
+    this.thighL=this._segment(.086,this.ink,.82,16);this.thighR=this._segment(.086,this.ink,.82,16);
+    this.calfL=this._segment(.071,this.ink,.76,16);this.calfR=this._segment(.071,this.ink,.76,16);
+    this.kneeL=this._shape(new THREE.SphereGeometry(.073,18,14),this.ink);
+    this.kneeR=this._shape(new THREE.SphereGeometry(.073,18,14),this.ink);
+
+    this.shoeL=this._shape(new THREE.CapsuleGeometry(.065,.15,6,14),this.stone,[0,0,0],[1,1,1],[0,0,Math.PI/2]);
+    this.shoeR=this._shape(new THREE.CapsuleGeometry(.065,.15,6,14),this.stone,[0,0,0],[1,1,1],[0,0,Math.PI/2]);
+
+    this.sleeveL=this._segment(.073,this.cream,.84,16);this.sleeveR=this._segment(.073,this.cream,.84,16);
+    this.upperL=this._segment(.052,this.skin,.84,16);this.upperR=this._segment(.052,this.skin,.84,16);
+    this.foreL=this._segment(.046,this.skin,.78,16);this.foreR=this._segment(.046,this.skin,.78,16);
+    this.elbowL=this._shape(new THREE.SphereGeometry(.050,16,12),this.skin);
+    this.elbowR=this._shape(new THREE.SphereGeometry(.050,16,12),this.skin);
+    this.handL=this._shape(new THREE.CapsuleGeometry(.035,.050,5,12),this.skin,[0,0,0],[.92,.92,.78]);
+    this.handR=this._shape(new THREE.CapsuleGeometry(.035,.050,5,12),this.skin,[0,0,0],[.92,.92,.78]);
+
+    this.neck=this._shape(new THREE.CylinderGeometry(.068,.075,.165,18),this.skin);
+    this.head=this._shape(new THREE.SphereGeometry(.137,30,22),this.skin,[0,0,0],[.82,1.04,.88]);
+    this.jaw=this._shape(new THREE.SphereGeometry(.101,24,18),this.skin,[0,0,0],[.86,.50,.78]);
+    this.nose=this._shape(new THREE.SphereGeometry(.034,18,14),this.skin,[0,0,0],[1.20,.76,.78]);
+    this.earL=this._shape(new THREE.SphereGeometry(.022,14,10),this.skin,[0,0,0],[.65,1,.52]);
+    this.earR=this._shape(new THREE.SphereGeometry(.022,14,10),this.skin,[0,0,0],[.65,1,.52]);
+
+    // Hair stays subordinate to a proper low-profile golf cap.
+    this.hairMass=this._shape(new THREE.SphereGeometry(.138,24,16),this.hair,[0,0,0],[.84,.34,.88]);
+    this.cap=this._shape(new THREE.CylinderGeometry(.132,.145,.075,24),this.ink);
+    this.capDome=this._shape(new THREE.SphereGeometry(.145,24,16),this.ink,[0,0,0],[1,.30,1]);
+    this.brim=this._shape(new THREE.BoxGeometry(.145,.020,.104),this.ink);
+    this.capSignal=this._shape(new THREE.SphereGeometry(.012,12,8),this.orange);
+
+    // Controlled face: tiny features, no emoji / caricature expression.
+    this.eyeL=this._shape(new THREE.SphereGeometry(.0065,10,8),this.ink,[0,0,0],[1,.90,.65]);
+    this.eyeR=this._shape(new THREE.SphereGeometry(.0065,10,8),this.ink,[0,0,0],[1,.90,.65]);
+    this.browL=this._shape(new THREE.BoxGeometry(.027,.006,.008),this.hair);
+    this.browR=this._shape(new THREE.BoxGeometry(.027,.006,.008),this.hair);
+    this.collar=this._shape(new THREE.TorusGeometry(.081,.012,8,26),this.stone,[0,0,0],[1,1,.88],[Math.PI/2,0,0]);
+    this.chestSignal=this._shape(new THREE.SphereGeometry(.010,10,8),this.orange);
+
+    this.grip=this._segment(.023,this.ink,.96,12);
+    this.shaft=this._segment(.0105,this.steel,.98,12);
+    this.clubHead=this._shape(new THREE.BoxGeometry(.098,.045,.146),this.steel);
     this.clubType='iron';
   }
+
   setClub(type='iron'){
     if(this.clubType===type)return;this.clubType=type;
     this.clubHead.geometry.dispose();
     if(type==='driver'){
-      this.clubHead.geometry=new THREE.SphereGeometry(.078,22,16);this.clubHead.scale.set(1.30,.70,1.45);this.clubHead.material=this.ink;
+      this.clubHead.geometry=new THREE.SphereGeometry(.068,24,18);this.clubHead.scale.set(1.28,.66,1.42);this.clubHead.material=this.ink;
     }else if(type==='wood'){
-      this.clubHead.geometry=new THREE.SphereGeometry(.070,22,16);this.clubHead.scale.set(1.22,.67,1.35);this.clubHead.material=this.ink;
+      this.clubHead.geometry=new THREE.SphereGeometry(.061,22,16);this.clubHead.scale.set(1.20,.64,1.34);this.clubHead.material=this.ink;
     }else if(type==='hybrid'){
-      this.clubHead.geometry=new THREE.SphereGeometry(.062,20,14);this.clubHead.scale.set(1.12,.64,1.26);this.clubHead.material=this.ink;
+      this.clubHead.geometry=new THREE.SphereGeometry(.055,20,14);this.clubHead.scale.set(1.10,.61,1.24);this.clubHead.material=this.ink;
     }else if(type==='putter'){
       this.clubHead.geometry=new THREE.BoxGeometry(.13,.045,.22);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.ink;
     }else{
-      this.clubHead.geometry=new THREE.BoxGeometry(.105,.050,.155);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.steel;
+      this.clubHead.geometry=new THREE.BoxGeometry(.098,.045,.146);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.steel;
     }
   }
   _v(a){return new THREE.Vector3(a[0],a[1],a[2]);}
@@ -165,29 +202,40 @@ export class LoftGolferRig{
   setPose(t,level){
     t=clamp(t,0,1);const p=this._poseAt(t,level);
     const V=k=>this._v(p[k]);
-    this.pelvis.position.copy(V('pelvis'));this.pelvis.scale.set(.96,.72,.76);
-    this.torso.position.copy(V('torso'));this.torso.scale.set(1.02,1.0,.76);this.torso.rotation.z=-.11;
-    this.chest.position.copy(V('chest'));this.chest.scale.set(.96,.58,.78);this.chest.rotation.z=-.08;
-    this.waist.position.copy(V('torso').lerp(V('pelvis'),.68));this.waist.scale.set(.94,.54,.74);
-    this.belt.position.copy(V('pelvis')).add(new THREE.Vector3(0,.09,0));this.belt.scale.set(1,1,.78);
+    this.pelvis.position.copy(V('pelvis'));this.pelvis.scale.set(.78,1.0,1.02);
+    this.torso.position.copy(V('torso'));this.torso.scale.set(.80,1.0,1.05);this.torso.rotation.z=-.11;
+    this.chest.position.copy(V('chest'));this.chest.scale.set(.78,1.0,1.06);this.chest.rotation.z=-.08;
+    this.waist.position.copy(V('torso').lerp(V('pelvis'),.68));this.waist.scale.set(.80,1.0,.98);
+    this.belt.position.copy(V('pelvis')).add(new THREE.Vector3(0,.085,0));this.belt.scale.set(.80,1,.98);
 
-    this._between(this.thighL,V('hipL'),V('kneeL'),.092);this._between(this.thighR,V('hipR'),V('kneeR'),.092);
-    this._between(this.calfL,V('kneeL'),V('ankleL'),.074);this._between(this.calfR,V('kneeR'),V('ankleR'),.074);
-    this.shoeL.position.copy(V('ankleL')).add(new THREE.Vector3(.09,-.04,0));this.shoeR.position.copy(V('ankleR')).add(new THREE.Vector3(.09,-.04,0));
+    this._between(this.thighL,V('hipL'),V('kneeL'),.086);this._between(this.thighR,V('hipR'),V('kneeR'),.086);
+    this._between(this.calfL,V('kneeL'),V('ankleL'),.071);this._between(this.calfR,V('kneeR'),V('ankleR'),.071);
+    this.kneeL.position.copy(V('kneeL'));this.kneeR.position.copy(V('kneeR'));
+    this.shoeL.position.copy(V('ankleL')).add(new THREE.Vector3(.085,-.035,0));this.shoeR.position.copy(V('ankleR')).add(new THREE.Vector3(.085,-.035,0));
 
-    this._between(this.sleeveL,V('shoulderL'),V('sleeveL'),.084);this._between(this.sleeveR,V('shoulderR'),V('sleeveR'),.084);
-    this._between(this.upperL,V('sleeveL'),V('elbowL'),.058);this._between(this.upperR,V('sleeveR'),V('elbowR'),.058);
-    this._between(this.foreL,V('elbowL'),V('handL'),.050);this._between(this.foreR,V('elbowR'),V('handR'),.050);
+    this._between(this.sleeveL,V('shoulderL'),V('sleeveL'),.073);this._between(this.sleeveR,V('shoulderR'),V('sleeveR'),.073);
+    this._between(this.upperL,V('sleeveL'),V('elbowL'),.052);this._between(this.upperR,V('sleeveR'),V('elbowR'),.052);
+    this._between(this.foreL,V('elbowL'),V('handL'),.046);this._between(this.foreR,V('elbowR'),V('handR'),.046);
+    this.elbowL.position.copy(V('elbowL'));this.elbowR.position.copy(V('elbowR'));
     this.handL.position.copy(V('handL'));this.handR.position.copy(V('handR'));
 
     const H=V('head');
-    this.neck.position.copy(H).add(new THREE.Vector3(-.04,-.19,0));this.neck.rotation.z=-.08;
-    this.head.position.copy(H);this.jaw.position.copy(H).add(new THREE.Vector3(.03,-.08,0));this.nose.position.copy(H).add(new THREE.Vector3(.133,.005,0));
-    this.earL.position.copy(H).add(new THREE.Vector3(-.02,0,-.121));this.earR.position.copy(H).add(new THREE.Vector3(-.02,0,.121));
-    this.hairMass.position.copy(H).add(new THREE.Vector3(-.02,.085,0));this.cap.position.copy(H).add(new THREE.Vector3(-.01,.12,0));this.brim.position.copy(H).add(new THREE.Vector3(.125,.10,0));this.brim.rotation.z=-.04;
-    this.capSignal.position.copy(H).add(new THREE.Vector3(.095,.138,-.038));
-    this.eyeL.position.copy(H).add(new THREE.Vector3(.128,.023,-.043));this.eyeR.position.copy(H).add(new THREE.Vector3(.128,.023,.043));
-    this.placket.position.copy(V('chest')).add(new THREE.Vector3(.27,-.05,0));this.placket.rotation.z=-.10;
+    this.neck.position.copy(H).add(new THREE.Vector3(-.035,-.178,0));this.neck.rotation.z=-.08;
+    this.head.position.copy(H);
+    this.jaw.position.copy(H).add(new THREE.Vector3(.024,-.074,0));
+    this.nose.position.copy(H).add(new THREE.Vector3(.116,.002,0));
+    this.earL.position.copy(H).add(new THREE.Vector3(-.015,-.002,-.112));this.earR.position.copy(H).add(new THREE.Vector3(-.015,-.002,.112));
+
+    this.hairMass.position.copy(H).add(new THREE.Vector3(-.018,.080,0));
+    this.cap.position.copy(H).add(new THREE.Vector3(-.010,.126,0));
+    this.capDome.position.copy(H).add(new THREE.Vector3(-.010,.166,0));
+    this.brim.position.copy(H).add(new THREE.Vector3(.112,.120,0));this.brim.rotation.z=-.035;
+    this.capSignal.position.copy(H).add(new THREE.Vector3(.083,.168,-.034));
+
+    this.eyeL.position.copy(H).add(new THREE.Vector3(.113,.020,-.040));this.eyeR.position.copy(H).add(new THREE.Vector3(.113,.020,.040));
+    this.browL.position.copy(H).add(new THREE.Vector3(.112,.040,-.041));this.browR.position.copy(H).add(new THREE.Vector3(.112,.040,.041));
+    this.collar.position.copy(V('chest')).add(new THREE.Vector3(-.015,.185,0));
+    this.chestSignal.position.copy(V('chest')).add(new THREE.Vector3(.202,.02,-.055));
 
     const h1=V('handL'),h2=V('handR'),gripCenter=h1.clone().lerp(h2,.5),club=V('club'),gripEnd=gripCenter.clone().lerp(club,.17);
     this._between(this.grip,gripCenter,gripEnd,.027);this._between(this.shaft,gripEnd,club,.013);this.clubHead.position.copy(club);
