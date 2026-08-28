@@ -32,7 +32,7 @@ export class LoftCamera{
 
     this.resultOrbit=0;this.resultOrbitT=0;
     this.resultPitch=.18;this.resultPitchT=.18;
-    this.resultDist=7.1;this.resultDistT=7.1;
+    this.resultDist=5.9;this.resultDistT=5.9;
 
     this.lockedAimYaw=0;
     this.impactKick=0;
@@ -69,7 +69,7 @@ export class LoftCamera{
     if(toPin.lengthSq()>.01)this.flightHeading=Math.atan2(toPin.x,-toPin.z);
     this.resultOrbit=this.resultOrbitT=0;
     this.resultPitch=this.resultPitchT=.18;
-    this.resultDist=this.resultDistT=7.1;
+    this.resultDist=this.resultDistT=5.9;
     this._enter(CAMERA_MODE.RESULT);
   }
 
@@ -95,7 +95,7 @@ export class LoftCamera{
 
   resultZoom(delta){
     if(this.mode!==CAMERA_MODE.RESULT)return;
-    this.resultDistT=clamp(this.resultDistT*Math.exp(-delta*.0017),5.9,9.1);
+    this.resultDistT=clamp(this.resultDistT*Math.exp(-delta*.0017),4.8,8.0);
   }
 
   _setFov(target,dt){
@@ -212,7 +212,7 @@ export class LoftCamera{
     this.resultOrbit=smooth(this.resultOrbit,this.resultOrbitT,8.5,dt);
     this.resultPitch=smooth(this.resultPitch,this.resultPitchT,8.5,dt);
     this.resultDist=smooth(this.resultDist,this.resultDistT,9,dt);
-    this._setFov(39.0,dt);
+    this._setFov(38.0,dt);
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):this.flightHeading;
@@ -223,11 +223,11 @@ export class LoftCamera{
 
     const desiredPos=ball.clone()
       .addScaledVector(forward,-this.resultDist)
-      .add(new THREE.Vector3(0,2.15+this.resultPitch*3.0,0));
+      .add(new THREE.Vector3(0,1.65+this.resultPitch*2.45,0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(pinDir,1.55)
-      .add(new THREE.Vector3(0,.13,0));
+      .addScaledVector(pinDir,.95)
+      .add(new THREE.Vector3(0,.10,0));
 
     this._safeY(desiredPos,1.08);
     this._commit(desiredPos,desiredLook,7.4,8.6,dt);
