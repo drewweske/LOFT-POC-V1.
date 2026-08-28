@@ -286,7 +286,7 @@ canvas.addEventListener('pointerdown',e=>{
   let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
   gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:performance.now(),lastT:performance.now(),load:0,moved:false,impact:false};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
-  if(type==='swing'){state.interaction='swing';document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
+  if(type==='swing'){state.interaction='swing';state.swingPhase=0;document.getElementById('app')?.classList.add('swing-focus');cam.beginSwing(aimYaw());$('swing-meter').classList.add('show');showContext('LOAD',9999);$('tip').style.opacity='0';}
 });
 canvas.addEventListener('pointermove',e=>{
   const p=pointers.get(e.pointerId);if(!p)return;e.preventDefault();p.px=p.x;p.py=p.y;p.x=e.clientX;p.y=e.clientY;
@@ -314,9 +314,15 @@ canvas.addEventListener('pointermove',e=>{
     const now=performance.now();if(e.clientY>gesture.deep){gesture.deep=e.clientY;gesture.deepT=now;}
     const r=canvas.getBoundingClientRect(),load=clamp((gesture.deep-gesture.sy)/(r.height*.265),0,1.08);gesture.load=Math.max(gesture.load,load);$('swing-fill').style.height=(clamp(load,0,1)*100)+'%';
     const reversal=e.clientY<gesture.deep-10;
-    if(!reversal){golfer.setPose(clamp(load,0,1)*.38,LEVELS[state.level]);showContext(load>.76?'TURN':'LOAD',9999);}
-    else{
-      const through=clamp((gesture.deep-e.clientY)/(r.height*.255),0,1.18);golfer.setPose(.38+through*.22,LEVELS[state.level]);showContext('STRIKE',9999);
+    if(!reversal){
+      state.swingPhase=clamp(load,0,1)*.38;
+      golfer.setPose(state.swingPhase,LEVELS[state.level]);
+      showContext(load>.76?'TURN':'LOAD',9999);
+    }else{
+      const through=clamp((gesture.deep-e.clientY)/(r.height*.255),0,1.18);
+      state.swingPhase=.38+through*.22;
+      golfer.setPose(state.swingPhase,LEVELS[state.level]);
+      showContext('STRIKE',9999);
       if(e.clientY<gesture.sy-16&&gesture.load>.35){
         const frameDt=Math.max(8,now-gesture.lastT),pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt,transition=Math.max(70,now-gesture.deepT),L=LEVELS[state.level];
         const tempo=clamp(100-Math.abs(238-transition)*.18+Math.sin(now*.015)*L.tempoJitter*10,42,100);
@@ -331,7 +337,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('PULL FARTHER · DRIVE THROUGH');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip('PULL FARTHER · DRIVE THROUGH');}
   }
   gesture=null;
 }
