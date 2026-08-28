@@ -7,7 +7,7 @@ import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
 import {ROUND_HOLES,ROWAN_SCORES,holeYards,scoreName,relativeScore} from './round.js';
-import {surfaceDisplay,surfacePhysics} from './surfaces.js';
+import {surfaceDisplay} from './surfaces.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -227,6 +227,7 @@ function updateLine(){
   }
   lineGeometry.attributes.position.needsUpdate=true;
   halo.position.copy(end);
+  halo.scale.setScalar(isPutting()?.42:1);
 
   // Camera-driven aiming rotates the entire address relationship around the ball.
   // Keep the model's local address ball (.46m right of stance) pinned to the
@@ -587,7 +588,12 @@ canvas.addEventListener('pointerdown',e=>{
     const a=[...pointers.values()];gesture={type:'pinch',lastDist:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),lastMid:{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}};$('tip').style.opacity='0';return;
   }
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
-  let type='orbit';if(state.phase==='ready'&&dh<92)type='line';else if(state.phase==='ready'&&db<116)type='swing';
+  let type='orbit';
+  const ballHitRadius=isPutting()?150:116;
+  // Ball intent wins when the target halo overlaps a short putt. This removes
+  // the maddening near-cup ambiguity where touching the ball could grab The Line.
+  if(state.phase==='ready'&&db<ballHitRadius)type='swing';
+  else if(state.phase==='ready'&&dh<92)type='line';
   const now=performance.now();
   gesture={type,id:e.pointerId,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,deep:e.clientY,deepT:now,startT:now,lastT:now,load:0,moved:false,impact:false,setCue:false,transitionCue:false,releaseCue:false,paceCue:false,putt:isPutting(),shortGame:isShortGame(),puttPaceFeet:0,samples:[{x:e.clientX,y:e.clientY,t:now}]};
   if(type==='line'){showContext('THE LINE',9999);$('tip').style.opacity='0';}
