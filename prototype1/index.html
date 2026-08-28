@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0B0D0D">
+<title>LOFT Prototype 1 — Coastal Ridge</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage"></div>
+
+  <div id="boot">
+    <div class="boot-ball"><i></i></div>
+    <h1>Coastal Ridge</h1>
+    <p>ONE MORE ROUND.</p>
+  </div>
+
+  <div id="hole-intro">
+    <span>COASTAL SERIES · 01</span>
+    <strong>THE RIDGE</strong>
+    <small>PAR 3 · 171 YD</small>
+  </div>
+
+  <header class="hud">
+    <section class="hole">
+      <span>01</span>
+      <strong>PAR 3</strong>
+    </section>
+    <section class="duel">
+      <span>LIVE DUEL</span>
+      <strong>YOU&nbsp;&nbsp;E&nbsp;&nbsp;·&nbsp;&nbsp;ROWAN&nbsp;&nbsp;E</strong>
+    </section>
+    <section class="wind">
+      <span>WIND</span>
+      <strong>7 MPH ↠</strong>
+    </section>
+  </header>
+
+  <button id="club-chip" class="club-chip" type="button" aria-label="Open bag">
+    <b id="club-short">7I</b>
+    <span id="club-carry">160</span>
+  </button>
+
+  <div class="right-tools">
+    <button id="level-chip" type="button">LV 1</button>
+    <button id="camera-reset" type="button" aria-label="Reset camera">⌖</button>
+  </div>
+
+  <div id="level-menu">
+    <button data-level="1" class="active">LV 1 <span>ROOKIE</span></button>
+    <button data-level="10">LV 10 <span>LEARNING</span></button>
+    <button data-level="25">LV 25 <span>PLAYER</span></button>
+    <button data-level="50">LV 50 <span>MASTERED</span></button>
+  </div>
+
+  <div id="context"><span id="context-text">THE LINE</span></div>
+  <div id="tip"><span id="tip-text">Drag to look · pinch to zoom</span></div>
+
+  <div id="swing-meter"><i id="swing-fill"></i></div>
+
+  <div id="bag" aria-hidden="true">
+    <div class="bag-panel">
+      <div class="bag-head">
+        <div><span>YOUR BAG</span><strong>Choose the object.</strong></div>
+        <button id="bag-close" type="button">×</button>
+      </div>
+      <div id="club-grid"></div>
+    </div>
+  </div>
+
+  <div id="result">
+    <div class="result-card">
+      <div class="result-copy">
+        <span id="result-kicker">PURE · 7I</span>
+        <strong id="result-head">8 FT</strong>
+        <small id="result-sub">ON GREEN · PIN HIGH</small>
+      </div>
+      <button id="again" type="button">ONE MORE</button>
+    </div>
+  </div>
+
+  <div id="fatal"><strong>LOFT could not start.</strong><p id="fatal-text"></p><button onclick="location.reload()">RELOAD</button></div>
+</div>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
