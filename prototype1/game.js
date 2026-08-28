@@ -121,7 +121,7 @@ function showHoleIntro(){
 function syncTargetFromAim(){
   const x=TEE.x+Math.sin(state.aimYaw)*state.targetDistance;
   const z=TEE.z-Math.cos(state.aimYaw)*state.targetDistance;
-  state.target.set(x,playingHeight(x,z)+.04,z);
+  state.target.set(x,terrainHeight(x,z)+.04,z);
 }
 function defaultTarget(resetAim=true){
   const c=club();
@@ -164,7 +164,7 @@ core.rotation.x=-Math.PI/2;core.position.y=.018;halo.add(core);
 
 function updateLine(){
   const start=ballGroup.position.clone();
-  const end=state.target.clone();end.y=playingHeight(end.x,end.z)+.04;
+  const end=state.target.clone();end.y=terrainHeight(end.x,end.z)+.04;
   const c=club();
   const mid=start.clone().lerp(end,.52);
   if(c.head==='putter'){
