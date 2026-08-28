@@ -35,8 +35,12 @@
     </section>
   </header>
 
-  <section id="course-map" class="course-map" aria-label="Coastal Ridge topographic course map">
-    <div class="map-head"><span>THE RIDGE · 01</span><b id="map-distance">160 YD</b></div>
+  <section id="course-map" class="course-map" aria-label="Coastal Ridge topographic course map" aria-expanded="false">
+    <div class="map-head">
+      <span>THE RIDGE · 01</span>
+      <b id="map-distance">160 YD</b>
+      <button id="map-expand" type="button" aria-label="Expand course map">↗</button>
+    </div>
     <svg viewBox="0 0 94 120" role="img" aria-label="Bird's-eye map of the hole">
       <defs>
         <clipPath id="mapClip"><rect x="2" y="2" width="90" height="116" rx="17"/></clipPath>
@@ -63,7 +67,8 @@
         <g transform="translate(49 15)" class="map-pin"><line x1="0" y1="5" x2="0" y2="-5"/><path d="M0 -5 L5 -3 L0 -1 Z"/></g>
       </g>
     </svg>
-    <div class="map-foot"><span id="map-lie">TEE</span><span>YOU E · ROWAN E</span></div>
+    <div class="map-foot"><span id="map-lie">TEE</span><span id="map-foot-right">YOU E · ROWAN E</span></div>
+    <div class="map-hint">DRAG MAP TO AIM · TAP × TO CLOSE</div>
   </section>
 
   <button id="club-chip" class="club-chip" type="button" aria-label="Open bag">
