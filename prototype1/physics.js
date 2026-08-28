@@ -66,7 +66,8 @@ export class GolfPhysics{
       bounced:false,
       holed:false,
       lipTouched:false,
-      lastSurface:null
+      lastSurface:null,
+      surfaceChanged:null
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -88,7 +89,8 @@ export class GolfPhysics{
       bounced:false,
       holed:false,
       lipTouched:false,
-      lastSurface:this.surfaceAt(position.x,position.z)
+      lastSurface:this.surfaceAt(position.x,position.z),
+      surfaceChanged:null
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -219,8 +221,10 @@ export class GolfPhysics{
       // Crossing from one cut into another has a physical bite. A ball leaving
       // fairway for rough loses momentum immediately; entering sand is dramatic.
       if(s.lastSurface&&surface!==s.lastSurface){
+        const from=s.lastSurface;
         const retain=material.transitionRetain;
         s.vel.x*=retain;s.vel.z*=retain;
+        s.surfaceChanged={from,to:surface};
       }
       s.lastSurface=surface;
 
