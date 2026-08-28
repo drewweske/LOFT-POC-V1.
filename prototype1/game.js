@@ -71,6 +71,48 @@ const state={
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
 function aimYaw(){return state.aimYaw;}
+function pinDistanceYards(){return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)/YARD;}
+function scoreToParText(strokes=state.strokes,par=holeDef.par){const d=strokes-par;return d===0?'E':d>0?'+'+d:String(d);}
+
+function updateHoleHUD(){
+  const nextStroke=state.strokes+1;
+  $('hole-number').textContent=String(holeDef.number).padStart(2,'0')+' · STROKE '+nextStroke;
+  $('hole-par').textContent='PAR '+holeDef.par;
+  $('wind-value').textContent=holeDef.windLabel;
+  $('intro-series').textContent=holeDef.series+' · '+String(holeDef.number).padStart(2,'0');
+  $('intro-name').textContent=holeDef.name;
+  $('intro-meta').textContent='PAR '+holeDef.par+' · '+holeYards(holeDef)+' YD';
+  const mapHead=document.querySelector('.map-head span');
+  if(mapHead)mapHead.textContent=holeDef.name+' · '+String(holeDef.number).padStart(2,'0');
+  const mapFoot=document.querySelector('.map-foot span:last-child');
+  if(mapFoot){
+    const total=state.holeScores.reduce((a,b,i)=>a+(b||0),0);
+    const pars=ROUND_HOLES.slice(0,state.holeScores.length).reduce((a,h)=>a+h.par,0);
+    mapFoot.textContent='YOU '+(state.holeScores.length?relativeScore(total,pars):'E')+' · ROWAN E';
+  }
+}
+
+function chooseAutoClub(){
+  const lie=surfaceAt(TEE.x,TEE.z);
+  const y=pinDistanceYards();
+  let id='driver';
+  if(lie==='green')id='putter';
+  else if(y<=92)id='sw';
+  else if(y<=118)id='pw';
+  else if(y<=140)id='iron9';
+  else if(y<=170)id='iron7';
+  else if(y<=205)id='hybrid5';
+  else if(y<=232)id='wood3';
+  state.clubId=id;
+  const c=club();golfer?.setClub?.(c.head);
+  syncBag?.();
+}
+
+function showHoleIntro(){
+  $('hole-intro').style.opacity='1';
+  clearTimeout(showHoleIntro.timer);
+  showHoleIntro.timer=setTimeout(()=>$('hole-intro').style.opacity='0',1450);
+}
 
 function syncTargetFromAim(){
   const x=TEE.x+Math.sin(state.aimYaw)*state.targetDistance;
