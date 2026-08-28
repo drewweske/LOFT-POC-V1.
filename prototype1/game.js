@@ -98,7 +98,7 @@ const linePositions=new Float32Array((LINE_STEPS+1)*3);
 const lineGeometry=new THREE.BufferGeometry();
 lineGeometry.setAttribute('position',new THREE.BufferAttribute(linePositions,3));
 const lineMat=new THREE.LineBasicMaterial({color:COLORS.cream,transparent:true,opacity:.38,depthWrite:false});
-const lineMesh=new THREE.Line(lineGeometry,lineMat);scene.add(lineMesh);
+const lineMesh=new THREE.Line(lineGeometry,lineMat);lineMesh.frustumCulled=false;scene.add(lineMesh);
 const halo=new THREE.Group();scene.add(halo);
 const ring=new THREE.Mesh(new THREE.TorusGeometry(.82,.038,8,52),new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.82}));
 ring.rotation.x=Math.PI/2;halo.add(ring);
@@ -123,7 +123,6 @@ function updateLine(){
     const j=i*3;linePositions[j]=x;linePositions[j+1]=y;linePositions[j+2]=z;
   }
   lineGeometry.attributes.position.needsUpdate=true;
-  lineGeometry.computeBoundingSphere();
   halo.position.copy(end);
 
   // Camera-driven aiming rotates the entire address relationship around the ball.
