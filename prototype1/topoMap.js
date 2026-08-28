@@ -56,7 +56,7 @@ export class LoftTopoMap{
     return this.unproject(x,y);
   }
 
-  update({ball,target,pin,surface='TEE'}){
+  update({ball,target,pin,surface='TEE',distanceUnit='YD'}){
     const p=this.project(ball.x,ball.z);
     const t=this.project(target.x,target.z);
     this.player?.setAttribute('transform',`translate(${p.x} ${p.y})`);
@@ -66,8 +66,10 @@ export class LoftTopoMap{
       this.aim.setAttribute('x2',t.x);this.aim.setAttribute('y2',t.y);
     }
     if(this.distance){
-      const yards=Math.hypot(target.x-ball.x,target.z-ball.z)/.9144;
-      this.distance.textContent=Math.round(yards)+' YD';
+      const meters=Math.hypot(target.x-ball.x,target.z-ball.z);
+      this.distance.textContent=distanceUnit==='FT'
+        ? Math.max(1,Math.round(meters*3.28084))+' FT'
+        : Math.max(1,Math.round(meters/.9144))+' YD';
     }
     if(this.lie)this.lie.textContent=surface.toUpperCase();
   }
