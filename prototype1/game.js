@@ -6,7 +6,7 @@ import {GolfPhysics} from './physics.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
-import {ROUND_HOLES,holeYards,scoreName,relativeScore} from './round.js';
+import {ROUND_HOLES,ROWAN_SCORES,holeYards,scoreName,relativeScore} from './round.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -88,9 +88,11 @@ function updateHoleHUD(){
   if(mapHead)mapHead.textContent=holeDef.name+' · '+String(holeDef.number).padStart(2,'0');
   const mapFoot=document.querySelector('.map-foot span:last-child');
   if(mapFoot){
-    const total=state.holeScores.reduce((a,b,i)=>a+(b||0),0);
-    const pars=ROUND_HOLES.slice(0,state.holeScores.length).reduce((a,h)=>a+h.par,0);
-    mapFoot.textContent='YOU '+(state.holeScores.length?relativeScore(total,pars):'E')+' · ROWAN E';
+    const played=state.holeScores.length;
+    const total=state.holeScores.reduce((a,b)=>a+(b||0),0);
+    const rowan=ROWAN_SCORES.slice(0,played).reduce((a,b)=>a+b,0);
+    const pars=ROUND_HOLES.slice(0,played).reduce((a,h)=>a+h.par,0);
+    mapFoot.textContent='YOU '+(played?relativeScore(total,pars):'E')+' · ROWAN '+(played?relativeScore(rowan,pars):'E');
   }
 }
 
@@ -421,7 +423,9 @@ function showRoundEnd(){
   const total=state.holeScores.reduce((a,b)=>a+b,0);
   const parTotal=ROUND_HOLES.reduce((a,h)=>a+h.par,0);
   $('round-score').textContent=relativeScore(total,parTotal);
-  $('round-total').textContent=total+' STROKES · PAR '+parTotal;
+  const rowanTotal=ROWAN_SCORES.reduce((a,b)=>a+b,0);
+  const match=total<rowanTotal?'WIN · '+(rowanTotal-total):total>rowanTotal?'DOWN · '+(total-rowanTotal):'TIED';
+  $('round-total').textContent=total+' STROKES · PAR '+parTotal+' · '+match;
   $('scorecard').innerHTML=ROUND_HOLES.map((h,i)=>{
     const s=state.holeScores[i]??'—';
     return '<div class="score-hole"><span>'+String(h.number).padStart(2,'0')+' · PAR '+h.par+'</span><b>'+s+'</b><small>'+(typeof s==='number'?scoreName(s,h.par):h.name)+'</small></div>';
