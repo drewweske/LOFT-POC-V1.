@@ -12,25 +12,26 @@
   <div id="stage"></div>
 
   <div id="boot">
-    <div class="boot-ball"><i></i></div>
-    <h1>Coastal Ridge</h1>
+    <img class="boot-ball-official" src="./assets/loft-ball-official.webp" alt="">
+    <img class="boot-wordmark-official" src="./assets/loft-wordmark-official.webp" alt="LOFT">
+    <span>COASTAL RIDGE · FIRST ROUND</span>
     <p>ONE MORE ROUND.</p>
   </div>
 
   <div id="hole-intro">
-    <span>COASTAL SERIES · 01</span>
-    <strong>THE RIDGE</strong>
-    <small>PAR 3 · 171 YD</small>
+    <span id="intro-series">COASTAL SERIES · 01</span>
+    <strong id="intro-name">THE RIDGE</strong>
+    <small id="intro-meta">PAR 3 · 171 YD</small>
   </div>
 
   <header class="hud">
     <section class="hole">
-      <span>01</span>
-      <strong>PAR 3</strong>
+      <span id="hole-number">01 · STROKE 1</span>
+      <strong id="hole-par">PAR 3</strong>
     </section>
     <section class="wind">
       <span>WIND</span>
-      <strong>7 MPH ↠</strong>
+      <strong id="wind-value">7 MPH ↠</strong>
     </section>
   </header>
 
@@ -104,7 +105,18 @@
         <strong id="result-head">8 FT</strong>
         <small id="result-sub">ON GREEN · PIN HIGH</small>
       </div>
-      <button id="again" type="button">ONE MORE</button>
+      <button id="again" type="button">NEXT SHOT</button>
+    </div>
+  </div>
+
+  <div id="round-end">
+    <div class="round-end-card">
+      <img src="./assets/loft-wordmark-official.webp" alt="LOFT" class="round-wordmark">
+      <span>COASTAL RIDGE · 3 HOLES</span>
+      <strong id="round-score">E</strong>
+      <small id="round-total">10 STROKES · PAR 10</small>
+      <div id="scorecard"></div>
+      <button id="run-it-back" type="button">ONE MORE ROUND</button>
     </div>
   </div>
 
