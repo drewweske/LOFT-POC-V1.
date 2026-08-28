@@ -68,7 +68,8 @@ const state={
   ballCompression:0,
   hitStop:0,
   cupSink:0,
-  cupSinkStartY:0
+  cupSinkStartY:0,
+  currentLie:'tee'
 };
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
@@ -97,7 +98,7 @@ function updateHoleHUD(){
 }
 
 function chooseAutoClub(){
-  const lie=surfaceAt(TEE.x,TEE.z);
+  const lie=state.currentLie||surfaceAt(TEE.x,TEE.z);
   const y=pinDistanceYards();
   let id='driver';
   if(lie==='green')id='putter';
@@ -309,7 +310,7 @@ function classify(q,path){if(Math.abs(path)>5.3)return path>0?'PUSH':'PULL';if(q
 
 function launchShot(metrics){
   if(state.phase!=='ready')return;
-  const c=club(),L=LEVELS[state.level],lie=state.strokes===0?'tee':surfaceAt(TEE.x,TEE.z);
+  const c=club(),L=LEVELS[state.level],lie=state.currentLie||surfaceAt(TEE.x,TEE.z);
 
   // LOFT Stroke quality is not one hidden power number. A great strike requires
   // rhythm, centered path, decisive release and useful load.
@@ -367,13 +368,14 @@ function launchShot(metrics){
   showContext(state.shot.label,q>.94?780:560);
 }
 
-function prepareShotAt(position,{penalty=false}={}){
+function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;state.cupSink=0;state.cupSink=0;
   physics.active=false;physics.state=null;
   if(penalty)state.strokes++;
 
   TEE.copy(position);
   TEE.y=terrainHeight(TEE.x,TEE.z)+.052;
+  state.currentLie=lieOverride||surfaceAt(TEE.x,TEE.z);
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
 
   COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
@@ -405,6 +407,7 @@ function startHole(index,{intro=true}={}){
   const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.052,holeDef.tee[1]);
   topo.setHole(originalTee,pin);
   TEE.copy(originalTee);
+  state.currentLie='tee';
 
   COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
   state.aimYaw=COURSE_YAW;state.aimYawTarget=COURSE_YAW;
@@ -478,7 +481,7 @@ function handleResultAction(){
   if(state.resultAction==='continue'){
     prepareShotAt(ballGroup.position.clone());
   }else if(state.resultAction==='waterDrop'){
-    prepareShotAt(TEE.clone(),{penalty:true});
+    prepareShotAt(TEE.clone(),{penalty:true,lieOverride:state.currentLie});
     showContext('DROP · +1',650);
   }else if(state.resultAction==='nextHole'){
     document.getElementById('app')?.classList.add('hole-transition');
@@ -699,7 +702,7 @@ function frame(now){
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
-    const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?(state.strokes===0?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z)):surfaceAt(ballGroup.position.x,ballGroup.position.z);
+    const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?state.currentLie:surfaceAt(ballGroup.position.x,ballGroup.position.z);
     topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface});
     lastMapUpdate=now;
   }
