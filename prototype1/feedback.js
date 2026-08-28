@@ -195,6 +195,18 @@ export class LoftFeedback{
     this._vibrate(score<0?[7,18,10,24,16]:[8,18,12]);
   }
 
+  surfaceTransition(to,speed=0){
+    const s=clamp(speed/8,0,1);
+    if(to==='rough'){
+      this._noise({freq:820,q:.55,dur:.060,gain:.010+.016*s});
+    }else if(to==='sand'){
+      this._noise({freq:560,q:.48,dur:.085,gain:.018+.022*s});
+      this._vibrate(3);
+    }else if(to==='green'||to==='fringe'){
+      this._tone(126,84,.040,.008+.008*s,'sine');
+    }
+  }
+
   land({surface='fairway',position,quality=.8}){
     this.landLife=1;
     this.landRing.position.copy(position);this.landRing.position.y+=.018;
