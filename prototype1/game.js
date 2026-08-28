@@ -347,27 +347,128 @@ function launchShot(metrics){
   showContext(state.shot.label,q>.94?780:560);
 }
 
+function prepareShotAt(position,{penalty=false}={}){
+  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;
+  physics.active=false;physics.state=null;
+  if(penalty)state.strokes++;
+
+  TEE.copy(position);
+  TEE.y=terrainHeight(TEE.x,TEE.z)+.085;
+  ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
+
+  COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
+  state.aimYaw=COURSE_YAW;state.aimYawTarget=COURSE_YAW;
+
+  chooseAutoClub();
+  defaultTarget(false);
+  golfer.setPose(0,LEVELS[state.level]);
+  feedback.clear();
+
+  lineMesh.visible=true;halo.visible=true;
+  $('result').classList.remove('show');
+  document.getElementById('app')?.classList.remove('swing-focus');
+  cam.resetAim();
+  updateLine();updateHoleHUD();updateTip();
+}
+
+function startHole(index,{intro=true}={}){
+  holeIndex=index;state.holeIndex=index;holeDef=ROUND_HOLES[index];
+  state.strokes=0;state.phase='ready';state.shot=null;state.roundComplete=false;
+  state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;
+  physics.active=false;physics.state=null;
+
+  pin.set(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
+  wind.set(holeDef.wind[0],0,holeDef.wind[1]);
+  physics.wind.copy(wind);physics.setCup(pin);
+  world.setPin(pin);
+
+  const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.085,holeDef.tee[1]);
+  topo.setHole(originalTee,pin);
+  TEE.copy(originalTee);
+
+  COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
+  state.aimYaw=COURSE_YAW;state.aimYawTarget=COURSE_YAW;
+  chooseAutoClub();defaultTarget(false);
+
+  ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
+  golfer.setPose(0,LEVELS[state.level]);
+  feedback.clear();lineMesh.visible=true;halo.visible=true;
+  $('result').classList.remove('show');$('round-end').classList.remove('show');
+  document.getElementById('app')?.classList.remove('swing-focus','hole-transition');
+  cam.resetAim();updateLine();updateHoleHUD();updateTip();
+  if(intro)showHoleIntro();
+}
+
+function showRoundEnd(){
+  state.roundComplete=true;
+  const total=state.holeScores.reduce((a,b)=>a+b,0);
+  const parTotal=ROUND_HOLES.reduce((a,h)=>a+h.par,0);
+  $('round-score').textContent=relativeScore(total,parTotal);
+  $('round-total').textContent=total+' STROKES · PAR '+parTotal;
+  $('scorecard').innerHTML=ROUND_HOLES.map((h,i)=>{
+    const s=state.holeScores[i]??'—';
+    return '<div class="score-hole"><span>'+String(h.number).padStart(2,'0')+' · PAR '+h.par+'</span><b>'+s+'</b><small>'+(typeof s==='number'?scoreName(s,h.par):h.name)+'</small></div>';
+  }).join('');
+  $('round-end').classList.add('show');
+}
+
 function finishShot(){
-  if(state.phase==='result')return;
+  if(state.phase==='result'||state.phase==='round-end')return;
+  const holed=Boolean(physics.state?.holed);
   state.phase='result';
   cam.beginResult(ballGroup.position,pin);
+
   const feet=Math.hypot(ballGroup.position.x-pin.x,ballGroup.position.z-pin.z)*3.28084;
-  const surface=surfaceAt(ballGroup.position.x,ballGroup.position.z);
+  const surface=holed?'cup':surfaceAt(ballGroup.position.x,ballGroup.position.z);
   $('result-kicker').textContent=state.shot.label+' · '+state.shot.club;
-  if(surface==='water'){$('result-head').textContent='WATER';$('result-sub').textContent='MISSED THE LINE · COASTAL SHELF';}
-  else if(feet<2.5){$('result-head').textContent='TAP-IN';$('result-sub').textContent='INSIDE 3 FT · '+surface.toUpperCase();}
-  else if(feet<45){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent=(feet<12?'DIALED':'ON '+surface.toUpperCase())+' · '+(ballGroup.position.z<pin.z?'LONG':'SHORT');}
-  else{$('result-head').textContent=Math.round(feet/3)+' YDS';$('result-sub').textContent='FROM PIN · '+surface.toUpperCase();}
+
+  if(holed){
+    state.holeScores[holeIndex]=state.strokes;
+    feedback.cup?.({position:pin,score:state.strokes-holeDef.par});
+    $('result-kicker').textContent='HOLE '+String(holeDef.number).padStart(2,'0')+' · '+state.strokes+' STROKE'+(state.strokes===1?'':'S');
+    $('result-head').textContent=scoreName(state.strokes,holeDef.par);
+    $('result-sub').textContent=scoreToParText()+' · '+holeDef.name;
+    $('again').textContent=holeIndex<ROUND_HOLES.length-1?'NEXT HOLE':'FINISH ROUND';
+    state.resultAction=holeIndex<ROUND_HOLES.length-1?'nextHole':'finishRound';
+    showContext('IN THE HOLE',900);
+    setTimeout(()=>$('result').classList.add('show'),620);
+    updateHoleHUD();return;
+  }
+
+  if(surface==='water'){
+    $('result-head').textContent='WATER';
+    $('result-sub').textContent='STROKE + DISTANCE · +1';
+    $('again').textContent='DROP +1';
+    state.resultAction='waterDrop';
+  }else{
+    if(feet<2.5){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent='AT THE CUP · FINISH IT';}
+    else if(feet<45){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent=(feet<12?'DIALED':'ON '+surface.toUpperCase())+' · '+(ballGroup.position.z<pin.z?'LONG':'SHORT');}
+    else{$('result-head').textContent=Math.round(feet/3)+' YDS';$('result-sub').textContent='TO PIN · '+surface.toUpperCase();}
+    $('again').textContent='NEXT SHOT';
+    state.resultAction='continue';
+  }
   $('result').classList.add('show');updateTip();
 }
-function resetShot(){
-  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;physics.active=false;physics.state=null;
-  ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);
-  golfer.group.position.set(0,terrainHeight(0,0),0);golfer.setPose(0,LEVELS[state.level]);
-  feedback.clear();ballGroup.scale.set(1,1,1);
-  lineMesh.visible=true;halo.visible=true;$('result').classList.remove('show');document.getElementById('app')?.classList.remove('swing-focus');cam.resetAim();defaultTarget();updateLine();updateTip();
+
+function handleResultAction(){
+  $('result').classList.remove('show');
+  if(state.resultAction==='continue'){
+    prepareShotAt(ballGroup.position.clone());
+  }else if(state.resultAction==='waterDrop'){
+    prepareShotAt(TEE.clone(),{penalty:true});
+    showContext('DROP · +1',650);
+  }else if(state.resultAction==='nextHole'){
+    document.getElementById('app')?.classList.add('hole-transition');
+    setTimeout(()=>startHole(holeIndex+1,{intro:true}),280);
+  }else if(state.resultAction==='finishRound'){
+    state.phase='round-end';showRoundEnd();
+  }
 }
-$('again').onclick=resetShot;
+$('again').onclick=handleResultAction;
+$('run-it-back').onclick=()=>{
+  state.holeScores=[];state.shotCount=0;state.learned={camera:true,line:true,stroke:true};
+  startHole(0,{intro:true});
+};
 
 const pointers=new Map();
 let gesture=null;
