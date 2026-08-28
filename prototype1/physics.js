@@ -6,8 +6,8 @@ const AIR_DENSITY=1.225;
 const BALL_MASS=.04593;
 const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
-const CUP_RADIUS=.14;
-const CUP_CAPTURE=.105;
+const CUP_RADIUS=.054;
+const CUP_CAPTURE=.047;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class GolfPhysics{
@@ -107,10 +107,14 @@ export class GolfPhysics{
 
     const speed=Math.hypot(s.vel.x,s.vel.z);
     const direct=d<CUP_CAPTURE;
-    const fastCenter=d<CUP_CAPTURE*.66&&speed<3.15;
-    const normalCapture=direct&&speed<2.05;
 
-    if(normalCapture||fastCenter){
+    // Regulation cup is 108 mm diameter. Capture speed falls rapidly toward
+    // the lip: center strikes can fall at a firmer pace, edge strikes must die.
+    const edge=clamp(d/CUP_CAPTURE,0,1);
+    const captureSpeed=1.55-(1.55-.58)*Math.pow(edge,1.65);
+    const normalCapture=direct&&speed<captureSpeed;
+
+    if(normalCapture){
       s.holed=true;s.stopped=true;s.surface='cup';s.vel.set(0,0,0);
       s.pos.set(this.cup.x,this.terrainHeight(this.cup.x,this.cup.z)-.055,this.cup.z);
       return true;
