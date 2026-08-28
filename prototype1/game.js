@@ -6,16 +6,18 @@ import {GolfPhysics} from './physics.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
+import {ROUND_HOLES,holeYards,scoreName,relativeScore} from './round.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const YARD=.9144;
-const PIN_YARDS=171;
-const pin=new THREE.Vector3(2.5,terrainHeight(2.5,-PIN_YARDS*YARD),-PIN_YARDS*YARD);
-const wind=new THREE.Vector3(3.13,0,0);
-const TEE=new THREE.Vector3(.46,terrainHeight(.46,0)+.085,0);
-const COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
+let holeIndex=0;
+let holeDef=ROUND_HOLES[holeIndex];
+let pin=new THREE.Vector3(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
+let wind=new THREE.Vector3(holeDef.wind[0],0,holeDef.wind[1]);
+let TEE=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+.085,holeDef.tee[1]);
+let COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
 
 window.addEventListener('error',e=>{
   $('fatal').classList.add('show');
@@ -43,7 +45,7 @@ sun.position.set(-56,82,38);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048
 sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=105;sun.shadow.camera.bottom=-235;
 scene.add(sun);
 
-buildWorld(scene,pin);
+const world=buildWorld(scene,pin);
 
 const state={
   phase:'ready',
@@ -58,6 +60,10 @@ const state={
   learned:{camera:false,line:false,stroke:false},
   interaction:null,
   shotCount:0,
+  holeIndex:0,
+  strokes:0,
+  holeScores:[],
+  roundComplete:false,
   landingFX:false,
   ballCompression:0,
   hitStop:0
