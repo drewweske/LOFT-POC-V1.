@@ -102,7 +102,7 @@ function chooseAutoClub(){
   else if(y<=92)id='sw';
   else if(y<=118)id='pw';
   else if(y<=140)id='iron9';
-  else if(y<=170)id='iron7';
+  else if(y<=178)id='iron7';
   else if(y<=205)id='hybrid5';
   else if(y<=232)id='wood3';
   state.clubId=id;
