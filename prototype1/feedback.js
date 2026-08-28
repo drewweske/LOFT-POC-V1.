@@ -101,6 +101,13 @@ export class LoftFeedback{
     try{navigator.vibrate?.(pattern);}catch{}
   }
 
+  loadSet(load=.8){
+    const l=clamp(load,0,1.08);
+    this._tone(74,58,.045,.010+.010*l,'sine');
+    this._tone(520,330,.028,.006+.005*l,'triangle',.003);
+    this._vibrate(3);
+  }
+
   transition(load=.75){
     if(this.transitionCooldown>0)return;
     this.transitionCooldown=.08;
