@@ -131,7 +131,7 @@ export function buildWorld(scene,pin){
     const bunkerMat=mat(COLORS.sand,.99);bunkerMat.map=sandTex;
     const b=new THREE.Mesh(g,bunkerMat);b.position.set(x,terrainHeight(x,z)+.009,z);b.receiveShadow=true;world.add(b);
   }
-  BUNKERS.forEach(b=>bunker(b.x,b.z,b.sx*.92,b.sz*.88,b.seed));
+  BUNKERS.forEach(b=>bunker(b.x,b.z,b.sx,b.sz,b.seed));
 
   const water=new THREE.Mesh(new THREE.PlaneGeometry(126,290),new THREE.MeshStandardMaterial({color:COLORS.water,roughness:.32,metalness:.04,transparent:true,opacity:.94}));
   water.rotation.x=-Math.PI/2;water.position.set(94,-.38,-115);world.add(water);
