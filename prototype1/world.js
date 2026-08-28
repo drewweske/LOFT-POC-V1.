@@ -100,12 +100,19 @@ export function buildWorld(scene,pin){
   buildFairway();
 
   const gg=new THREE.CircleGeometry(18,72);gg.rotateX(-Math.PI/2);
+  const gp=gg.attributes.position;
+  for(let i=0;i<gp.count;i++)gp.setY(i,gp.getX(i)*.007+gp.getZ(i)*.0035);
+  gp.needsUpdate=true;gg.computeVertexNormals();
   const greenMat=mat(COLORS.green,.86);greenMat.map=greenTex;
+  const fringeGeo=new THREE.RingGeometry(18.1,20.2,72);fringeGeo.rotateX(-Math.PI/2);
+  const fp=fringeGeo.attributes.position;
+  for(let i=0;i<fp.count;i++)fp.setY(i,fp.getX(i)*.007+fp.getZ(i)*.0035);
+  fp.needsUpdate=true;fringeGeo.computeVertexNormals();
   const fringe=new THREE.Mesh(
-    new THREE.RingGeometry(18.1,20.2,72),
+    fringeGeo,
     new THREE.MeshStandardMaterial({color:0x779269,roughness:.94,transparent:true,opacity:.96})
   );
-  fringe.rotation.x=-Math.PI/2;fringe.scale.set(1.36,1,1);fringe.position.set(pin.x,pin.y+.005,pin.z);fringe.receiveShadow=true;world.add(fringe);
+  fringe.scale.set(1.36,1,1);fringe.position.set(pin.x,pin.y+.005,pin.z);fringe.receiveShadow=true;world.add(fringe);
 
   const green=new THREE.Mesh(gg,greenMat);green.scale.set(1.36,1,1);green.position.set(pin.x,pin.y+.008,pin.z);green.receiveShadow=true;world.add(green);
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.075,40),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
