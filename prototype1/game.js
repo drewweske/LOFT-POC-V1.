@@ -85,11 +85,11 @@ function makeBallBump(){
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2,1);return t;
 }
 
-const creamMat=new THREE.MeshStandardMaterial({color:COLORS.cream,roughness:.73,bumpMap:makeBallBump(),bumpScale:-.032});
+const creamMat=new THREE.MeshStandardMaterial({color:COLORS.cream,roughness:.80,bumpMap:makeBallBump(),bumpScale:-.052});
 const ballGroup=new THREE.Group();scene.add(ballGroup);
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.085,42,30),creamMat);ballMesh.castShadow=true;ballGroup.add(ballMesh);
-const ballSignal=new THREE.Mesh(new THREE.SphereGeometry(.014,14,10),new THREE.MeshStandardMaterial({color:COLORS.orange,roughness:.65}));
-ballSignal.position.set(-.043,-.025,.068);ballGroup.add(ballSignal);
+const ballSignal=new THREE.Mesh(new THREE.SphereGeometry(.013,16,12),new THREE.MeshStandardMaterial({color:COLORS.orange,roughness:.82}));
+ballSignal.position.set(-.038,-.022,.061);ballGroup.add(ballSignal);
 ballGroup.position.copy(TEE);
 
 const golfer=new LoftGolferRig(COLORS);
