@@ -108,6 +108,24 @@ export class LoftFeedback{
     this._vibrate(3);
   }
 
+  paceLock(){
+    if(this.transitionCooldown>0)return;
+    this.transitionCooldown=.11;
+    // A tiny "magnetic" confirmation when the live pace ghost crosses the
+    // chosen landing distance. It is a cue, never an auto-lock.
+    this._tone(610,455,.038,.012,'sine');
+    this._tone(980,720,.026,.007,'triangle',.006);
+    this._vibrate(2);
+  }
+
+  puttTransition(load=.35){
+    if(this.transitionCooldown>0)return;
+    this.transitionCooldown=.06;
+    const l=clamp(load,0,1);
+    this._tone(118,92,.035,.010+.007*l,'sine');
+    this._vibrate(2);
+  }
+
   transition(load=.75){
     if(this.transitionCooldown>0)return;
     this.transitionCooldown=.08;
@@ -125,20 +143,28 @@ export class LoftFeedback{
     const q=clamp(quality,0,1),p=clamp(power,0,1.1);
     this.impactLife=1;
     this.impactRing.position.copy(position);this.impactRing.position.y+=.015;
-    this.impactRing.scale.setScalar(.55);
-    this.impactRing.material.opacity=.62;
+    this.impactRing.scale.setScalar(club==='putter'?.34:.55);
+    this.impactRing.material.opacity=club==='putter'?.42:.62;
     this.impactDot.position.copy(position);this.impactDot.position.y+=.045;
-    this.impactDot.scale.setScalar(.75+.28*q);
-    this.impactDot.material.opacity=.30+.42*q;
+    this.impactDot.scale.setScalar(club==='putter'?.58:(.75+.28*q));
+    this.impactDot.material.opacity=club==='putter'?(.22+.24*q):(.30+.42*q);
 
-    // Three-layer strike: low compression body, metallic face click, air snap.
-    const body=club==='driver'?112:club==='wood'?124:club==='putter'?82:142;
-    const click=club==='driver'?1180:club==='wood'?1320:club==='putter'?560:1760;
-    this._tone(body,58,.105,.055+.035*p,'sine');
-    this._tone(click,click*.34,.055,.045+.075*q,'triangle',.002);
-    this._noise({freq:1800+2200*q,q:.72,dur:.065,gain:.025+.050*q,delay:.001});
-
-    if(q>.94)this._tone(2820,1540,.040,.023,'sine',.006);
+    if(club==='putter'){
+      // LOFT putter strike: soft body + crisp face tick. Great contact gets a
+      // delicate upper harmonic instead of the full-swing air transient.
+      this._tone(286,138,.075,.028+.014*p,'sine');
+      this._tone(1120,690,.040,.027+.040*q,'triangle',.001);
+      this._noise({freq:2450,q:1.15,dur:.027,gain:.006+.011*q,delay:.002});
+      if(q>.955)this._tone(1680,1120,.045,.014,'sine',.008);
+    }else{
+      // Three-layer strike: low compression body, metallic face click, air snap.
+      const body=club==='driver'?112:club==='wood'?124:142;
+      const click=club==='driver'?1180:club==='wood'?1320:1760;
+      this._tone(body,58,.105,.055+.035*p,'sine');
+      this._tone(click,click*.34,.055,.045+.075*q,'triangle',.002);
+      this._noise({freq:1800+2200*q,q:.72,dur:.065,gain:.025+.050*q,delay:.001});
+      if(q>.94)this._tone(2820,1540,.040,.023,'sine',.006);
+    }
 
     const dir=direction.clone().normalize();
     const side=new THREE.Vector3(dir.z,0,-dir.x);
@@ -155,7 +181,7 @@ export class LoftFeedback{
       t.spin=(Math.random()-.5)*12;
     });
 
-    this._vibrate(q>.94?[5,12,11]:q>.82?[6,10,8]:[8]);
+    this._vibrate(club==='putter'?(q>.95?[3,10,5]:[3]):(q>.94?[5,12,11]:q>.82?[6,10,8]:[8]));
   }
 
   startFlight(position){
