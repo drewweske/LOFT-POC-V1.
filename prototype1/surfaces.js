@@ -51,6 +51,18 @@ export const SURFACE_PHYSICS=freeze({
     launchSpin:1,
     launchBias:0
   }),
+  fringe:freeze({
+    restitution:.13,
+    tangentRetain:.59,
+    rollingDecel:1.05,
+    staticGrade:.085,
+    settleSpeed:.052,
+    spinGrip:.115,
+    transitionRetain:.82,
+    launchSpeed:.98,
+    launchSpin:.92,
+    launchBias:.2
+  }),
   rough:freeze({
     restitution:.055,
     tangentRetain:.34,
@@ -113,6 +125,7 @@ export function surfaceDisplay(name){
     rough:'ROUGH',
     sand:'BUNKER',
     green:'GREEN',
+    fringe:'FRINGE',
     water:'WATER',
     cup:'CUP'
   })[name]||String(name||'').toUpperCase();
