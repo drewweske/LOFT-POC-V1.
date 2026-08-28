@@ -205,6 +205,11 @@ const strokeSignalDot=new THREE.Mesh(
   new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
 );
 strokeSignalDot.visible=false;scene.add(strokeSignalDot);
+const strokeSetMark=new THREE.Mesh(
+  new THREE.TorusGeometry(.060,.012,8,32),
+  new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.70,depthWrite:false})
+);
+strokeSetMark.rotation.x=Math.PI/2;strokeSetMark.visible=false;scene.add(strokeSetMark);
 const strokeContactGate=new THREE.Mesh(
   new THREE.RingGeometry(.075,.102,42),
   new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.0,side:THREE.DoubleSide,depthWrite:false})
@@ -224,6 +229,17 @@ function strokeSignalPoint(t,{putting=isPutting(),shortGame=isShortGame()}={}){
   return p;
 }
 
+function recommendedLoad(){
+  const c=club();
+  if(!c||c.head==='putter')return 0;
+  const ratio=clamp(state.targetDistance/Math.max(1,c.carry*YARD),.04,1.06);
+  // The Line chooses intent; the Cream SET mark translates that intent into
+  // a readable physical backstroke without ever auto-hitting the shot.
+  return isShortGame()
+    ? clamp(.08+.72*ratio,.10,.74)
+    : clamp(.14+.74*ratio,.18,.92);
+}
+
 function beginStrokeSignal({putting=isPutting(),shortGame=isShortGame()}={}){
   for(let i=0;i<STROKE_TRACE_STEPS;i++){
     const t=i/(STROKE_TRACE_STEPS-1);
@@ -236,6 +252,13 @@ function beginStrokeSignal({putting=isPutting(),shortGame=isShortGame()}={}){
   strokeSignalDot.visible=true;
   strokeSignalDot.position.copy(ballGroup.position);strokeSignalDot.position.y+=.032;
   strokeSignalDot.scale.setScalar(putting?.76:.90);
+  if(!putting){
+    const setPoint=strokeSignalPoint(recommendedLoad(),{putting:false,shortGame});
+    strokeSetMark.position.copy(setPoint);strokeSetMark.position.y+=.018;
+    strokeSetMark.scale.setScalar(shortGame?.84:1);
+    strokeSetMark.material.opacity=.66;
+    strokeSetMark.visible=true;
+  }else strokeSetMark.visible=false;
   strokeContactGate.position.copy(ballGroup.position);strokeContactGate.position.y=playingHeight(ballGroup.position.x,ballGroup.position.z)+.018;
   strokeContactGate.visible=true;strokeContactGate.material.opacity=.26;
 }
@@ -245,13 +268,19 @@ function updateStrokeSignal(t,{putting=isPutting(),shortGame=isShortGame(),retur
   const p=strokeSignalPoint(t,{putting,shortGame});
   strokeSignalDot.position.copy(p);strokeSignalDot.position.y+=.018;
   const nearImpact=returning&&t<.14;
+  if(!putting&&strokeSetMark.visible){
+    const setDelta=Math.abs(clamp(t,0,1)-recommendedLoad());
+    const onSet=setDelta<.045&&!returning;
+    strokeSetMark.material.opacity=onSet?.98:.66;
+    strokeSetMark.scale.setScalar((shortGame?.84:1)*(onSet?1.20:1));
+  }
   strokeContactGate.material.opacity=nearImpact?.72:.26;
   strokeContactGate.scale.setScalar(nearImpact?1.16:1);
   strokeSignalDot.scale.setScalar((putting?.76:.90)*(nearImpact?1.18:1));
 }
 
 function hideStrokeSignal(){
-  strokeTrace.visible=false;strokeSignalDot.visible=false;strokeContactGate.visible=false;
+  strokeTrace.visible=false;strokeSignalDot.visible=false;strokeSetMark.visible=false;strokeContactGate.visible=false;
   strokeContactGate.material.opacity=0;
 }
 
@@ -382,7 +411,7 @@ function showContext(text,duration=520){
 function setTip(text){$('tip-text').textContent=text;$('tip').style.opacity='1';}
 function updateTip(){
   if(state.phase==='result'){$('tip').style.opacity='0';return;}
-  if(isPutting()&&!state.learned.putt){setTip('PULL FOR PACE · RETURN THROUGH BALL');return;}
+  if(isPutting()&&!state.learned.putt){setTip('PULL THE SIGNAL BACK · RETURN THROUGH BALL');return;}
   if(!state.learned.camera)setTip('DRAG TO AIM · PINCH TO ZOOM');
   else if(!state.learned.line)setTip('LANDING MARK · SET DISTANCE');
   else if(!state.learned.stroke)setTip('PULL BACK · DRIVE THROUGH');
@@ -789,14 +818,18 @@ canvas.addEventListener('pointermove',e=>{
       const reversal=e.clientY<gesture.deep-(gesture.shortGame?6:10);
 
       if(!reversal){
-        if(load>.80&&!gesture.setCue){
+        const setLoad=recommendedLoad();
+        if(Math.abs(load-setLoad)<.045&&!gesture.setCue){
           gesture.setCue=true;
           feedback.loadSet(load);
         }
         const loadPose=clamp(load,0,1);
         state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
-        if(state.shotCount===0)showContext(gesture.shortGame?(load>.60?'SET':'TOUCH'):(load>.78?'SET':'LOAD'),9999);
+        if(state.shotCount===0){
+          const onSet=Math.abs(load-recommendedLoad())<.045;
+          showContext(onSet?'SET':(gesture.shortGame?'TOUCH':'LOAD'),9999);
+        }
       }else{
         if(!gesture.transitionCue){
           gesture.transitionCue=true;
@@ -813,7 +846,7 @@ canvas.addEventListener('pointermove',e=>{
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
         if(state.shotCount===0)showContext(through>.72?'RELEASE':'STRIKE',9999);
 
-        if(e.clientY<gesture.sy-(gesture.shortGame?6:16)&&gesture.load>(gesture.shortGame ? .07 : .35)){
+        if(e.clientY<gesture.sy-(gesture.shortGame?6:10)&&gesture.load>(gesture.shortGame ? .07 : .14)){
           const frameDt=Math.max(8,now-gesture.lastT);
           const pixelSpeed=Math.hypot(e.clientX-gesture.lx,e.clientY-gesture.ly)/frameDt;
           const backswingMs=Math.max(120,gesture.deepT-gesture.startT);
@@ -847,7 +880,7 @@ canvas.addEventListener('pointermove',e=>{
 
           const power=gesture.shortGame
             ? clamp(gesture.load*.74+speedScore*.08+commitment*.18,.055,.74)
-            : clamp(gesture.load*.66+speedScore*.20+commitment*.14,.40,1.08);
+            : clamp(gesture.load*.70+speedScore*.14+commitment*.16,.12,1.08);
 
           gesture.impact=true;
           launchShot({power,path,speedScore,tempoScore,center,commitment,loadScore,rhythm});
@@ -861,7 +894,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);hidePuttPace();hideStrokeSignal();$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip(gesture.putt?'PULL FOR PACE · RETURN THROUGH BALL':'PULL FARTHER · DRIVE THROUGH');}
+    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();golfer.setPose(0,LEVELS[state.level]);hidePuttPace();hideStrokeSignal();$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip(gesture.putt?'PULL THE SIGNAL BACK · RETURN THROUGH BALL':'PULL THE SIGNAL BACK · DRIVE THROUGH');}
   }
   gesture=null;
 }
@@ -902,7 +935,7 @@ function frame(now){
     if(ps){
       ballGroup.position.copy(ps.pos);
       ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;
-      feedback.flight(ballGroup.position,state.shot?.quality||.8);
+      if(!state.shot?.putting)feedback.flight(ballGroup.position,state.shot?.quality||.8);
       if(ps.surfaceChanged){
         feedback.surfaceTransition(ps.surfaceChanged.to,Math.hypot(ps.vel.x,ps.vel.z));
         ps.surfaceChanged=null;
