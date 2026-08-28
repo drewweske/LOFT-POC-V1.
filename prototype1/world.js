@@ -3,7 +3,23 @@ import * as THREE from '../vendor/three.module.js';
 export const COLORS={ink:0x0B0D0D,cream:0xF2EFE8,stone:0xB8B1A6,orange:0xFF6A2A,rough:0x496548,fair:0x7e9a70,green:0x91ab7e,sand:0xd7c39a,water:0x4f7178,rock:0x817566,sky:0xcbd8d7};
 
 export function terrainHeight(x,z){
-  return .36*Math.sin((z+28)*.034)+.19*Math.sin((z-20)*.071)+.14*Math.sin(x*.108+z*.018)-.34*Math.exp(-(x*x+z*z)/190);
+  const micro=
+    .32*Math.sin((z+28)*.034)+
+    .17*Math.sin((z-20)*.071)+
+    .12*Math.sin(x*.108+z*.018)-
+    .30*Math.exp(-(x*x+z*z)/190);
+
+  // Broad authored landform: Coastal Ridge rises as the player approaches
+  // the green instead of reading as a flat rectangular fairway.
+  const approachRise=
+    1.18*Math.exp(-Math.pow((z+145)/48,2))*
+    (.72+.28*Math.exp(-Math.pow((x+4)/34,2)));
+
+  const midShoulder=
+    .42*Math.exp(-Math.pow((z+82)/38,2))*
+    (.65+.35*Math.exp(-Math.pow((x+2)/28,2)));
+
+  return micro+approachRise+midShoulder;
 }
 
 const mat=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
