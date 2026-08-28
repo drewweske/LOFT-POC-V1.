@@ -8,8 +8,8 @@ const BALL_MASS=.04593;
 const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
 const CUP_RADIUS=.054;
-const CUP_CAPTURE=.047;
-const CONTACT_HEIGHT=.052;
+const CUP_CAPTURE=.051;
+const CONTACT_HEIGHT=.034;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class GolfPhysics{
@@ -73,10 +73,15 @@ export class GolfPhysics{
     return this.state;
   }
 
-  putt({position,club,power,path,aimYaw=0,strike=.8}){
+  putt({position,club,power=.3,paceFeet=null,path,aimYaw=0,strike=.8}){
     const q=clamp(strike,0,1);
-    const yaw=aimYaw+path*(.20+.08*(1-q))*Math.PI/180;
-    const speed=club.ballSpeed*clamp(power,.08,1.08)*(.86+.14*q);
+    const yaw=aimYaw+path*(.16+.06*(1-q))*Math.PI/180;
+
+    // Putting is distance-authored by the player's actual backstroke.
+    // A displayed 10 FT pace means approximately 10 feet of level-green roll.
+    const speed=paceFeet!=null
+      ? Math.sqrt(2*surfacePhysics('green').rollingDecel*Math.max(.12,paceFeet*.3048))*(.985+.025*q)
+      : club.ballSpeed*clamp(power,.035,1.08)*(.86+.14*q);
     this.state={
       pos:position.clone(),
       vel:new THREE.Vector3(Math.sin(yaw)*speed,0,-Math.cos(yaw)*speed),
@@ -103,19 +108,32 @@ export class GolfPhysics{
     return this.state;
   }
 
-  _tryCup(s,surface){
+  _tryCup(s,surface,fromX=null,fromZ=null){
     if(!this.cup||surface!=='green'||s.holed)return false;
-    const dx=s.pos.x-this.cup.x,dz=s.pos.z-this.cup.z;
+
+    let closestX=s.pos.x,closestZ=s.pos.z;
+    if(fromX!=null&&fromZ!=null){
+      const ax=fromX,az=fromZ,bx=s.pos.x,bz=s.pos.z;
+      const vx=bx-ax,vz=bz-az;
+      const vv=vx*vx+vz*vz;
+      if(vv>1e-8){
+        const t=clamp(((this.cup.x-ax)*vx+(this.cup.z-az)*vz)/vv,0,1);
+        closestX=ax+vx*t;closestZ=az+vz*t;
+      }
+    }
+
+    const dx=closestX-this.cup.x,dz=closestZ-this.cup.z;
     const d=Math.hypot(dx,dz);
     if(d>CUP_RADIUS)return false;
 
     const speed=Math.hypot(s.vel.x,s.vel.z);
     const direct=d<CUP_CAPTURE;
 
-    // Regulation cup is 108 mm diameter. Capture speed falls rapidly toward
-    // the lip: center strikes can fall at a firmer pace, edge strikes must die.
+    // Real cups accept a firm center strike but reject hot edge pace.
+    // The continuous segment test prevents a perfectly aimed putt tunneling
+    // across the cup between 120 Hz fixed steps.
     const edge=clamp(d/CUP_CAPTURE,0,1);
-    const captureSpeed=1.55-(1.55-.58)*Math.pow(edge,1.65);
+    const captureSpeed=2.18-(2.18-.66)*Math.pow(edge,1.55);
     const normalCapture=direct&&speed<captureSpeed;
 
     if(normalCapture){
@@ -124,13 +142,13 @@ export class GolfPhysics{
       return true;
     }
 
-    // Lip-out: conserve direction broadly, shed speed, and push tangentially.
-    if(!s.lipTouched&&speed>.12){
+    // A genuine hot lip-out should still be readable rather than an invisible wall.
+    if(!s.lipTouched&&speed>.18){
       s.lipTouched=true;
-      const n=new THREE.Vector3(dx,0,dz).normalize();
+      const n=new THREE.Vector3(dx||.001,0,dz||.001).normalize();
       const tangent=new THREE.Vector3(-n.z,0,n.x);
       const sign=Math.sign(s.vel.dot(tangent))||1;
-      s.vel.multiplyScalar(.48).addScaledVector(tangent,sign*.42);
+      s.vel.multiplyScalar(.54).addScaledVector(tangent,sign*.28);
     }
     return false;
   }
@@ -216,8 +234,6 @@ export class GolfPhysics{
       s.surface=surface;
       const material=surfacePhysics(surface);
 
-      if(this._tryCup(s,surface))return;
-
       // Crossing from one cut into another has a physical bite. A ball leaving
       // fairway for rough loses momentum immediately; entering sand is dramatic.
       if(s.lastSurface&&surface!==s.lastSurface){
@@ -256,8 +272,11 @@ export class GolfPhysics{
         s.vel.x*=k;s.vel.z*=k;
       }
 
+      const fromX=s.pos.x,fromZ=s.pos.z;
       s.pos.addScaledVector(s.vel,FIXED);
       s.pos.y=this.terrainHeight(s.pos.x,s.pos.z)+CONTACT_HEIGHT;
+
+      if(this._tryCup(s,surface,fromX,fromZ))return;
 
       if(Math.hypot(s.vel.x,s.vel.z)<material.settleSpeed&&grade<material.staticGrade){
         s.vel.set(0,0,0);
