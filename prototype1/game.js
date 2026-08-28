@@ -239,11 +239,14 @@ function recommendedLoad(){
   const c=club();
   if(!c||c.head==='putter')return 0;
   const ratio=clamp(state.targetDistance/Math.max(1,c.carry*YARD),.04,1.06);
-  // The Line chooses intent; the Cream SET mark translates that intent into
-  // a readable physical backstroke without ever auto-hitting the shot.
-  return isShortGame()
-    ? clamp(.08+.72*ratio,.10,.74)
-    : clamp(.14+.74*ratio,.18,.92);
+
+  // Distance is authored primarily by backstroke depth. Downswing speed and
+  // commitment influence compression and quality, but they no longer obscure
+  // the player's distance decision. The SET mark is therefore an honest guide.
+  const short=isShortGame();
+  const nominalReleaseBonus=short ? .065 : .085;
+  const loadShare=short ? .92 : .90;
+  return clamp((ratio-nominalReleaseBonus)/loadShare,short ? .08 : .14,1.03);
 }
 
 function beginStrokeSignal({putting=isPutting(),shortGame=isShortGame()}={}){
@@ -891,9 +894,11 @@ canvas.addEventListener('pointermove',e=>{
             rhythm=clamp(1-cv*.48,.42,1);
           }
 
+          // THE SIGNAL owns distance. Release quality matters, but a player
+          // should never wonder whether the same backstroke will suddenly fly 30% farther.
           const power=gesture.shortGame
-            ? clamp(gesture.load*.74+speedScore*.08+commitment*.18,.055,.74)
-            : clamp(gesture.load*.70+speedScore*.14+commitment*.16,.12,1.08);
+            ? clamp(gesture.load*.92+speedScore*.03+commitment*.05,.055,.86)
+            : clamp(gesture.load*.90+speedScore*.06+commitment*.04,.10,1.08);
 
           gesture.impact=true;
           launchShot({power,path,speedScore,tempoScore,center,commitment,loadScore,rhythm});
