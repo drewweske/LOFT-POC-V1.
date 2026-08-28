@@ -72,7 +72,7 @@ export class GolfPhysics{
   putt({position,club,power,path,aimYaw=0,strike=.8}){
     const q=clamp(strike,0,1);
     const yaw=aimYaw+path*(.20+.08*(1-q))*Math.PI/180;
-    const speed=club.ballSpeed*clamp(power,.22,1.08)*(.86+.14*q);
+    const speed=club.ballSpeed*clamp(power,.08,1.08)*(.86+.14*q);
     this.state={
       pos:position.clone(),
       vel:new THREE.Vector3(Math.sin(yaw)*speed,0,-Math.cos(yaw)*speed),
