@@ -36,6 +36,7 @@ export class LoftCamera{
 
     this.lockedAimYaw=0;
     this.impactKick=0;
+    this.resultCup=false;
   }
 
   get isSwingLocked(){return this.mode===CAMERA_MODE.SWING;}
@@ -64,12 +65,13 @@ export class LoftCamera{
     this._enter(CAMERA_MODE.FLIGHT);
   }
 
-  beginResult(ball,pin){
+  beginResult(ball,pin,{cup=false}={}){
     const toPin=pin.clone().sub(ball);toPin.y=0;
     if(toPin.lengthSq()>.01)this.flightHeading=Math.atan2(toPin.x,-toPin.z);
+    this.resultCup=cup;
     this.resultOrbit=this.resultOrbitT=0;
-    this.resultPitch=this.resultPitchT=.18;
-    this.resultDist=this.resultDistT=5.9;
+    this.resultPitch=this.resultPitchT=cup?.06:.18;
+    this.resultDist=this.resultDistT=cup?3.25:5.9;
     this._enter(CAMERA_MODE.RESULT);
   }
 
@@ -212,7 +214,7 @@ export class LoftCamera{
     this.resultOrbit=smooth(this.resultOrbit,this.resultOrbitT,8.5,dt);
     this.resultPitch=smooth(this.resultPitch,this.resultPitchT,8.5,dt);
     this.resultDist=smooth(this.resultDist,this.resultDistT,9,dt);
-    this._setFov(38.0,dt);
+    this._setFov(this.resultCup?34.5:38.0,dt);
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):this.flightHeading;
@@ -226,8 +228,8 @@ export class LoftCamera{
       .add(new THREE.Vector3(0,1.65+this.resultPitch*2.45,0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(pinDir,.95)
-      .add(new THREE.Vector3(0,.10,0));
+      .addScaledVector(pinDir,this.resultCup?.32:.95)
+      .add(new THREE.Vector3(0,this.resultCup?.06:.10,0));
 
     this._safeY(desiredPos,1.08);
     this._commit(desiredPos,desiredLook,7.4,8.6,dt);
