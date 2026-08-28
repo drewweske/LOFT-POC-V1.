@@ -128,17 +128,19 @@ export class LoftCamera{
   result(dt,ball,pin,aimYaw){
     this._smooth(dt);
     const toPin=pin.clone().sub(ball);toPin.y=0;
-    const dir=toPin.lengthSq()>.01?toPin.normalize():new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw));
-    const right=new THREE.Vector3(dir.z,0,-dir.x);
+    const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):aimYaw;
+    const yaw=base+this.flightYaw;
+    const viewForward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw)).normalize();
+    const pinDir=toPin.lengthSq()>.01?toPin.normalize():new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw));
 
     // Result camera is a lie-inspection camera, not a giant empty-ground overview.
+    // It remains inspectable after landing through the same damped orbit state.
     const desired=ball.clone()
-      .addScaledVector(dir,-6.2)
-      .addScaledVector(right,3.6)
-      .add(new THREE.Vector3(0,3.0,0));
+      .addScaledVector(viewForward,-7.0)
+      .add(new THREE.Vector3(0,2.8+this.flightPitch*3.6,0));
 
     const look=ball.clone()
-      .addScaledVector(dir,2.2)
+      .addScaledVector(pinDir,2.0)
       .add(new THREE.Vector3(0,.18,0));
 
     this.camera.position.lerp(desired,1-Math.exp(-6.4*dt));
