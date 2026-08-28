@@ -346,7 +346,7 @@ function launchShot(metrics){
     tempo:metrics.tempoScore,
     commitment:metrics.commitment
   };
-  state.phase='flight';state.swingPhase=.60;state.shotCount++;state.strokes++;updateHoleHUD();
+  state.phase='flight';state.swingPhase=.60;state.shotCount++;state.strokes++;
   state.landingFX=false;
   state.ballCompression=1;
   state.hitStop=q>.94?.030:q>.82?.022:.014;
