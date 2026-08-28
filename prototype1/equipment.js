@@ -10,10 +10,10 @@ export const CLUBS=[
 ];
 
 export const LEVELS={
-1:{name:'ROOKIE',form:.18,sway:.11,earlyExt:.11,plane:.20,balance:.48,finish:.58,tempoJitter:.18},
-10:{name:'LEARNING',form:.40,sway:.075,earlyExt:.075,plane:.14,balance:.64,finish:.70,tempoJitter:.12},
-25:{name:'PLAYER',form:.70,sway:.038,earlyExt:.035,plane:.07,balance:.82,finish:.86,tempoJitter:.06},
-50:{name:'MASTERED',form:1,sway:.012,earlyExt:.01,plane:.018,balance:.98,finish:1,tempoJitter:.015}
+1:{name:'ROOKIE',form:.14,sway:.16,earlyExt:.17,plane:.28,balance:.42,finish:.46,tempoJitter:.22},
+10:{name:'LEARNING',form:.38,sway:.10,earlyExt:.105,plane:.18,balance:.61,finish:.65,tempoJitter:.13},
+25:{name:'PLAYER',form:.70,sway:.045,earlyExt:.045,plane:.075,balance:.82,finish:.86,tempoJitter:.06},
+50:{name:'MASTERED',form:1,sway:.010,earlyExt:.008,plane:.015,balance:.99,finish:1,tempoJitter:.012}
 };
 
 export const DEFAULT_CLUB='iron7';
