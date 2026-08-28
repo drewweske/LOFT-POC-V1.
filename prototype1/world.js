@@ -130,5 +130,12 @@ export function buildWorld(scene,pin){
   const fs=new THREE.Shape();fs.moveTo(0,0);fs.lineTo(2.2,.55);fs.lineTo(0,1.1);fs.closePath();
   const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),new THREE.MeshStandardMaterial({color:COLORS.orange,side:THREE.DoubleSide,roughness:.82}));flag.position.set(pin.x,pin.y+3.9,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
-  return {world,green};
+  function setPin(next){
+    green.position.set(next.x,next.y+.06,next.z);
+    holeDisc.position.set(next.x,next.y+.071,next.z);
+    pole.position.set(next.x,next.y+2.25,next.z);
+    flag.position.set(next.x,next.y+3.9,next.z);
+  }
+
+  return {world,green,holeDisc,pole,flag,setPin};
 }
