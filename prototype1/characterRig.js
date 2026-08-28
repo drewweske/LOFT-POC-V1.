@@ -26,6 +26,27 @@ export class LoftGolferRig{
     const pts=profile.map(([r,y])=>new THREE.Vector2(r,y));
     return this._add(new THREE.Mesh(new THREE.LatheGeometry(pts,segments),mat));
   }
+  _ellipticBody(sections,mat,radial=16){
+    const pos=[],idx=[];
+    for(let s=0;s<sections.length;s++){
+      const [y,depth,width]=sections[s];
+      for(let i=0;i<radial;i++){
+        const a=i/radial*Math.PI*2;
+        pos.push(Math.cos(a)*depth,y,Math.sin(a)*width);
+      }
+    }
+    for(let s=0;s<sections.length-1;s++){
+      for(let i=0;i<radial;i++){
+        const n=(i+1)%radial;
+        const a=s*radial+i,b=s*radial+n,c=(s+1)*radial+i,d=(s+1)*radial+n;
+        idx.push(a,c,b,b,c,d);
+      }
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setIndex(idx);g.computeVertexNormals();
+    return this._add(new THREE.Mesh(g,mat));
+  }
   _segment(r,mat,taper=.88,segments=14){
     const m=this._add(new THREE.Mesh(new THREE.CylinderGeometry(r*taper,r,1,segments),mat));
     m.userData.baseRadius=r;
@@ -43,17 +64,21 @@ export class LoftGolferRig{
       [.165,-.16],[.195,-.11],[.208,-.02],[.202,.08],[.174,.16]
     ],this.ink,26);
 
-    this.torso=this._lathe([
-      [.165,-.34],[.178,-.29],[.190,-.18],[.208,-.02],[.236,.17],[.248,.27],[.222,.34]
-    ],this.cream,28);
+    // One authored shirt volume: narrow waist, believable chest depth,
+    // broad but attainable shoulders. This removes the stacked-barrel torso read.
+    this.torso=this._ellipticBody([
+      [-.36,.135,.165],
+      [-.24,.142,.176],
+      [-.08,.148,.192],
+      [.10,.160,.218],
+      [.24,.166,.248],
+      [.34,.148,.266]
+    ],this.cream,18);
 
-    this.chest=this._lathe([
-      [.205,-.13],[.236,-.07],[.255,.03],[.246,.12],[.215,.16]
-    ],this.cream,28);
-
-    this.waist=this._lathe([
-      [.155,-.11],[.176,-.07],[.183,.02],[.170,.11]
-    ],this.cream,24);
+    this.chest=this._lathe([[.01,-.01],[.01,.01]],this.cream,8);
+    this.chest.visible=false;
+    this.waist=this._lathe([[.01,-.01],[.01,.01]],this.cream,8);
+    this.waist.visible=false;
 
     this.belt=this._shape(new THREE.CylinderGeometry(.198,.198,.048,26),this.ink);
 
@@ -125,7 +150,7 @@ export class LoftGolferRig{
     return {
       address:{pelvis:[-.50,.94,0],torso:[-.42,1.33,0],chest:[-.37,1.52,0],head:[-.38,1.975,0],
         hipL:[-.50,.91,-.145],hipR:[-.50,.91,.145],kneeL:[-.47,.47,-.19],kneeR:[-.44,.48,.20],ankleL:[-.45,.115,-.20],ankleR:[-.40,.115,.21],
-        shoulderL:[-.38,1.55,-.205],shoulderR:[-.38,1.55,.205],sleeveL:[-.24,1.40,-.19],sleeveR:[-.23,1.41,.19],elbowL:[-.08,1.23,-.16],elbowR:[-.055,1.24,.165],handL:[.16,.99,-.045],handR:[.17,.985,.042],club:[.39,.055,0]},
+        shoulderL:[-.34,1.53,-.215],shoulderR:[-.34,1.53,.215],sleeveL:[-.20,1.37,-.19],sleeveR:[-.20,1.38,.19],elbowL:[-.04,1.18,-.15],elbowR:[-.035,1.19,.155],handL:[.17,.94,-.042],handR:[.18,.935,.040],club:[.39,.055,0]},
       takeaway:{pelvis:[-.51,.94,.01],torso:[-.44,1.34,.02],chest:[-.41,1.53,.03],head:[-.39,1.975,.025],
         hipL:[-.48,.91,-.13],hipR:[-.53,.91,.16],kneeL:[-.46,.47,-.19],kneeR:[-.46,.48,.20],ankleL:[-.45,.115,-.20],ankleR:[-.40,.115,.21],
         shoulderL:[-.33,1.55,-.13],shoulderR:[-.48,1.56,.23],sleeveL:[-.22,1.42,-.10],sleeveR:[-.36,1.43,.22],elbowL:[-.10,1.32,-.04],elbowR:[-.28,1.34,.24],handL:[-.08,1.25,.18],handR:[-.10,1.23,.25],club:[-.04,.30,.73]},
@@ -217,11 +242,9 @@ export class LoftGolferRig{
   setPose(t,level){
     t=clamp(t,0,1);const p=this._poseAt(t,level);
     const V=k=>this._v(p[k]);
-    this.pelvis.position.copy(V('pelvis'));this.pelvis.scale.set(.78,1.0,1.02);
-    this.torso.position.copy(V('torso'));this.torso.scale.set(.80,1.0,1.05);this.torso.rotation.z=-.11;
-    this.chest.position.copy(V('chest'));this.chest.scale.set(.78,1.0,1.06);this.chest.rotation.z=-.08;
-    this.waist.position.copy(V('torso').lerp(V('pelvis'),.68));this.waist.scale.set(.80,1.0,.98);
-    this.belt.position.copy(V('pelvis')).add(new THREE.Vector3(0,.085,0));this.belt.scale.set(.80,1,.98);
+    this.pelvis.position.copy(V('pelvis'));this.pelvis.scale.set(.66,.94,.92);
+    this.torso.position.copy(V('torso')).add(new THREE.Vector3(.015,.015,0));this.torso.scale.set(.98,.98,.98);this.torso.rotation.z=-.10;
+    this.belt.position.copy(V('pelvis')).add(new THREE.Vector3(0,.080,0));this.belt.scale.set(.72,1,.92);
 
     this._between(this.thighL,V('hipL'),V('kneeL'),.086);this._between(this.thighR,V('hipR'),V('kneeR'),.086);
     this._between(this.calfL,V('kneeL'),V('ankleL'),.071);this._between(this.calfR,V('kneeR'),V('ankleR'),.071);
