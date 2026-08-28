@@ -14,8 +14,8 @@ export const ROUND_HOLES=[
     name:'THE SHELF',
     series:'COASTAL SERIES',
     par:3,
-    tee:[-24,-38],
-    pin:[18,-178],
+    tee:[-8,10],
+    pin:[12,-170],
     wind:[-2.24,-0.55],
     windLabel:'5 MPH ↞'
   },
@@ -24,8 +24,8 @@ export const ROUND_HOLES=[
     name:'LIGHTHOUSE',
     series:'COASTAL SERIES',
     par:4,
-    tee:[24,12],
-    pin:[-18,-218],
+    tee:[8,18],
+    pin:[-8,-218],
     wind:[1.75,-1.40],
     windLabel:'6 MPH ↘'
   }
