@@ -334,6 +334,7 @@ function resize(){const r=$('stage').getBoundingClientRect();renderer.setSize(Ma
 new ResizeObserver(resize).observe($('stage'));resize();
 
 let last=performance.now();
+let lastMapUpdate=0;
 function frame(now){
   const dt=Math.min(.03,(now-last)/1000||.016);last=now;
   const yaw=aimYaw();
@@ -344,8 +345,11 @@ function frame(now){
     if(ps){ballGroup.position.copy(ps.pos);ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;cam.flight(dt,ballGroup.position,ps.vel,yaw);if(ps.stopped)finishShot();}
   }else if(state.phase==='result')cam.result(dt,ballGroup.position,pin,yaw);
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
-  const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z);
-  topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface});
+  if(now-lastMapUpdate>66){
+    const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?'TEE':surfaceAt(ballGroup.position.x,ballGroup.position.z);
+    topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface});
+    lastMapUpdate=now;
+  }
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
 
