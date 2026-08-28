@@ -7,8 +7,8 @@ const AIR_DENSITY=1.225;
 const BALL_MASS=.04593;
 const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
-const CUP_RADIUS=.054;
-const CUP_CAPTURE=.051;
+const CUP_RADIUS=.086;
+const CUP_CAPTURE=.074;
 const CONTACT_HEIGHT=.034;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
