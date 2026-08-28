@@ -200,6 +200,12 @@ const strokeTraceGeo=new THREE.BufferGeometry();
 strokeTraceGeo.setAttribute('position',new THREE.BufferAttribute(strokeTracePositions,3));
 const strokeTraceMat=new THREE.LineBasicMaterial({color:COLORS.cream,transparent:true,opacity:.46,depthWrite:false});
 const strokeTrace=new THREE.Line(strokeTraceGeo,strokeTraceMat);strokeTrace.frustumCulled=false;strokeTrace.visible=false;scene.add(strokeTrace);
+const strokeDimples=[];
+const strokeDimpleMat=new THREE.MeshBasicMaterial({color:COLORS.cream,transparent:true,opacity:.34,depthWrite:false});
+for(let i=0;i<9;i++){
+  const d=new THREE.Mesh(new THREE.CircleGeometry(.026,18),strokeDimpleMat.clone());
+  d.rotation.x=-Math.PI/2;d.visible=false;scene.add(d);strokeDimples.push(d);
+}
 const strokeSignalDot=new THREE.Mesh(
   new THREE.SphereGeometry(.036,18,12),
   new THREE.MeshBasicMaterial({color:COLORS.orange,transparent:true,opacity:.96,depthWrite:false})
@@ -247,8 +253,15 @@ function beginStrokeSignal({putting=isPutting(),shortGame=isShortGame()}={}){
     const j=i*3;strokeTracePositions[j]=p.x;strokeTracePositions[j+1]=p.y;strokeTracePositions[j+2]=p.z;
   }
   strokeTraceGeo.attributes.position.needsUpdate=true;
-  strokeTraceMat.opacity=putting ? .40 : .34;
+  strokeTraceMat.opacity=putting ? .16 : .13;
   strokeTrace.visible=true;
+  strokeDimples.forEach((d,i)=>{
+    const t=(i+1)/strokeDimples.length;
+    d.position.copy(strokeSignalPoint(t,{putting,shortGame}));d.position.y+=.012;
+    d.scale.setScalar(putting ? .72 : (shortGame ? .84 : 1));
+    d.material.opacity=putting ? .36 : .30;
+    d.visible=true;
+  });
   strokeSignalDot.visible=true;
   strokeSignalDot.position.copy(ballGroup.position);strokeSignalDot.position.y+=.032;
   strokeSignalDot.scale.setScalar(putting ? .76 : .90);
@@ -280,7 +293,7 @@ function updateStrokeSignal(t,{putting=isPutting(),shortGame=isShortGame(),retur
 }
 
 function hideStrokeSignal(){
-  strokeTrace.visible=false;strokeSignalDot.visible=false;strokeSetMark.visible=false;strokeContactGate.visible=false;
+  strokeTrace.visible=false;strokeDimples.forEach(d=>d.visible=false);strokeSignalDot.visible=false;strokeSetMark.visible=false;strokeContactGate.visible=false;
   strokeContactGate.material.opacity=0;
 }
 
@@ -414,7 +427,7 @@ function updateTip(){
   if(isPutting()&&!state.learned.putt){setTip('PULL THE SIGNAL BACK · RETURN THROUGH BALL');return;}
   if(!state.learned.camera)setTip('DRAG TO AIM · PINCH TO ZOOM');
   else if(!state.learned.line)setTip('LANDING MARK · SET DISTANCE');
-  else if(!state.learned.stroke)setTip('PULL BACK · DRIVE THROUGH');
+  else if(!state.learned.stroke)setTip('PULL THE SIGNAL BACK · DRIVE THROUGH');
   else $('tip').style.opacity='0';
 }
 
