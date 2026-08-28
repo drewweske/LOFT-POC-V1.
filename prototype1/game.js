@@ -66,7 +66,9 @@ const state={
   roundComplete:false,
   landingFX:false,
   ballCompression:0,
-  hitStop:0
+  hitStop:0,
+  cupSink:0,
+  cupSinkStartY:0
 };
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
@@ -363,7 +365,7 @@ function launchShot(metrics){
 }
 
 function prepareShotAt(position,{penalty=false}={}){
-  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;
+  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;state.cupSink=0;state.cupSink=0;
   physics.active=false;physics.state=null;
   if(penalty)state.strokes++;
 
@@ -438,6 +440,7 @@ function finishShot(){
   $('result-kicker').textContent=state.shot.label+' · '+state.shot.club;
 
   if(holed){
+    state.cupSink=1;state.cupSinkStartY=ballGroup.position.y;
     state.holeScores[holeIndex]=state.strokes;
     feedback.cup?.({position:pin,score:state.strokes-holeDef.par});
     $('result-kicker').textContent='HOLE '+String(holeDef.number).padStart(2,'0')+' · '+state.strokes+' STROKE'+(state.strokes===1?'':'S');
@@ -679,6 +682,15 @@ function frame(now){
   }
 
   feedback.update(dt);
+
+  if(state.cupSink>0){
+    state.cupSink=Math.max(0,state.cupSink-dt*2.35);
+    const t=1-state.cupSink;
+    ballGroup.position.y=lerp(state.cupSinkStartY,playingHeight(pin.x,pin.z)-.18,t*t);
+    const s=lerp(1,.72,t);
+    ballGroup.scale.setScalar(s);
+    if(state.cupSink===0)ballGroup.visible=false;
+  }
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
