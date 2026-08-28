@@ -28,16 +28,16 @@ export class LoftGolferRig{
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
   }
   _build(){
-    this.pelvis=this._shape(new THREE.SphereGeometry(.28,24,18),this.ink);
-    this.torso=this._shape(new THREE.SphereGeometry(.37,28,20),this.cream);
-    this.chest=this._shape(new THREE.SphereGeometry(.33,28,20),this.cream);
-    this.waist=this._shape(new THREE.SphereGeometry(.26,24,18),this.cream);
-    this.belt=this._shape(new THREE.CylinderGeometry(.235,.235,.055,24),this.ink);
+    this.pelvis=this._shape(new THREE.SphereGeometry(.255,24,18),this.ink);
+    this.torso=this._shape(new THREE.CapsuleGeometry(.19,.30,8,18),this.cream);
+    this.chest=this._shape(new THREE.SphereGeometry(.28,28,20),this.cream);
+    this.waist=this._shape(new THREE.SphereGeometry(.22,24,18),this.cream);
+    this.belt=this._shape(new THREE.CylinderGeometry(.215,.215,.050,24),this.ink);
 
     this.thighL=this._segment(.092,this.ink);this.thighR=this._segment(.092,this.ink);
     this.calfL=this._segment(.074,this.ink);this.calfR=this._segment(.074,this.ink);
-    this.shoeL=this._shape(new THREE.BoxGeometry(.34,.115,.17),this.stone);
-    this.shoeR=this._shape(new THREE.BoxGeometry(.34,.115,.17),this.stone);
+    this.shoeL=this._shape(new THREE.SphereGeometry(.16,20,14),this.stone,[0,0,0],[1.05,.38,.58]);
+    this.shoeR=this._shape(new THREE.SphereGeometry(.16,20,14),this.stone,[0,0,0],[1.05,.38,.58]);
 
     this.sleeveL=this._segment(.084,this.cream);this.sleeveR=this._segment(.084,this.cream);
     this.upperL=this._segment(.058,this.skin);this.upperR=this._segment(.058,this.skin);
@@ -68,11 +68,17 @@ export class LoftGolferRig{
   setClub(type='iron'){
     if(this.clubType===type)return;this.clubType=type;
     this.clubHead.geometry.dispose();
-    if(type==='driver'){this.clubHead.geometry=new THREE.SphereGeometry(.105,22,16);this.clubHead.scale.set(1.35,.72,1.5);}
-    else if(type==='wood'){this.clubHead.geometry=new THREE.SphereGeometry(.092,22,16);this.clubHead.scale.set(1.25,.68,1.4);}
-    else if(type==='hybrid'){this.clubHead.geometry=new THREE.SphereGeometry(.085,20,14);this.clubHead.scale.set(1.12,.66,1.30);}
-    else if(type==='putter'){this.clubHead.geometry=new THREE.BoxGeometry(.15,.055,.25);this.clubHead.scale.set(1,1,1);}
-    else{this.clubHead.geometry=new THREE.BoxGeometry(.12,.055,.17);this.clubHead.scale.set(1,1,1);}
+    if(type==='driver'){
+      this.clubHead.geometry=new THREE.SphereGeometry(.078,22,16);this.clubHead.scale.set(1.30,.70,1.45);this.clubHead.material=this.ink;
+    }else if(type==='wood'){
+      this.clubHead.geometry=new THREE.SphereGeometry(.070,22,16);this.clubHead.scale.set(1.22,.67,1.35);this.clubHead.material=this.ink;
+    }else if(type==='hybrid'){
+      this.clubHead.geometry=new THREE.SphereGeometry(.062,20,14);this.clubHead.scale.set(1.12,.64,1.26);this.clubHead.material=this.ink;
+    }else if(type==='putter'){
+      this.clubHead.geometry=new THREE.BoxGeometry(.13,.045,.22);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.ink;
+    }else{
+      this.clubHead.geometry=new THREE.BoxGeometry(.105,.050,.155);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.steel;
+    }
   }
   _v(a){return new THREE.Vector3(a[0],a[1],a[2]);}
   _mix(a,b,t){const o={};for(const k in a){const A=a[k],B=b[k];o[k]=[lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)];}return o;}
@@ -122,11 +128,11 @@ export class LoftGolferRig{
   setPose(t,level){
     t=clamp(t,0,1);const p=this._poseAt(t,level);
     const V=k=>this._v(p[k]);
-    this.pelvis.position.copy(V('pelvis'));this.pelvis.scale.set(.92,.64,.72);
-    this.torso.position.copy(V('torso'));this.torso.scale.set(.73,.95,.66);this.torso.rotation.z=-.11;
-    this.chest.position.copy(V('chest'));this.chest.scale.set(.84,.52,.73);this.chest.rotation.z=-.08;
-    this.waist.position.copy(V('torso').lerp(V('pelvis'),.68));this.waist.scale.set(.83,.48,.70);
-    this.belt.position.copy(V('pelvis')).add(new THREE.Vector3(0,.09,0));this.belt.scale.set(1,1,.76);
+    this.pelvis.position.copy(V('pelvis'));this.pelvis.scale.set(.96,.72,.76);
+    this.torso.position.copy(V('torso'));this.torso.scale.set(1.02,1.0,.76);this.torso.rotation.z=-.11;
+    this.chest.position.copy(V('chest'));this.chest.scale.set(.96,.58,.78);this.chest.rotation.z=-.08;
+    this.waist.position.copy(V('torso').lerp(V('pelvis'),.68));this.waist.scale.set(.94,.54,.74);
+    this.belt.position.copy(V('pelvis')).add(new THREE.Vector3(0,.09,0));this.belt.scale.set(1,1,.78);
 
     this._between(this.thighL,V('hipL'),V('kneeL'),.092);this._between(this.thighR,V('hipR'),V('kneeR'),.092);
     this._between(this.calfL,V('kneeL'),V('ankleL'),.074);this._between(this.calfR,V('kneeR'),V('ankleR'),.074);
