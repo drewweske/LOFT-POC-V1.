@@ -379,8 +379,11 @@ function intendedPuttFeet(){
   return Math.max(.5,state.targetDistance*3.28084);
 }
 function puttPaceFromPull(px,height){
-  const norm=clamp(px/(height*.18),0,1.08);
-  const feet=.7+64*Math.pow(norm,1.55);
+  // Long physical travel for short putts. The first third of the gesture is
+  // intentionally generous so 2–10 FT putts are easy to meter with a thumb.
+  // Longer putts then accelerate progressively instead of linearly.
+  const norm=clamp(px/(height*.25),0,1.10);
+  const feet=.45+46.5*Math.pow(norm,1.45);
   return {norm,feet};
 }
 function updatePuttPaceGhost(feet){
