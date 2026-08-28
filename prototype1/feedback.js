@@ -108,6 +108,12 @@ export class LoftFeedback{
     this._vibrate(4);
   }
 
+  release(speed=.75){
+    const s=clamp(speed,0,1.15);
+    this._noise({freq:760+520*s,q:.42,dur:.075,gain:.014+.025*s});
+    this._tone(220+120*s,105,.055,.009+.010*s,'triangle');
+  }
+
   impact({quality=.8,power=.8,position,direction,club='iron'}){
     const q=clamp(quality,0,1),p=clamp(power,0,1.1);
     this.impactLife=1;
@@ -129,8 +135,10 @@ export class LoftFeedback{
 
     const dir=direction.clone().normalize();
     const side=new THREE.Vector3(dir.z,0,-dir.x);
+    const turfCount=club==='driver'||club==='wood'?3:club==='putter'?0:this.turf.length;
     this.turf.forEach((t,i)=>{
-      const k=i/(this.turf.length-1)-.5;
+      if(i>=turfCount){t.life=0;t.mesh.visible=false;return;}
+      const k=i/Math.max(1,turfCount-1)-.5;
       t.mesh.visible=true;
       t.mesh.position.copy(position).add(new THREE.Vector3(0,.025,0));
       t.vel.copy(dir).multiplyScalar(.65+Math.random()*.55)
