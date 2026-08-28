@@ -1,132 +1,106 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 003
+Current build: Prototype 1 / Integration 004
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
 Active subsystem: Real-device integrated validation
-Iteration: integration_003
+Iteration: integration_004
 
 ## Current provisional score
-89 / 100 — NOT GRADUATED
+92 / 100 — NOT GRADUATED
 
-The score increased because the user-provided iPhone evidence exposed structural camera/UI/character problems and those systems were rebuilt rather than patched cosmetically. Final scoring remains blocked on the newly rendered device artifact.
+This candidate is materially ahead of Integration 003 at source/architecture level, but final graduation is still blocked on the newly rendered iPhone artifact.
 
-## Real-device failures from previous candidate
-- swing camera cropped the golfer
-- camera behaved independently of aim
-- post-shot camera created giant empty-ground compositions
-- golfer remained too round / toy-like
-- driver head was oversized
-- visible vertical swing bar violated The Stroke philosophy
-- center duel pill competed with the shot
-- fairway still read too flat / generic
+## Integration 004 wins
 
-## Current integrated response
-### Camera / Aim
-- ready-state horizontal camera drag now IS shot heading
-- aim heading is damped rather than jittering directly
-- golfer rotates around the fixed ball as aim changes
-- camera pitch remains semi-free
-- pinch zoom remains available
-- starting The Stroke blends into a ball-locked composition
-- camera input is ignored while swinging
-- impact transitions to flight camera
-- post-shot camera focuses the lie
-- reset restores the pin line
+### Camera intelligence
+- explicit AIM / SWING_LOCK / FLIGHT / RESULT state machine
+- heading/camera/character transform bug fixed
+- camera remains in a stable trailing golf composition during aim
+- horizontal drag defines heading
+- vertical drag adjusts pitch
+- pinch adjusts aim distance
+- swing input locks camera to ball/golfer relationship
+- no user camera transforms during swing or flight
+- automatic flight camera follows ball direction with capped yaw response
+- result camera returns semi-free lie inspection
+- state-specific FOV, damping and distance clamps
+- ground/floor protection
+- stable world-up horizon
+- full-club finish framing checked before handoff
 
-### The Line
-- orange landing mark adjusts distance along the selected heading
-- heading comes from camera, not duplicate left/right controls
-- stable allocation-free line geometry
+### Critical transform fix
+The rig's authored shot direction is local -Z.
+Gameplay heading uses positive yaw toward +X.
+The previous implementation rotated the golfer by +aimYaw, mirroring golfer orientation relative to the target/camera.
 
-### Topographic Map
-- 2D overhead Coastal Ridge course map at top center
-- contours
-- fairway
-- green
-- bunkers
-- water
-- pin
-- player marker
-- target marker
-- aim line
-- target distance
-- lie
-- duel state demoted to map footer
+Integration 004 now uses:
+rigYaw = -aimYaw
 
-### Character / Swing
-- slimmer torso / pelvis hierarchy
-- reduced driver / wood head scale
-- dark premium wood finish
-- stronger Level 1 posture/form defects
-- more obvious Level 50 mastery contrast
-- paired-hand grip and club constraint retained
+The address ball offset uses the same rigYaw.
 
-### World
-- curved variable-width fairway
-- broad approach ridge
-- mid-course landform
-- lodge / lighthouse relationship improved
-- coastal identity retained
+This removes the front-on / mirrored camera-angle pathology visible in Integration 003 screenshots.
 
-### UI
-- visible swing meter removed
-- secondary HUD fades during the stroke
-- hole / wind chrome reduced
-- result-tip redundancy removed
+### Character
+- spherical toy torso replaced by tapered authored LatheGeometry volumes
+- pelvis, torso, chest and waist now taper like clothing/body masses
+- tapered limbs
+- knee/elbow joint caps
+- capsule shoes
+- smaller hands
+- reduced head/jaw/nose
+- controlled micro facial features
+- proper low-profile golf cap instead of beret-like cap
+- smaller clubheads
+- quiet collar
+- micro Flag Orange signal only
 
-### Performance
-- The Line no longer allocates geometry while aiming
-- map DOM updates throttled
-- FOV matrix work reduced
-- body rig remains transform-driven
+### Brand lock
+- Clubhouse Ink #0B0D0D
+- Scorecard Cream #F2EFE8
+- Fairway Stone #B8B1A6
+- Flag Orange #FF6A2A
+- glass/backdrop-filter styling removed
+- primary UI surfaces are solid Ink/Cream
+- course map uses Cream/Stone/Ink identity language
+- world greens remain in the game world, not core UI identity
+- no logo geometry changes
+- interaction copy tightened
+- HUD/map nearly disappear during The Stroke
 
-## Portrait framing evidence
-430×932 model projection:
-
-Address
-- ball ≈ (0.42, -0.32) NDC
-- head ≈ (-0.14, 0.29)
-- feet ≈ (-0.18, -0.34)
-
-Swing lock
-- ball ≈ (0.52, -0.34)
-- head ≈ (-0.19, 0.46)
-- feet ≈ (-0.24, -0.39)
-
-All critical landmarks remain inside frame with meaningful margin.
+### Technical validation
+- all custom JS modules parse successfully
+- CSS braces balanced
+- zero stale Camera 003 API references
+- no backdrop-filter/glass styling remains
 
 ## Graduated systems
-None at final 94/100 graduation level yet.
+None at final 94/100 integrated graduation level yet.
 
 ## Largest meaningful gap
-Real-device validation of Integration 002.
+Real-device evidence for Integration 004.
 
 ## Next critic fixture
-1. address screenshot
-2. rotate camera left/right and confirm golfer + Line follow
-3. alter distance using orange landing mark
-4. Level 1 full swing
-5. Level 50 full swing
-6. bag interaction
-7. ball flight
-8. result camera
-9. topographic map hierarchy
+1. default address screenshot
+2. aim 45° left
+3. aim 45° right
+4. Level 1 top-of-backswing
+5. Level 50 top-of-backswing
+6. Level 1 finish
+7. Level 50 finish
+8. ball flight
+9. result camera
+10. topographic map / HUD hierarchy
 
-## Boundary
-Source inspection and mathematical projection cannot certify physical iPhone touch feel, rendering, browser chrome interaction or frame rate. The next Gauntlet judgment must use the newly rendered iPhone build.
-
-
-## Integration 003 delta
-- portrait camera framing was mathematically calibrated after Camera 002 failed projection
-- camera horizontal drag now defines heading and character address
-- address geometry stays pinned to the ball during rotation
-- swing camera is state-locked to ball
-- topographic map is live
-- visible power meter is gone
-- golfer proportions and equipment scale refined
-- Level 1 vs Level 50 form divergence increased
-- course silhouette and elevation strengthened
-- repeated pointer-frame allocations reduced
-
-The score is capped below graduation until real-device evidence is received.
+## Critical failures that still automatically fail the build
+- golfer flips to face camera while merely aiming
+- golfer/ball relationship shifts as heading rotates
+- swing camera clips head, feet or club
+- camera accepts orbit input during The Stroke
+- flight camera corkscrews from spin/bounce
+- result camera creates empty-ground framing
+- character still reads as a primitive toy/mannequin
+- cap reads like a beret
+- any limb detaches/disappears
+- UI drifts outside official Ink/Cream/Stone/Orange brand system
+- mobile Safari interaction breaks
