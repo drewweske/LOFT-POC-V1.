@@ -206,7 +206,7 @@ document.querySelectorAll('#level-menu button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#level-menu button').forEach(x=>x.classList.toggle('active',x===b));
   $('level-menu').classList.remove('open');golfer.setPose(0,LEVELS[state.level]);showContext(LEVELS[state.level].name,500);
 });
-$('camera-reset').onclick=()=>cam.reset();
+$('camera-reset').onclick=()=>{state.aimYawTarget=COURSE_YAW;cam.reset();showContext('PIN LINE',360);};
 
 function setTarget(p){
   const c=club();
