@@ -37,6 +37,7 @@ export function holeYards(h){
 }
 
 export function scoreName(strokes,par){
+  if(strokes===1)return'ACE';
   const d=strokes-par;
   if(d<=-3)return'ALBATROSS';
   if(d===-2)return'EAGLE';
