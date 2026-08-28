@@ -116,13 +116,41 @@ export class LoftGolferRig{
     else if(t<.77)p=this._mix(P.impact,P.release,out((t-.60)/.17));
     else p=this._mix(P.release,P.finish,out((t-.77)/.23));
 
-    const rookie=1-level.form,downswing=Math.max(0,1-Math.abs(t-.55)/.22),back=Math.max(0,1-Math.abs(t-.34)/.34),fin=clamp((t-.72)/.28,0,1);
-    p.head[0]+=Math.sin(t*Math.PI*2.1)*level.sway;p.head[2]+=back*level.sway*.5;
-    p.torso[0]+=downswing*level.earlyExt;p.chest[0]+=downswing*level.earlyExt*.75;p.pelvis[0]+=downswing*level.earlyExt*.55;
-    p.handL[0]-=downswing*level.plane*.22;p.handR[0]-=downswing*level.plane*.22;p.handL[2]+=downswing*level.plane*.5;p.handR[2]+=downswing*level.plane*.5;
-    p.club[0]-=downswing*level.plane*.45;p.club[2]+=downswing*level.plane;
-    p.ankleR[1]+=fin*rookie*.06*Math.sin(Math.PI*fin);p.kneeR[0]-=fin*rookie*.07;
-    if(t>.77){p.club[1]=lerp(1.70,p.club[1],level.finish);p.club[2]=lerp(-.72,p.club[2],level.finish);}
+    const rookie=1-level.form;
+    const downswing=Math.max(0,1-Math.abs(t-.55)/.22);
+    const back=Math.max(0,1-Math.abs(t-.34)/.34);
+    const fin=clamp((t-.72)/.28,0,1);
+
+    // Beginner form is visibly inefficient rather than merely slower.
+    p.head[0]+=Math.sin(t*Math.PI*2.1)*level.sway;
+    p.head[2]+=back*level.sway*.55;
+
+    // Limited coil at the top: hands/club never reach the clean mastered height.
+    p.handL[1]-=back*rookie*.13;p.handR[1]-=back*rookie*.13;
+    p.club[1]-=back*rookie*.20;
+    p.handL[0]+=back*rookie*.05;p.handR[0]+=back*rookie*.05;
+
+    // Early extension + steeper delivery create a visibly less athletic strike.
+    p.torso[0]+=downswing*level.earlyExt;
+    p.chest[0]+=downswing*level.earlyExt*.82;
+    p.pelvis[0]+=downswing*level.earlyExt*.62;
+    p.handL[0]-=downswing*level.plane*.34;p.handR[0]-=downswing*level.plane*.34;
+    p.handL[2]+=downswing*level.plane*.62;p.handR[2]+=downswing*level.plane*.62;
+    p.club[0]-=downswing*level.plane*.58;p.club[2]+=downswing*level.plane*1.18;
+
+    // Rookie release gets a small chicken-wing / low finish signature.
+    p.elbowL[0]+=fin*rookie*.08;
+    p.elbowL[2]+=fin*rookie*.10;
+    p.handL[1]-=fin*rookie*.17;p.handR[1]-=fin*rookie*.17;
+    p.handL[2]+=fin*rookie*.09;p.handR[2]+=fin*rookie*.09;
+    p.ankleR[1]+=fin*rookie*.08*Math.sin(Math.PI*fin);
+    p.kneeR[0]-=fin*rookie*.09;
+    p.chest[2]+=fin*rookie*.08;
+
+    if(t>.77){
+      p.club[1]=lerp(1.58,p.club[1],level.finish);
+      p.club[2]=lerp(-.64,p.club[2],level.finish);
+    }
     return p;
   }
   setPose(t,level){
