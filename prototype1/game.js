@@ -277,6 +277,9 @@ function playingHeight(x,z){
 function cupDistanceFeet(){
   return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)*3.28084;
 }
+function intendedPuttFeet(){
+  return Math.max(.5,state.targetDistance*3.28084);
+}
 function puttPaceFromPull(px,height){
   const norm=clamp(px/(height*.18),0,1.08);
   const feet=.7+64*Math.pow(norm,1.55);
@@ -288,8 +291,9 @@ function updatePuttPaceGhost(feet){
   const forward=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
   const x=TEE.x+forward.x*d,z=TEE.z+forward.z*d;
   puttPaceGhost.position.set(x,playingHeight(x,z)+.035,z);
-  const err=Math.abs(feet-cupDistanceFeet());
-  const close=err<=Math.max(.55,cupDistanceFeet()*.055);
+  const intended=intendedPuttFeet();
+  const err=Math.abs(feet-intended);
+  const close=err<=Math.max(.55,intended*.055);
   puttPaceRing.material.opacity=close?.98:.70;
   puttPaceRing.scale.setScalar(close?1.10:1);
   puttPaceDot.scale.setScalar(close?1.20:1);
@@ -334,14 +338,18 @@ function buildBag(){
   const grid=$('club-grid');grid.innerHTML='';
   for(const c of CLUBS){
     const b=document.createElement('button');b.className='club-card';b.type='button';b.dataset.club=c.id;
-    b.innerHTML='<b>'+c.name+'</b><strong>'+c.carry+'</strong><span>'+c.feel+'</span>';
+    const hero=c.head==='putter'?65:c.carry;
+    const unit=c.head==='putter'?'FT':'YD';
+    b.innerHTML='<b>'+c.name+'</b><strong data-unit="'+unit+'">'+hero+'</strong><span>'+c.feel+'</span>';
     b.onclick=()=>selectClub(c.id);
     grid.appendChild(b);
   }
   syncBag();
 }
 function syncBag(){
-  const c=club();$('club-short').textContent=c.short;$('club-carry').textContent=c.carry;
+  const c=club();$('club-short').textContent=c.short;
+  $('club-carry').textContent=c.head==='putter'?65:c.carry;
+  $('club-carry').dataset.unit=c.head==='putter'?'FT':'YD';
   document.querySelectorAll('.club-card').forEach(x=>x.classList.toggle('active',x.dataset.club===state.clubId));
 }
 function selectClub(id){
@@ -875,7 +883,7 @@ function frame(now){
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
-    const mapSurface=state.phase==='flight'?'AIR':state.phase==='ready'?state.currentLie:surfaceAt(ballGroup.position.x,ballGroup.position.z);
+    const mapSurface=state.phase==='flight'?(state.shot?.putting?surfaceAt(ballGroup.position.x,ballGroup.position.z):'AIR'):state.phase==='ready'?state.currentLie:surfaceAt(ballGroup.position.x,ballGroup.position.z);
     topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface});
     lastMapUpdate=now;
   }
