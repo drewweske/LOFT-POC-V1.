@@ -421,7 +421,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   if(penalty)state.strokes++;
 
   TEE.copy(position);
-  TEE.y=terrainHeight(TEE.x,TEE.z)+BALL_VISUAL_R;
+  TEE.y=playingHeight(TEE.x,TEE.z)+BALL_VISUAL_R;
   state.currentLie=lieOverride||surfaceAt(TEE.x,TEE.z);
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
 
@@ -831,7 +831,7 @@ function frame(now){
   }
 
   const tendingPin=(state.phase==='ready'&&isPutting())||(state.phase==='flight'&&state.shot?.putting)||(state.phase==='result'&&state.shot?.putting);
-  world.setPinFade(tendingPin?.10:1);
+  world.setPinFade(tendingPin ? .10 : 1);
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
