@@ -461,7 +461,7 @@ function setAimFromMapClient(clientX,clientY){
     ? Math.max(1,Math.round(state.targetDistance*3.28084))+' FT'
     : Math.max(1,Math.round(state.targetDistance/YARD))+' YD';
   $('map-distance').textContent=label;
-  topo.update({ball:ballGroup.position,target:state.target,pin,surface:state.currentLie});
+  topo.update({ball:ballGroup.position,target:state.target,pin,surface:state.currentLie,distanceUnit:isPutting()?'FT':'YD'});
 }
 
 mapExpand.addEventListener('pointerdown',e=>{e.stopPropagation();});
@@ -1089,7 +1089,7 @@ function frame(now){
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
     const mapSurface=state.phase==='flight'?(state.shot?.putting?surfaceAt(ballGroup.position.x,ballGroup.position.z):'AIR'):state.phase==='ready'?state.currentLie:surfaceAt(ballGroup.position.x,ballGroup.position.z);
-    topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface});
+    topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface,distanceUnit:isPutting()?'FT':'YD'});
     lastMapUpdate=now;
   }
   renderer.render(scene,camera);requestAnimationFrame(frame);
