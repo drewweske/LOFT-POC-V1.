@@ -8,12 +8,25 @@ export class LoftTopoMap{
     this.aim=root.querySelector('#map-aim');
     this.distance=root.querySelector('#map-distance');
     this.lie=root.querySelector('#map-lie');
+    this.tee={x:0,z:0};
+    this.pin={x:0,z:-156};
+    this.fx=0;this.fz=-1;this.rx=1;this.rz=0;this.length=156;
+  }
+  setHole(tee,pin){
+    this.tee={x:tee.x,z:tee.z};this.pin={x:pin.x,z:pin.z};
+    const dx=pin.x-tee.x,dz=pin.z-tee.z;
+    this.length=Math.max(1,Math.hypot(dx,dz));
+    this.fx=dx/this.length;this.fz=dz/this.length;
+    this.rx=-this.fz;this.rz=this.fx;
   }
   project(x,z){
-    // Coastal Ridge prototype bounds: x ±48m, tee z 0m, green ~-156m.
+    const dx=x-this.tee.x,dz=z-this.tee.z;
+    const along=dx*this.fx+dz*this.fz;
+    const lateral=dx*this.rx+dz*this.rz;
+    const t=clamp(along/this.length,0,1.08);
     return {
-      x:clamp(47+x*.72,8,86),
-      y:clamp(108+z*.59,8,112)
+      x:clamp(47+lateral*.82,8,86),
+      y:clamp(108-t*94,8,112)
     };
   }
   update({ball,target,pin,surface='TEE'}){
