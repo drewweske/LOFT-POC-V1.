@@ -191,7 +191,15 @@ export class LoftFeedback{
   }
 
   flight(position,quality=.8){
-    if(!this.lastTrailPoint||position.distanceToSquared(this.lastTrailPoint)>.28){
+    // Defensive initialization: putting intentionally skips startFlight().
+    // Never let a feedback effect crash the entire game loop.
+    if(!this.lastTrailPoint){
+      this.trailPoints=[position.clone()];
+      this.lastTrailPoint=position.clone();
+      this.trailMat.opacity=0;
+      return;
+    }
+    if(position.distanceToSquared(this.lastTrailPoint)>.28){
       this.trailPoints.push(position.clone());
       if(this.trailPoints.length>this.trailN)this.trailPoints.shift();
       this.lastTrailPoint.copy(position);
