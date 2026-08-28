@@ -4,72 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0B0D0D">
-<title>LOFT POC V1 — Coastal Ridge</title>
-<link rel="stylesheet" href="./styles.css">
+<title>LOFT P0.7 — Coastal Ridge</title>
+<link rel="stylesheet" href="./styles.css?v=07">
 </head>
 <body>
 <div id="app">
   <div id="stage"></div>
 
   <div id="boot">
-    <div class="boot-inner">
-      <div class="loft-ball"><span></span></div>
-      <div class="boot-title">Coastal Ridge</div>
-      <div class="boot-sub">ONE MORE ROUND.</div>
-    </div>
+    <div class="boot-inner"><div class="loft-ball"><span></span></div><div class="boot-title">Coastal Ridge</div><div class="boot-sub">ONE MORE ROUND.</div></div>
   </div>
 
   <header class="hud-top">
-    <div class="score glass-dark">
-      <div><small>01</small><strong>PAR 3</strong></div>
-      <i></i>
-      <div><small>PIN</small><strong>171 YD</strong></div>
+    <div class="hud-card score glass-dark">
+      <div class="hud-unit"><span class="micro">01</span><strong class="hero">PAR 3</strong></div><i></i>
+      <div class="hud-unit"><span class="micro">PIN</span><strong class="hero">171 YD</strong></div>
     </div>
-    <div class="wind glass-light">
-      <small>WIND</small><strong>7 MPH ↠</strong>
-    </div>
+    <div class="hud-card wind glass-light"><span class="micro">WIND</span><strong class="hero">7 MPH ↠</strong></div>
   </header>
 
   <div id="level-wrap">
-    <button id="level-btn" class="glass-dark">
-      <small>SWING</small><strong id="level-text">LV 1 · ROOKIE</strong>
-    </button>
+    <button id="level-btn" class="glass-dark" type="button"><span class="micro">SWING</span><strong class="hero" id="level-text">LV 1 · ROOKIE</strong></button>
     <div id="level-menu" class="glass-light">
-      <button data-level="1" class="level active">Level 1 · Rookie</button>
-      <button data-level="10" class="level">Level 10 · Learning</button>
-      <button data-level="25" class="level">Level 25 · Player</button>
-      <button data-level="50" class="level">Level 50 · Mastered</button>
+      <button class="level active" data-level="1"><span>Level 1 · Rookie</span><span>01</span></button>
+      <button class="level" data-level="10"><span>Level 10 · Learning</span><span>10</span></button>
+      <button class="level" data-level="25"><span>Level 25 · Player</span><span>25</span></button>
+      <button class="level" data-level="50"><span>Level 50 · Mastered</span><span>50</span></button>
     </div>
   </div>
 
-  <div id="context"><span class="glass-dark" id="context-text">THE LINE</span></div>
-
+  <div id="context"><span id="context-text" class="glass-dark">THE LINE</span></div>
   <div id="swing-meter"><div id="swing-fill"></div></div>
+  <div id="tip"><span id="tip-text" class="glass-light">Drag anywhere to orbit · pinch to zoom</span></div>
 
-  <div id="tip"><span class="glass-light" id="tip-text">Drag anywhere to orbit · pinch to zoom</span></div>
+  <button id="bag-chip" class="glass-dark" type="button">
+    <span class="micro">CLUB · CARRY</span>
+    <span class="bag-row"><b id="bag-short">7I</b><strong id="bag-carry">160 YD</strong></span>
+    <small id="bag-grade">CORE · CONTROL</small>
+  </button>
+  <button id="cam-reset" class="glass-light" type="button" aria-label="Reset camera">⌖</button>
 
-  <button id="bag" class="glass-dark"><b>7I</b><span>171</span></button>
-  <button id="cam-reset" class="glass-light" aria-label="Reset camera">⌖</button>
+  <div id="bag-sheet" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div><div class="sheet-title">Your bag.</div><div class="sheet-sub">Carry yardage is the hero number. Choose the object, then shape The Line.</div></div>
+        <button id="sheet-close" class="sheet-close" type="button">×</button>
+      </div>
+      <div class="section-label">CORE STARTER SET</div>
+      <div id="club-grid" class="club-grid"></div>
+      <div class="section-label" style="margin-top:16px">BALL</div>
+      <div id="ball-grid" class="ball-grid"></div>
+    </div>
+  </div>
 
   <div id="result">
     <div class="result-card glass-light">
-      <div>
-        <small id="result-kicker">PURE</small>
-        <strong id="result-head">8 FT</strong>
-        <span id="result-sub">Green · pin high</span>
-      </div>
-      <button id="again">ONE MORE</button>
+      <div class="result-data"><small id="result-kicker">PURE</small><strong id="result-head">8 FT</strong><span id="result-sub">Green · pin high</span></div>
+      <button id="again" class="again" type="button">ONE MORE</button>
     </div>
   </div>
 
-  <div id="fatal">
-    <div>
-      <strong>LOFT couldn't start.</strong>
-      <p id="fatal-text"></p>
-      <button onclick="location.reload()">RELOAD</button>
-    </div>
-  </div>
+  <div id="fatal"><div><strong>LOFT couldn't start.</strong><p id="fatal-text"></p><button onclick="location.reload()">RELOAD</button></div></div>
 </div>
-<script type="module" src="./app.js"></script>
+<script type="module" src="./app.js?v=07"></script>
 </body>
 </html>
