@@ -91,7 +91,7 @@ function updateHoleHUD(){
   $('intro-meta').textContent='PAR '+holeDef.par+' · '+holeYards(holeDef)+' YD';
   const mapHead=document.querySelector('.map-head span');
   if(mapHead)mapHead.textContent=holeDef.name+' · '+String(holeDef.number).padStart(2,'0');
-  const mapFoot=document.querySelector('.map-foot span:last-child');
+  const mapFoot=$('map-foot-right');
   if(mapFoot){
     const played=state.holeScores.length;
     const total=state.holeScores.reduce((a,b)=>a+(b||0),0);
@@ -412,6 +412,89 @@ const cam=new LoftCamera(camera,{terrainHeight});
 const topo=new LoftTopoMap($('course-map'));
 const feedback=new LoftFeedback(scene,COLORS);
 
+const courseMap=$('course-map');
+const mapExpand=$('map-expand');
+let mapDragPointer=null;
+let mapDragMoved=false;
+
+function mapIsOpen(){return courseMap.classList.contains('expanded');}
+function openPrecisionMap(){
+  if(state.phase!=='ready'||cam.isSwingLocked)return;
+  courseMap.classList.add('expanded');
+  courseMap.setAttribute('aria-expanded','true');
+  $('app').classList.add('map-open');
+  mapExpand.textContent='×';
+  mapExpand.setAttribute('aria-label','Close course map');
+  $('tip').style.opacity='0';
+}
+function closePrecisionMap(){
+  courseMap.classList.remove('expanded');
+  courseMap.setAttribute('aria-expanded','false');
+  $('app').classList.remove('map-open');
+  mapExpand.textContent='↗';
+  mapExpand.setAttribute('aria-label','Expand course map');
+  mapDragPointer=null;
+  updateHoleHUD();
+  updateTip();
+}
+function setAimFromMapClient(clientX,clientY){
+  if(state.phase!=='ready')return;
+  const p=topo.worldFromClient(clientX,clientY);
+  if(!p)return;
+  const dx=p.x-TEE.x,dz=p.z-TEE.z;
+  let distance=Math.hypot(dx,dz);
+  if(distance<.001)return;
+
+  const c=club();
+  const min=c.head==='putter' ? .15 : (isShortGame() ? .35 : Math.max(1.8,c.carry*YARD*.12));
+  const max=c.head==='putter' ? 65*.3048 : c.carry*YARD*1.08;
+  const yaw=clamp(Math.atan2(dx,-dz),COURSE_YAW-1.10,COURSE_YAW+1.10);
+
+  state.aimYaw=yaw;
+  state.aimYawTarget=yaw;
+  state.targetDistance=clamp(distance,min,max);
+  syncTargetFromAim();
+  state.learned.camera=true;state.learned.line=true;
+  updateLine();
+
+  const label=c.head==='putter'
+    ? Math.max(1,Math.round(state.targetDistance*3.28084))+' FT'
+    : Math.max(1,Math.round(state.targetDistance/YARD))+' YD';
+  $('map-distance').textContent=label;
+  topo.update({ball:ballGroup.position,target:state.target,pin,surface:state.currentLie});
+}
+
+mapExpand.addEventListener('pointerdown',e=>{e.stopPropagation();});
+mapExpand.addEventListener('click',e=>{
+  e.stopPropagation();
+  mapIsOpen()?closePrecisionMap():openPrecisionMap();
+});
+courseMap.addEventListener('click',e=>{
+  if(e.target===mapExpand)return;
+  if(!mapIsOpen())openPrecisionMap();
+});
+topo.svg?.addEventListener('pointerdown',e=>{
+  if(!mapIsOpen()||state.phase!=='ready')return;
+  e.preventDefault();e.stopPropagation();
+  mapDragPointer=e.pointerId;mapDragMoved=false;
+  topo.svg.setPointerCapture?.(e.pointerId);
+  setAimFromMapClient(e.clientX,e.clientY);
+});
+topo.svg?.addEventListener('pointermove',e=>{
+  if(mapDragPointer!==e.pointerId||!mapIsOpen())return;
+  e.preventDefault();e.stopPropagation();
+  mapDragMoved=true;
+  setAimFromMapClient(e.clientX,e.clientY);
+});
+function endMapDrag(e){
+  if(mapDragPointer!==e.pointerId)return;
+  e.preventDefault();e.stopPropagation();
+  try{topo.svg.releasePointerCapture?.(e.pointerId);}catch(_){}
+  mapDragPointer=null;
+}
+topo.svg?.addEventListener('pointerup',endMapDrag);
+topo.svg?.addEventListener('pointercancel',endMapDrag);
+
 const raycaster=new THREE.Raycaster();
 const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 function rayGround(cx,cy){
@@ -479,7 +562,11 @@ document.querySelectorAll('#level-menu button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#level-menu button').forEach(x=>x.classList.toggle('active',x===b));
   $('level-menu').classList.remove('open');golfer.setPose(0,LEVELS[state.level]);showContext(LEVELS[state.level].name,500);
 });
-$('camera-reset').onclick=()=>{state.aimYawTarget=COURSE_YAW;cam.resetAim();showContext('PIN LINE',360);};
+$('camera-reset').onclick=()=>{
+  closePrecisionMap();
+  state.aimYaw=COURSE_YAW;state.aimYawTarget=COURSE_YAW;
+  syncTargetFromAim();updateLine();cam.resetAim();showContext('PIN LINE',360);
+};
 
 function setTarget(p){
   const c=club();
@@ -565,6 +652,7 @@ function launchShot(metrics){
 }
 
 function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
+  closePrecisionMap();
   state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;state.cupSink=0;
   physics.active=false;physics.state=null;
   if(penalty)state.strokes++;
@@ -590,6 +678,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
 }
 
 function startHole(index,{intro=true}={}){
+  closePrecisionMap();
   holeIndex=index;state.holeIndex=index;holeDef=ROUND_HOLES[index];
   state.strokes=0;state.phase='ready';state.shot=null;state.roundComplete=false;
   state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;
@@ -732,8 +821,9 @@ canvas.addEventListener('pointermove',e=>{
   const dx=e.clientX-gesture.lx,dy=e.clientY-gesture.ly,total=Math.hypot(e.clientX-gesture.sx,e.clientY-gesture.sy);if(total>5)gesture.moved=true;
   if(gesture.type==='orbit'){
     if(state.phase==='ready'&&!cam.isSwingLocked){
-      state.aimYawTarget=clamp(state.aimYawTarget-dx*.0041,COURSE_YAW-.98,COURSE_YAW+.98);
-      cam.aimPitchBy(dy);
+      const yawRate=isPutting() ? .00245 : .0041;
+      state.aimYawTarget=clamp(state.aimYawTarget-dx*yawRate,COURSE_YAW-1.10,COURSE_YAW+1.10);
+      cam.aimPitchBy(dy*(isPutting() ? .48 : 1));
     }else if(state.phase==='result'){
       cam.resultOrbitBy(dx,dy);
     }
