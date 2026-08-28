@@ -59,7 +59,8 @@ const state={
   interaction:null,
   shotCount:0,
   landingFX:false,
-  ballCompression:0
+  ballCompression:0,
+  hitStop:0
 };
 
 function club(){return CLUBS.find(c=>c.id===state.clubId);}
@@ -276,6 +277,7 @@ function launchShot(metrics){
   state.phase='flight';state.swingPhase=.60;state.shotCount++;
   state.landingFX=false;
   state.ballCompression=1;
+  state.hitStop=q>.94?.030:q>.82?.022:.014;
 
   cam.impact(.70+.30*q);
   cam.beginFlight(aimYaw());
@@ -302,7 +304,7 @@ function finishShot(){
   $('result').classList.add('show');updateTip();
 }
 function resetShot(){
-  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;physics.active=false;physics.state=null;
+  state.phase='ready';state.shot=null;state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;physics.active=false;physics.state=null;
   ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);
   golfer.group.position.set(0,terrainHeight(0,0),0);golfer.setPose(0,LEVELS[state.level]);
   feedback.clear();ballGroup.scale.set(1,1,1);
@@ -470,7 +472,15 @@ function frame(now){
     if(cam.isSwingLocked)cam.updateSwing(dt,{ball:ballGroup.position,aimYaw:yaw,swingProgress:state.swingPhase});
     else cam.updateAim(dt,{ball:ballGroup.position,aimYaw:yaw});
   }else if(state.phase==='flight'){
-    const L=LEVELS[state.level];state.swingPhase=clamp(state.swingPhase+dt*lerp(.70,1.15,L.form),.60,1);golfer.setPose(state.swingPhase,L);
+    const L=LEVELS[state.level];
+    if(state.hitStop>0){
+      state.hitStop=Math.max(0,state.hitStop-dt);
+      golfer.setPose(.60,L);
+    }else{
+      const followRate=.84+.38*(state.shot?.quality||.8)+.18*(state.shot?.commitment||.8);
+      state.swingPhase=clamp(state.swingPhase+dt*followRate,.60,1);
+      golfer.setPose(state.swingPhase,L);
+    }
     const ps=physics.step(dt);
     if(ps){
       ballGroup.position.copy(ps.pos);
