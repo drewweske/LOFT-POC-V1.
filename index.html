@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0B0D0D">
+<title>LOFT POC V1 — Coastal Ridge</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage"></div>
+
+  <div id="boot">
+    <div class="boot-inner">
+      <div class="loft-ball"><span></span></div>
+      <div class="boot-title">Coastal Ridge</div>
+      <div class="boot-sub">ONE MORE ROUND.</div>
+    </div>
+  </div>
+
+  <header class="hud-top">
+    <div class="score glass-dark">
+      <div><small>01</small><strong>PAR 3</strong></div>
+      <i></i>
+      <div><small>PIN</small><strong>171 YD</strong></div>
+    </div>
+    <div class="wind glass-light">
+      <small>WIND</small><strong>7 MPH ↠</strong>
+    </div>
+  </header>
+
+  <div id="level-wrap">
+    <button id="level-btn" class="glass-dark">
+      <small>SWING</small><strong id="level-text">LV 1 · ROOKIE</strong>
+    </button>
+    <div id="level-menu" class="glass-light">
+      <button data-level="1" class="level active">Level 1 · Rookie</button>
+      <button data-level="10" class="level">Level 10 · Learning</button>
+      <button data-level="25" class="level">Level 25 · Player</button>
+      <button data-level="50" class="level">Level 50 · Mastered</button>
+    </div>
+  </div>
+
+  <div id="context"><span class="glass-dark" id="context-text">THE LINE</span></div>
+
+  <div id="swing-meter"><div id="swing-fill"></div></div>
+
+  <div id="tip"><span class="glass-light" id="tip-text">Drag anywhere to orbit · pinch to zoom</span></div>
+
+  <button id="bag" class="glass-dark"><b>7I</b><span>171</span></button>
+  <button id="cam-reset" class="glass-light" aria-label="Reset camera">⌖</button>
+
+  <div id="result">
+    <div class="result-card glass-light">
+      <div>
+        <small id="result-kicker">PURE</small>
+        <strong id="result-head">8 FT</strong>
+        <span id="result-sub">Green · pin high</span>
+      </div>
+      <button id="again">ONE MORE</button>
+    </div>
+  </div>
+
+  <div id="fatal">
+    <div>
+      <strong>LOFT couldn't start.</strong>
+      <p id="fatal-text"></p>
+      <button onclick="location.reload()">RELOAD</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
