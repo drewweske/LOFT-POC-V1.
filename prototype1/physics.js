@@ -8,17 +8,23 @@ export class GolfPhysics{
     this.terrainHeight=terrainHeight;this.surfaceAt=surfaceAt;this.wind=wind.clone();
     this.active=false;this.state=null;this.accum=0;
   }
-  launch({position,club,power,tempo,path,form}){
+  launch({position,club,power,tempo,path,form,aimYaw=0}){
     const q=Math.max(.54,Math.min(1.01,.73+.18*tempo+.1*form-.016*Math.abs(path)));
     const speed=club.ballSpeed*Math.max(.45,Math.min(1.08,power))*(.92+.08*q);
     const launch=club.launch*Math.PI/180;
-    const yaw=path*.42*Math.PI/180;
+    const yaw=aimYaw+path*.42*Math.PI/180;
     const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
     const velocity=new THREE.Vector3(forward.x*Math.cos(launch)*speed,Math.sin(launch)*speed,forward.z*Math.cos(launch)*speed);
     const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),forward).normalize();
     const tilt=Math.max(-14,Math.min(14,path*1.45))*Math.PI/180;
     const axis=right.multiplyScalar(Math.cos(tilt)).add(new THREE.Vector3(0,Math.sin(tilt),0)).normalize();
     this.state={pos:position.clone(),vel:velocity,spinAxis:axis,spinOmega:club.spin*Math.PI*2/60,surface:'air',stopped:false,quality:q};
+    this.active=true;this.accum=0;return this.state;
+  }
+  putt({position,club,power,path,aimYaw=0}){
+    const yaw=aimYaw+path*.28*Math.PI/180;
+    const speed=club.ballSpeed*Math.max(.25,Math.min(1.08,power));
+    this.state={pos:position.clone(),vel:new THREE.Vector3(Math.sin(yaw)*speed,0,-Math.cos(yaw)*speed),spinAxis:new THREE.Vector3(),spinOmega:0,surface:this.surfaceAt(position.x,position.z),stopped:false,quality:1};
     this.active=true;this.accum=0;return this.state;
   }
   step(dt){
