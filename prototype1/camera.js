@@ -20,51 +20,35 @@ export class LoftCamera{
     this.camera.up.set(0,1,0);
 
     this.mode=CAMERA_MODE.AIM;
-    this.transition=1;
-
     this.pos=new THREE.Vector3();
     this.look=new THREE.Vector3();
     this.initialized=false;
 
-    // AIM: heading itself comes from game aim. These are only composition controls.
-    this.aimPitch=.14;
-    this.aimPitchT=.14;
-    this.aimDist=8.9;
-    this.aimDistT=8.9;
+    this.aimPitch=.12;this.aimPitchT=.12;
+    this.aimDist=8.7;this.aimDistT=8.7;
 
-    // FLIGHT is intentionally automatic. We smooth toward ball velocity rather
-    // than letting pointer input create accidental cinematic angles mid-shot.
     this.flightHeading=0;
-    this.flightPitch=.18;
-    this.flightDist=10.0;
+    this.flightDist=9.7;
 
-    // RESULT regains semi-free inspection around the final lie.
-    this.resultOrbit=0;
-    this.resultOrbitT=0;
-    this.resultPitch=.20;
-    this.resultPitchT=.20;
-    this.resultDist=7.3;
-    this.resultDistT=7.3;
+    this.resultOrbit=0;this.resultOrbitT=0;
+    this.resultPitch=.18;this.resultPitchT=.18;
+    this.resultDist=7.1;this.resultDistT=7.1;
 
     this.lockedAimYaw=0;
-    this.lastMode=CAMERA_MODE.AIM;
+    this.impactKick=0;
   }
 
   get isSwingLocked(){return this.mode===CAMERA_MODE.SWING;}
   get isShotLocked(){return this.mode===CAMERA_MODE.SWING||this.mode===CAMERA_MODE.FLIGHT;}
 
-  _enter(mode){
-    if(this.mode===mode)return;
-    this.lastMode=this.mode;
-    this.mode=mode;
-    this.transition=0;
-  }
+  _enter(mode){this.mode=mode;}
 
   resetAim(){
     this._enter(CAMERA_MODE.AIM);
-    this.aimPitchT=.14;
-    this.aimDistT=8.9;
+    this.aimPitchT=.12;
+    this.aimDistT=8.7;
     this.resultOrbit=this.resultOrbitT=0;
+    this.impactKick=0;
   }
 
   beginSwing(aimYaw){
@@ -72,9 +56,7 @@ export class LoftCamera{
     this._enter(CAMERA_MODE.SWING);
   }
 
-  cancelSwing(){
-    this._enter(CAMERA_MODE.AIM);
-  }
+  cancelSwing(){this._enter(CAMERA_MODE.AIM);}
 
   beginFlight(aimYaw){
     this.lockedAimYaw=aimYaw;
@@ -86,52 +68,53 @@ export class LoftCamera{
     const toPin=pin.clone().sub(ball);toPin.y=0;
     if(toPin.lengthSq()>.01)this.flightHeading=Math.atan2(toPin.x,-toPin.z);
     this.resultOrbit=this.resultOrbitT=0;
-    this.resultPitch=this.resultPitchT=.20;
-    this.resultDist=this.resultDistT=7.3;
+    this.resultPitch=this.resultPitchT=.18;
+    this.resultDist=this.resultDistT=7.1;
     this._enter(CAMERA_MODE.RESULT);
+  }
+
+  impact(amount=1){
+    this.impactKick=clamp(amount,0,1.25);
   }
 
   aimPitchBy(dy){
     if(this.mode!==CAMERA_MODE.AIM)return;
-    this.aimPitchT=clamp(this.aimPitchT+dy*.00235,-.035,.34);
+    this.aimPitchT=clamp(this.aimPitchT+dy*.00215,-.02,.30);
   }
 
   aimZoom(delta){
     if(this.mode!==CAMERA_MODE.AIM)return;
-    this.aimDistT=clamp(this.aimDistT*Math.exp(-delta*.0019),7.0,11.4);
+    this.aimDistT=clamp(this.aimDistT*Math.exp(-delta*.0018),7.2,10.8);
   }
 
   resultOrbitBy(dx,dy){
     if(this.mode!==CAMERA_MODE.RESULT)return;
-    this.resultOrbitT=clamp(this.resultOrbitT-dx*.0038,-.58,.58);
-    this.resultPitchT=clamp(this.resultPitchT+dy*.0023,-.02,.42);
+    this.resultOrbitT=clamp(this.resultOrbitT-dx*.0033,-.50,.50);
+    this.resultPitchT=clamp(this.resultPitchT+dy*.0021,0,.36);
   }
 
   resultZoom(delta){
     if(this.mode!==CAMERA_MODE.RESULT)return;
-    this.resultDistT=clamp(this.resultDistT*Math.exp(-delta*.0018),5.8,9.8);
+    this.resultDistT=clamp(this.resultDistT*Math.exp(-delta*.0017),5.9,9.1);
   }
 
   _setFov(target,dt){
-    const next=smooth(this.camera.fov,target,8,dt);
+    const next=smooth(this.camera.fov,target,9,dt);
     if(Math.abs(next-this.camera.fov)>.002){
       this.camera.fov=next;
       this.camera.updateProjectionMatrix();
     }
   }
 
-  _safeY(v,minAbove=1.15){
+  _safeY(v,minAbove=1.1){
     const ground=this.terrainHeight(v.x,v.z);
     v.y=Math.max(v.y,ground+minAbove);
     return v;
   }
 
   _commit(desiredPos,desiredLook,posRate,lookRate,dt){
-    this.transition=clamp(this.transition+dt*4.5,0,1);
     if(!this.initialized){
-      this.pos.copy(desiredPos);
-      this.look.copy(desiredLook);
-      this.initialized=true;
+      this.pos.copy(desiredPos);this.look.copy(desiredLook);this.initialized=true;
     }else{
       this.pos.lerp(desiredPos,1-Math.exp(-posRate*dt));
       this.look.lerp(desiredLook,1-Math.exp(-lookRate*dt));
@@ -144,83 +127,84 @@ export class LoftCamera{
     if(this.mode!==CAMERA_MODE.AIM)this._enter(CAMERA_MODE.AIM);
     this.aimPitch=smooth(this.aimPitch,this.aimPitchT,10,dt);
     this.aimDist=smooth(this.aimDist,this.aimDistT,11,dt);
-    this._setFov(39.5,dt);
+    this._setFov(38.5,dt);
 
     const forward=new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
 
-    // Deliberately trailing, not a free 360° orbit. This prevents accidental
-    // front-on / side-on address angles while still letting heading change freely.
+    // LOFT address composition: almost directly down the shot line.
+    // This keeps the ball visually centered and prevents the shot from feeling
+    // pre-biased left/right before the player has done anything.
     const desiredPos=ball.clone()
-      .addScaledVector(forward,-this.aimDist*.91)
-      .addScaledVector(right,this.aimDist*.24)
-      .add(new THREE.Vector3(0,1.78+this.aimPitch*3.65,0));
+      .addScaledVector(forward,-this.aimDist*.93)
+      .addScaledVector(right,this.aimDist*.045)
+      .add(new THREE.Vector3(0,1.70+this.aimPitch*3.45,0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,2.15)
-      .add(new THREE.Vector3(0,.63,0));
+      .addScaledVector(forward,2.85)
+      .add(new THREE.Vector3(0,.58,0));
 
-    this._safeY(desiredPos,1.15);
-    this._commit(desiredPos,desiredLook,10.5,11.5,dt);
+    this._safeY(desiredPos,1.12);
+    this._commit(desiredPos,desiredLook,11.5,12.5,dt);
   }
 
   updateSwing(dt,{ball,swingProgress=0}){
     if(this.mode!==CAMERA_MODE.SWING)return;
-    this._setFov(40.5,dt);
+    this._setFov(39.2,dt);
 
     const forward=new THREE.Vector3(Math.sin(this.lockedAimYaw),0,-Math.cos(this.lockedAimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
 
-    // The swing camera is a fixed cinematic rail around the BALL. The only
-    // movement is a tiny authored push through impact, never user input.
-    const impactPulse=Math.exp(-Math.pow((swingProgress-.58)/.14,2));
+    // Ball-centered cinematic rail. Small lateral reveal shows the golfer's body
+    // and club plane without turning the shot into a side-view animation.
+    const turn=Math.sin(clamp(swingProgress,0,1)*Math.PI);
+    const impactPulse=Math.exp(-Math.pow((swingProgress-.58)/.12,2));
     const desiredPos=ball.clone()
-      .addScaledVector(forward,-6.28+impactPulse*.18)
-      .addScaledVector(right,2.58)
-      .add(new THREE.Vector3(0,2.42-impactPulse*.05,0));
+      .addScaledVector(forward,-6.55+impactPulse*.16)
+      .addScaledVector(right,1.36+turn*.18)
+      .add(new THREE.Vector3(0,2.28-impactPulse*.04,0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,1.10+impactPulse*.25)
-      .add(new THREE.Vector3(0,.64,0));
+      .addScaledVector(forward,1.55+impactPulse*.22)
+      .add(new THREE.Vector3(0,.58,0));
 
-    this._safeY(desiredPos,1.22);
-    this._commit(desiredPos,desiredLook,16,17,dt);
+    this._safeY(desiredPos,1.18);
+    this._commit(desiredPos,desiredLook,17,18,dt);
   }
 
   updateFlight(dt,{ball,velocity,pin}){
     if(this.mode!==CAMERA_MODE.FLIGHT)return;
-    this._setFov(42.5,dt);
+
+    this.impactKick=smooth(this.impactKick,0,13,dt);
+    this._setFov(41.8+this.impactKick*1.15,dt);
 
     const horizontal=velocity.clone();horizontal.y=0;
     let desiredHeading=this.flightHeading;
     if(horizontal.lengthSq()>.035)desiredHeading=Math.atan2(horizontal.x,-horizontal.z);
-
-    // Follow actual ball direction, but cap how fast the camera is allowed to
-    // yaw. This removes sudden corkscrew / side-angle changes from spin or bounce.
-    this.flightHeading=smoothAngle(this.flightHeading,desiredHeading,4.2,dt);
+    this.flightHeading=smoothAngle(this.flightHeading,desiredHeading,4.0,dt);
 
     const speed=horizontal.length();
     const height=Math.max(0,ball.y-this.terrainHeight(ball.x,ball.z));
-    const dynamicDist=clamp(8.4+speed*.045+height*.025,8.6,12.8);
-    this.flightDist=smooth(this.flightDist,dynamicDist,4.5,dt);
+    const dynamicDist=clamp(8.2+speed*.045+height*.022,8.4,12.3);
+    this.flightDist=smooth(this.flightDist,dynamicDist,4.8,dt);
 
     const forward=new THREE.Vector3(Math.sin(this.flightHeading),0,-Math.cos(this.flightHeading)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
 
     const desiredPos=ball.clone()
-      .addScaledVector(forward,-this.flightDist*.86)
-      .addScaledVector(right,this.flightDist*.16)
-      .add(new THREE.Vector3(0,2.85+clamp(height*.09,0,2.1),0));
+      .addScaledVector(forward,-this.flightDist*.88-this.impactKick*.28)
+      .addScaledVector(right,this.flightDist*.095)
+      .add(new THREE.Vector3(0,2.70+clamp(height*.085,0,1.95)+this.impactKick*.05,0));
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const pinBias=toPin.lengthSq()>.01?toPin.normalize():forward;
     const desiredLook=ball.clone()
-      .addScaledVector(forward,.95)
-      .addScaledVector(pinBias,.35)
-      .add(new THREE.Vector3(0,.12,0));
+      .addScaledVector(forward,1.00)
+      .addScaledVector(pinBias,.30)
+      .add(new THREE.Vector3(0,.10,0));
 
-    this._safeY(desiredPos,1.3);
-    this._commit(desiredPos,desiredLook,7.4,9.6,dt);
+    this._safeY(desiredPos,1.25);
+    this._commit(desiredPos,desiredLook,7.8,10.0,dt);
   }
 
   updateResult(dt,{ball,pin}){
@@ -228,7 +212,7 @@ export class LoftCamera{
     this.resultOrbit=smooth(this.resultOrbit,this.resultOrbitT,8.5,dt);
     this.resultPitch=smooth(this.resultPitch,this.resultPitchT,8.5,dt);
     this.resultDist=smooth(this.resultDist,this.resultDistT,9,dt);
-    this._setFov(39.5,dt);
+    this._setFov(39.0,dt);
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):this.flightHeading;
@@ -239,13 +223,13 @@ export class LoftCamera{
 
     const desiredPos=ball.clone()
       .addScaledVector(forward,-this.resultDist)
-      .add(new THREE.Vector3(0,2.28+this.resultPitch*3.25,0));
+      .add(new THREE.Vector3(0,2.15+this.resultPitch*3.0,0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(pinDir,1.75)
-      .add(new THREE.Vector3(0,.16,0));
+      .addScaledVector(pinDir,1.55)
+      .add(new THREE.Vector3(0,.13,0));
 
-    this._safeY(desiredPos,1.12);
-    this._commit(desiredPos,desiredLook,7.2,8.2,dt);
+    this._safeY(desiredPos,1.08);
+    this._commit(desiredPos,desiredLook,7.4,8.6,dt);
   }
 }
