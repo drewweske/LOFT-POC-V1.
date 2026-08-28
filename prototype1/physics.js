@@ -1,7 +1,13 @@
 import * as THREE from '../vendor/three.module.js';
 
-const G=9.81;
+const G=9.80665;
 const FIXED=1/120;
+const AIR_DENSITY=1.225;
+const BALL_MASS=.04593;
+const BALL_RADIUS=.021335;
+const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
+const CUP_RADIUS=.14;
+const CUP_CAPTURE=.105;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class GolfPhysics{
@@ -12,7 +18,10 @@ export class GolfPhysics{
     this.active=false;
     this.state=null;
     this.accum=0;
+    this.cup=null;
   }
+
+  setCup(position){this.cup=position?position.clone():null;}
 
   launch({position,club,power,path,form,aimYaw=0,strike=.8,release=.8}){
     const q=clamp(strike,0,1);
@@ -35,7 +44,9 @@ export class GolfPhysics{
       forward.z*Math.cos(launch)*speed
     );
 
-    const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),forward).normalize();
+    // Backspin axis: forward × up. The previous opposite cross-product pushed
+    // Magnus force downward. This orientation produces physical upward lift.
+    const right=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
     const tiltDeg=clamp(path*1.18+(1-q)*Math.sign(path||1)*2.0,-14,14);
     const tilt=tiltDeg*Math.PI/180;
     const axis=right.multiplyScalar(Math.cos(tilt)).add(new THREE.Vector3(0,Math.sin(tilt),0)).normalize();
@@ -50,7 +61,9 @@ export class GolfPhysics{
       stopped:false,
       quality:q,
       lastImpactSurface:null,
-      bounced:false
+      bounced:false,
+      holed:false,
+      lipTouched:false
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -69,7 +82,9 @@ export class GolfPhysics{
       stopped:false,
       quality:q,
       lastImpactSurface:null,
-      bounced:false
+      bounced:false,
+      holed:false,
+      lipTouched:false
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -82,16 +97,53 @@ export class GolfPhysics{
     return this.state;
   }
 
+  _tryCup(s,surface){
+    if(!this.cup||surface!=='green'||s.holed)return false;
+    const dx=s.pos.x-this.cup.x,dz=s.pos.z-this.cup.z;
+    const d=Math.hypot(dx,dz);
+    if(d>CUP_RADIUS)return false;
+
+    const speed=Math.hypot(s.vel.x,s.vel.z);
+    const direct=d<CUP_CAPTURE;
+    const fastCenter=d<CUP_CAPTURE*.66&&speed<3.15;
+    const normalCapture=direct&&speed<2.05;
+
+    if(normalCapture||fastCenter){
+      s.holed=true;s.stopped=true;s.surface='cup';s.vel.set(0,0,0);
+      s.pos.set(this.cup.x,this.terrainHeight(this.cup.x,this.cup.z)-.055,this.cup.z);
+      return true;
+    }
+
+    // Lip-out: conserve direction broadly, shed speed, and push tangentially.
+    if(!s.lipTouched&&speed>.12){
+      s.lipTouched=true;
+      const n=new THREE.Vector3(dx,0,dz).normalize();
+      const tangent=new THREE.Vector3(-n.z,0,n.x);
+      const sign=Math.sign(s.vel.dot(tangent))||1;
+      s.vel.multiplyScalar(.48).addScaledVector(tangent,sign*.42);
+    }
+    return false;
+  }
+
   _fixed(){
     const s=this.state;if(s.stopped)return;
 
     if(s.surface==='air'){
       const rel=s.vel.clone().sub(this.wind);
-      const speed=rel.length();
-      const drag=rel.clone().multiplyScalar(-.00215*speed);
-      const magnus=new THREE.Vector3()
-        .crossVectors(s.spinAxis.clone().multiplyScalar(s.spinOmega),rel)
-        .multiplyScalar(.00012);
+      const speed=Math.max(.01,rel.length());
+
+      // Aerodynamics are based on a regulation 45.93 g / 42.67 mm golf ball.
+      // Drag coefficient rises with spin parameter; lift is derived from backspin.
+      const spinParam=Math.abs(s.spinOmega)*BALL_RADIUS/speed;
+      const cd=clamp(.19+.18*spinParam,.20,.285);
+      const cl=clamp(.70*spinParam,0,.32);
+      const q=.5*AIR_DENSITY*BALL_AREA/BALL_MASS;
+      const drag=rel.clone().normalize().multiplyScalar(-q*cd*speed*speed);
+
+      let magnus=new THREE.Vector3();
+      if(s.spinOmega>1&&cl>0){
+        magnus.crossVectors(s.spinAxis,rel).normalize().multiplyScalar(q*cl*speed*speed);
+      }
       const acc=new THREE.Vector3(0,-G,0).add(drag).add(magnus);
 
       s.vel.addScaledVector(acc,FIXED);
@@ -104,6 +156,8 @@ export class GolfPhysics{
       if(s.pos.y<=ground&&s.vel.y<0){
         s.pos.y=ground;
         s.lastImpactSurface=surface;
+
+        if(this._tryCup(s,surface))return;
 
         if(surface==='water'){
           s.surface='water';
@@ -126,6 +180,8 @@ export class GolfPhysics{
     }else{
       const surface=this.surfaceAt(s.pos.x,s.pos.z);
       s.surface=surface;
+
+      if(this._tryCup(s,surface))return;
 
       const e=.35;
       const dx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
