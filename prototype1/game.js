@@ -433,7 +433,7 @@ function finishShot(){
   if(state.phase==='result'||state.phase==='round-end')return;
   const holed=Boolean(physics.state?.holed);
   state.phase='result';
-  cam.beginResult(ballGroup.position,pin);
+  cam.beginResult(ballGroup.position,pin,{cup:holed});
 
   const feet=Math.hypot(ballGroup.position.x-pin.x,ballGroup.position.z-pin.z)*3.28084;
   const surface=holed?'cup':surfaceAt(ballGroup.position.x,ballGroup.position.z);
