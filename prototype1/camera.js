@@ -137,7 +137,7 @@ export class LoftCamera{
     // pre-biased left/right before the player has done anything.
     const desiredPos=ball.clone()
       .addScaledVector(forward,-this.aimDist*.93)
-      .addScaledVector(right,this.aimDist*.045)
+      .addScaledVector(right,this.aimDist*.024)
       .add(new THREE.Vector3(0,1.70+this.aimPitch*3.45,0));
 
     const desiredLook=ball.clone()
@@ -161,7 +161,7 @@ export class LoftCamera{
     const impactPulse=Math.exp(-Math.pow((swingProgress-.58)/.12,2));
     const desiredPos=ball.clone()
       .addScaledVector(forward,-6.55+impactPulse*.16)
-      .addScaledVector(right,1.36+turn*.18)
+      .addScaledVector(right,1.12+turn*.14)
       .add(new THREE.Vector3(0,2.28-impactPulse*.04,0));
 
     const desiredLook=ball.clone()
