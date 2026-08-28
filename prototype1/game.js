@@ -163,8 +163,13 @@ function updateLine(){
   const end=state.target.clone();end.y=terrainHeight(end.x,end.z)+.06;
   const c=club();
   const mid=start.clone().lerp(end,.52);
-  mid.y+=Math.max(4.2,c.launch*.54+start.distanceTo(end)*.032);
-  mid.x+=wind.x*.40;
+  if(c.head==='putter'){
+    mid.y=Math.max(start.y,end.y)+.10;
+  }else{
+    mid.y+=Math.max(4.2,c.launch*.54+start.distanceTo(end)*.032);
+    mid.x+=wind.x*.40;
+    mid.z+=wind.z*.28;
+  }
   // Update a stable line buffer in place. Camera-driven aiming can update every
   // pointer frame without allocating/discarding geometry.
   for(let i=0;i<=LINE_STEPS;i++){
