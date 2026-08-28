@@ -39,8 +39,8 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
 
 /* Swing focus: when The Stroke begins, the world/ball become the protagonist. */
 .hud,.course-map,.club-chip,.right-tools{transition:opacity .22s var(--ease),transform .22s var(--ease)}
-#app.swing-focus .hud{opacity:.28}
-#app.swing-focus .course-map{opacity:.20;transform:translateX(-50%) translateY(-4px)}
+#app.swing-focus .hud{opacity:.18}
+#app.swing-focus .course-map{opacity:.08;transform:translateX(-50%) translateY(-4px)}
 #app.swing-focus .club-chip,#app.swing-focus .right-tools{opacity:0;pointer-events:none}
 
 /* Brand lock: UI neutrals stay inside the official LOFT identity.
