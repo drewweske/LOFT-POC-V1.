@@ -675,6 +675,10 @@ function frame(now){
       ballGroup.position.copy(ps.pos);
       ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;
       feedback.flight(ballGroup.position,state.shot?.quality||.8);
+      if(ps.surfaceChanged){
+        feedback.surfaceTransition(ps.surfaceChanged.to,Math.hypot(ps.vel.x,ps.vel.z));
+        ps.surfaceChanged=null;
+      }
       cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin});
 
       if(ps.lastImpactSurface&&!state.landingFX){
