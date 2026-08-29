@@ -308,7 +308,7 @@ function hideStrokeSignal(){
 
 function updateLine(){
   const start=ballGroup.position.clone();
-  const end=state.target.clone();end.y=terrainHeight(end.x,end.z)+.04;
+  const end=state.target.clone();end.y=playingHeight(end.x,end.z)+.04;
   const c=club();
   const mid=start.clone().lerp(end,.52);
   if(c.head==='putter'){
