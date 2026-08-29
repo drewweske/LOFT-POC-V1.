@@ -185,7 +185,9 @@ function buildRibbon({z0=8,z1=-242,segments=160,widthScale=1,yOffset=.012}={}){
     for(const side of [-1,1]){
       const x=profile.center+side*half;
       pos.push(x,terrainHeight(x,z)+yOffset,z);
-      uv.push(side<0?0:1,t*32);
+      // One normalized longitudinal UV. Texture.repeat owns mowing frequency;
+      // multiplying both here and in the texture caused severe mobile moiré.
+      uv.push(side<0?0:1,t);
     }
     if(i<segments){
       const a=i*2,b=a+1,c=a+2,d=a+3;
