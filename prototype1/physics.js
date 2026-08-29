@@ -348,11 +348,14 @@ export class GolfPhysics{
       s.vel.z+=-dz*G*FIXED;
       s.vel.y=0;
 
-      // Rolling resistance is a calibrated physical deceleration in m/s².
-      // It makes grass cuts meaningfully different without arbitrary frame damping.
+      // Turf resistance has two physical-feeling components:
+      // a low-speed rolling term and a speed-sensitive deformation/grass drag.
+      // This keeps putts exquisitely controllable while preventing long shots
+      // from skating across fairway/rough like polished ice.
       const hs=Math.hypot(s.vel.x,s.vel.z);
       if(hs>0){
-        const drop=Math.min(hs,material.rollingDecel*FIXED);
+        const decel=material.rollingDecel+(material.speedDrag||0)*hs*hs;
+        const drop=Math.min(hs,decel*FIXED);
         const k=(hs-drop)/hs;
         s.vel.x*=k;s.vel.z*=k;
       }
