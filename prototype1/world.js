@@ -578,53 +578,38 @@ export function buildWorld(scene,pin){
   const sandMap=makeNoiseTexture(COLORS.sand,{grain:20,seed:51});
   const bump=makeBumpTexture({seed:71});
 
-  // --- LAND ---------------------------------------------------------------
-  const terrainGeo=deformedPlane(170,320,108,196,-116);
-  const roughMat=applyTexture(mat(COLORS.rough,.96),roughMap,bump,18,34,.028);
-  roughMat.vertexColors=true;
-  const terrain=new THREE.Mesh(terrainGeo,roughMat);
-  terrain.receiveShadow=true;world.add(terrain);
+  // --- LOFT TERRAIN FABRIC ------------------------------------------------
+  // Integration 014 removes the stacked fairway / fringe / green / bunker
+  // planes entirely. One dense surface now owns both the visible world and
+  // the physics height contract. This is the core anti-clipping architecture.
+  const fiber=neutralFiberTexture({seed:2045});
+  const terrainBump=makeBumpTexture({size:256,seed:771});
+  terrainBump.repeat.set(22,42);
+  terrainBump.wrapS=terrainBump.wrapT=THREE.RepeatWrapping;
+  terrainBump.anisotropy=4;
 
-  // A subtle second rough band around the fairway prevents the course from
-  // looking like one flat green rectangle.
-  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:SURFACE_LIFT.firstCut});
-  const firstCutMat=applyTexture(mat(COLORS.roughLight,.95),roughMap,bump,4,24,.021);
-  firstCutMat.vertexColors=true;firstCutMat.polygonOffset=true;firstCutMat.polygonOffsetFactor=-1;firstCutMat.polygonOffsetUnits=-1;
-  const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
-
-  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:SURFACE_LIFT.fairway});
-  const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,8,.014);
-  fairMat.vertexColors=true;fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
-  const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
-
-  // Tee shelves — small authored cuts, not giant rectangles.
-  const teeMat=applyTexture(mat(0x809b6c,.91),fairMap,bump,2,2,.018);
-  [[.46,0,7.6,4.8],[-8,10,7.4,4.6],[8,18,7.8,4.8]].forEach(([x,z,w,d])=>{
-    const g=new THREE.PlaneGeometry(w,d,8,5);g.rotateX(-Math.PI/2);
-    const p=g.attributes.position;
-    for(let i=0;i<p.count;i++){
-      const wx=x+p.getX(i),wz=z+p.getZ(i);
-      p.setY(i,terrainHeight(wx,wz)+SURFACE_LIFT.tee);
-    }
-    p.needsUpdate=true;g.computeVertexNormals();
-    const m=new THREE.Mesh(g,teeMat);m.position.set(x,0,z);m.receiveShadow=true;world.add(m);
+  const terrainGeo=buildTerrainFabricGeometry(pin);
+  const terrainMat=new THREE.MeshStandardMaterial({
+    color:0xffffff,
+    roughness:.94,
+    metalness:0,
+    vertexColors:true,
+    map:fiber,
+    bumpMap:terrainBump,
+    bumpScale:.018
   });
+  const terrain=new THREE.Mesh(terrainGeo,terrainMat);
+  terrain.name='LOFT_TERRAIN_FABRIC';
+  terrain.receiveShadow=true;
+  world.add(terrain);
 
-  // --- GREEN / FRINGE ------------------------------------------------------
-  const greenGeo=buildGreenGeometry(18.5,14.5,14,72);
-  const fringeGeo=buildGreenGeometry(21.0,16.5,14,72);
-  const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,8,8,.008);
-  greenMat.vertexColors=true;greenMat.polygonOffset=true;greenMat.polygonOffsetFactor=-4;greenMat.polygonOffsetUnits=-4;
-  const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.015);
-  fringeMat.vertexColors=true;fringeMat.polygonOffset=true;fringeMat.polygonOffsetFactor=-3;fringeMat.polygonOffsetUnits=-3;
-  const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
-  const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
-  updateGreenGeometry(fringe,pin,{offset:SURFACE_LIFT.fringe});
-  updateGreenGeometry(green,pin,{offset:SURFACE_LIFT.green});
+  // Compatibility aliases. These are deliberately the SAME mesh: there are no
+  // overlapping fairway / green surfaces left to z-fight or trap the ball.
+  const fairway=terrain;
+  const fringe=terrain;
+  const green=terrain;
 
-  // CUP VISUAL: a dedicated raised render layer. The old single coplanar
-  // disc could vanish into the green on mobile depth buffers. The liner/rim
-  // now has a deterministic render separation while physics still owns capture.
+  // --- CUP -----------------------------------------------------------------
   const cupGroup=new THREE.Group();cupGroup.name='LOFT_CUP';world.add(cupGroup);
   const holeMat=new THREE.MeshBasicMaterial({
     color:0x050606,side:THREE.DoubleSide,depthWrite:false,
@@ -632,49 +617,31 @@ export function buildWorld(scene,pin){
   });
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.082,64),holeMat);
   holeDisc.rotation.x=-Math.PI/2;holeDisc.renderOrder=8;cupGroup.add(holeDisc);
-  const rimMat=new THREE.MeshBasicMaterial({
-    color:0xded8cc,side:THREE.DoubleSide,transparent:true,opacity:.94,depthWrite:false,
+
+  const rimMat=new THREE.MeshStandardMaterial({
+    color:0xded8cc,roughness:.92,side:THREE.DoubleSide,
+    transparent:true,opacity:.96,depthWrite:false,
     polygonOffset:true,polygonOffsetFactor:-10,polygonOffsetUnits:-10
   });
   const cupRim=new THREE.Mesh(new THREE.RingGeometry(.078,.097,64),rimMat);
   cupRim.rotation.x=-Math.PI/2;cupRim.position.y=.0018;cupRim.renderOrder=9;cupGroup.add(cupRim);
+
+  // A very shallow internal wall makes the cup read as an opening rather than
+  // a painted circle without creating a collider that can reject the ball.
+  const cupWall=new THREE.Mesh(
+    new THREE.CylinderGeometry(.080,.080,.072,48,1,true),
+    new THREE.MeshStandardMaterial({color:0x111313,roughness:1,side:THREE.BackSide,depthWrite:false})
+  );
+  cupWall.position.y=-.034;cupWall.renderOrder=7;cupGroup.add(cupWall);
+
   cupGroup.position.set(
     pin.x,
-    greenSurfaceHeight(pin,pin.x,pin.z)+SURFACE_LIFT.green+.0045,
+    courseSurfaceHeight(pin.x,pin.z,pin)+.0045,
     pin.z
   );
 
-  // --- BUNKERS: depressed floor + grass/sand lip --------------------------
-  function bunker(b){
-    const inner=irregularBoundary(b,48,.90);
-    const outer=irregularBoundary(b,48,1.06);
-
-    // Radially tessellated sand bowl. Every visible floor vertex samples the
-    // same heightfield used by ball physics, so the ball cannot disappear into
-    // an invisible depression.
-    const floorGeo=buildBunkerFloorGeometry(b,9,48);
-    const floorMat=applyTexture(mat(COLORS.sand,.995),sandMap,bump,4.5,4.5,.050);
-    floorMat.vertexColors=true;floorMat.polygonOffset=true;floorMat.polygonOffsetFactor=-2;floorMat.polygonOffsetUnits=-2;
-    const floor=new THREE.Mesh(floorGeo,floorMat);floor.position.set(b.x,0,b.z);floor.receiveShadow=true;world.add(floor);
-
-    const pos=[],uv=[],idx=[];
-    for(let i=0;i<outer.length;i++){
-      const o=outer[i],inn=inner[i];
-      const oy=terrainHeight(b.x+o.x,b.z+o.y)+.004;
-      const iy=terrainHeight(b.x+inn.x,b.z+inn.y)+.004;
-      pos.push(o.x,oy,o.y,inn.x,iy,inn.y);
-      uv.push(0,i/outer.length,1,i/outer.length);
-      const n=(i+1)%outer.length,a=i*2,bb=a+1,c=n*2,d=c+1;
-      idx.push(a,c,bb,bb,c,d);
-    }
-    const lipGeo=new THREE.BufferGeometry();
-    lipGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-    lipGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-    lipGeo.setIndex(idx);lipGeo.computeVertexNormals();
-    const lipMat=applyTexture(mat(COLORS.sandShade,.98),sandMap,bump,4,4,.045);
-    const lip=new THREE.Mesh(lipGeo,lipMat);lip.position.set(b.x,0,b.z);lip.receiveShadow=true;world.add(lip);
-  }
-  BUNKERS.forEach(bunker);
+  // Bunker bowls are sculpted directly into terrainHeight() and colored by the
+  // terrain fabric. No separate sand floor or lip geometry exists anymore.
 
   // --- COAST / WATER -------------------------------------------------------
   const waterMat=new THREE.MeshPhysicalMaterial({
@@ -757,9 +724,7 @@ export function buildWorld(scene,pin){
       }
       const a=rr()*Math.PI*2,r=Math.sqrt(rr())*radius;
       const x=position.x+Math.cos(a)*r,z=position.z+Math.sin(a)*r;
-      const y=(surface==='green'||surface==='fringe')
-        ? greenSurfaceHeight(pin,x,z)
-        : terrainHeight(x,z);
+      const y=courseSurfaceHeight(x,z,pin);
       const h=height*(.72+rr()*.62);
       dummy.position.set(x,y+.004,z);
       dummy.rotation.set((rr()-.5)*.12,rr()*Math.PI*2,(rr()-.5)*.12);
@@ -818,12 +783,11 @@ export function buildWorld(scene,pin){
   const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+SURFACE_LIFT.green+3.88,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
-    updateGreenGeometry(fringe,next,{offset:SURFACE_LIFT.fringe});
-    updateGreenGeometry(green,next,{offset:SURFACE_LIFT.green});
-    const cupY=greenSurfaceHeight(next,next.x,next.z)+SURFACE_LIFT.green+.0045;
+    updateTerrainFabric(terrain,next);
+    const cupY=courseSurfaceHeight(next.x,next.z,next)+.0045;
     cupGroup.position.set(next.x,cupY,next.z);
-    pole.position.set(next.x,next.y+SURFACE_LIFT.green+2.25,next.z);
-    flag.position.set(next.x,next.y+SURFACE_LIFT.green+3.88,next.z);
+    pole.position.set(next.x,cupY+2.245,next.z);
+    flag.position.set(next.x,cupY+3.875,next.z);
   }
 
   let pinAlpha=1;
