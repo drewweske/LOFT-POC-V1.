@@ -364,6 +364,25 @@ export class GolfPhysics{
       s.vel.z+=-dz*G*ROLLING_GRAVITY_FACTOR*FIXED;
       s.vel.y=0;
 
+      // Ground spin-to-roll coupling. Wedges can check, low-spin shots
+      // release, and the transition converges toward pure rolling instead of
+      // discarding aerodynamic spin the instant the ball touches grass.
+      if(s.spinOmega>1&&s.spinAxis.lengthSq()>.001){
+        const n=new THREE.Vector3(-dx,1,-dz).normalize();
+        const omega=s.spinAxis.clone().multiplyScalar(s.spinOmega);
+        const arm=n.clone().multiplyScalar(-BALL_RADIUS);
+        const contactVel=s.vel.clone().add(new THREE.Vector3().crossVectors(omega,arm));
+        const normalComponent=n.clone().multiplyScalar(contactVel.dot(n));
+        const slip=contactVel.sub(normalComponent);
+        const slipSpeed=slip.length();
+        if(slipSpeed>.002){
+          const maxDv=material.spinGrip*G*.42*FIXED;
+          const dv=Math.min(slipSpeed,maxDv);
+          s.vel.addScaledVector(slip.normalize(),-dv);
+        }
+        s.spinOmega*=Math.exp(-material.spinGrip*5.2*FIXED);
+      }
+
       // Turf resistance has two physical-feeling components:
       // a low-speed rolling term and a speed-sensitive deformation/grass drag.
       // This keeps putts exquisitely controllable while preventing long shots
