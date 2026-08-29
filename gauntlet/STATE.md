@@ -1,143 +1,211 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 013
+Current build: Prototype 1 / Integration 014
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: terrain contact fidelity + cup visibility + camera clipping
-Iteration: integration_013
+Active subsystem: LOFT Field V2 — unified terrain, course ecology, swept collision
+Iteration: integration_014
 
-## Integration 012 device verdict
+## Device verdict entering 014
 
-CLEAR IMPROVEMENT / NOT YET FINAL.
+Integration 013 fixed the cup and reduced several clipping regressions, but the course itself was still visually early-prototype:
+- geometric / low-poly landform language
+- stacked surface meshes and visible cut boundaries
+- terrain that could still disagree with ball contact
+- sparse environmental detail
+- stylized placeholder rocks / trees
+- insufficient material differentiation
+- occasional fast-ball penetration at rising terrain
+- physical terrain that was more complex than the player could visually read
 
-Confirmed improvements:
-- turf lighting and landform readability improved
-- course grass began reading as an actual authored golf surface
-- prior near-black terrain failure did not return
-- slope perception improved enough to expose remaining geometry/contact issues
+The new requirement is not another cosmetic pass.
+The world renderer and terrain physics must become the same authored field.
 
-Remaining device failures:
-- ball could still visually penetrate terrain at some surface boundaries
-- result / tap-in views could still pass too close to the golfer rig
-- golfer feet could intersect sloped ground because the rig used one root-height sample
-- the physical cup opening could disappear into the green
-- gameplay controls could ghost underneath the result card
-- visible surface overlays and physics contact height were not yet one unified contract
+## Integration 014 — LOFT Field V2
 
-## Integration 013 rebuild
+### 1. Unified terrain architecture
 
-### 1. One visual/physical terrain contract
+A new /prototype1/worldV2.js system replaces the layered-course approach.
 
-Playable cut layers now have explicit render lifts:
+The entire playable course is now one continuous, dense 3D terrain mesh.
+
+There are no longer independent coplanar:
+- rough planes
+- fairway ribbons
+- green planes
+- fringe planes
+- bunker floors
+
+The same terrainHeight(x,z) function now drives:
+- every visible terrain vertex
+- ball collision
+- rolling slope
+- ready-ball placement
+- golfer grounding
+- camera floor safety
+- cup placement
+
+This removes the most important structural source of ball/terrain clipping.
+
+### 2. Natural golf-scale landforms
+
+The terrain field now combines:
+- broad strategic climb
+- ridge systems
+- middle shelves
+- lighthouse shelf
+- two saddles
+- coastal crossfall
+- restrained low-frequency earth variation
+- shaped tee pads
+- shaped greens
+- actual bunker depressions
+- a continuous coastal bluff transition
+
+Physical detail is intentionally low-frequency.
+No invisible micro-noise is allowed to alter ball roll.
+
+If the ball reacts to a slope, the player should be able to see that slope.
+
+### 3. Organic course-surface language
+
+Surface identity is painted into the unified mesh rather than stacked above it.
+
+The terrain color field now blends:
 - rough
-- first cut
+- first-cut transition
 - fairway
-- tee
+- fairway mowing variation
 - fringe
-- green
+- green mowing variation
+- tee cuts
 - sand
 
-The same lifts are now consumed by playingHeight(), which feeds physics and ball placement.
+Slope-facing and broad earth variation are also encoded into the color field so grade can be read visually before a shot.
 
-This removes a class of bugs where:
-the renderer showed one surface height while collision / rolling used a slightly lower one.
+### 4. Bunkers are now actual terrain
 
-### 2. Deterministic ball ground clearance
+Each bunker is carved into the physical height field.
 
-Physics now exports one BALL_CONTACT_HEIGHT.
+The sand surface and ball collision are therefore the same geometry.
 
-The gameplay renderer uses the same value for:
-- tee placement
-- post-shot placement
-- putting
-- roll contact
-- pace ghost placement
+Bunkers now include:
+- bowl depth
+- irregular elliptical shaping
+- restrained raised lip
+- sand-specific visual color field
+- realistic physical resistance through the existing surface solver
 
-A final visual safety clamp prevents a rolling ball center from ever rendering below the visible playable surface.
+There is no hidden depressed collision floor beneath a flat visual plane.
 
-This is intentionally millimeter-scale. The ball should look seated on turf, not floating.
+### 5. Denser world detail
 
-### 3. Cup rebuilt as a dedicated render object
+The Coastal Ridge environment now includes:
+- higher-detail organically distorted rocks
+- layered coastal bluff rock clusters
+- six-tier procedural conifers
+- expanded shrub ecology
+- 1,800-instance rough / dune grass field
+- up to 900 high-density near-ball grass instances
+- cut-specific near-lie grass height
+- refined clubhouse
+- higher-resolution lighthouse
+- animated ocean micro-bump
 
-The old cup was one nearly coplanar black circle.
+The target remains LOFT's visual ratio:
+stylized authorship with physically believable terrain and materials.
 
-On a mobile depth buffer it could disappear into the green.
+### 6. Ball physics — swept terrain contact
 
-Integration 013 introduces LOFT_CUP:
-- dedicated black opening
-- restrained physical liner/rim
-- raised deterministic render layer
-- aggressive local polygon offset
-- independent render order
-- remains visible while the flagstick fades for putting
+The fixed solver remains 120 Hz.
 
-Cup capture remains controlled by the physics solver.
+Integration 014 adds swept height-field collision for airborne balls.
 
-The visual cup cannot disappear merely because green geometry wins a depth test.
+When a fast ball crosses from above the terrain to below it inside one physics step:
+- the travelled segment is binary searched
+- the exact terrain crossing is found
+- contact is resolved at that point
+- bounce then uses the real local surface normal
 
-### 4. Golfer stance grounding
+This specifically prevents a fast iron / driver from tunneling through a rising bank.
 
-The golfer previously inherited the ball's single terrain height.
+### 7. Regulation geometry
 
-On meaningful slope, one side of the stance could therefore penetrate the ground.
+Physics now uses regulation golf dimensions for the destination relationship:
+- regulation ball physical radius
+- regulation cup radius
+- near-regulation capture radius
 
-Integration 013 samples:
-- rig center
-- left stance contact
-- right stance contact
+The rendered ball remains slightly enlarged for mobile readability, but its visual radius has been reduced substantially from the earlier oversized prototype.
 
-The root is conservatively raised to the highest local stance surface.
+### 8. Real ball rotation
 
-This is a pre-IK grounding pass designed specifically to eliminate visible lower-body terrain penetration before a later final character rig system.
+The visible LOFT ball no longer spins by an arbitrary tiny multiplier.
 
-### 5. Near-cup camera collision avoidance
+In flight:
+- aerodynamic spin axis / angular velocity drive rotation.
 
-A key sign error was identified:
-the old positive camera-side offset moved toward the golfer in the authored address coordinate system.
+On the ground:
+- roll angle is derived from travel speed / ball radius.
 
-Near-cup aim, swing, and result cameras now:
-- move to the opposite side of the golfer
-- pull farther back
-- rise more aggressively
-- widen FOV slightly
-- preserve the ball-to-cup read axis
+This makes the ball itself behave visually like a physical object.
 
-This targets the giant-arm / club / torso framing seen at 1–2 FT.
+### 9. Speed-sensitive turf resistance
 
-### 6. Result-state HUD ownership
+Rolling resistance now combines:
+- low-speed rolling resistance
+- speed-squared turf deformation / grass drag
 
-When a shot result is shown:
-- club chip hides
-- level/camera controls hide
-- tip hides
-- swing meter hides
+This allows:
+- controllable putting pace
+- believable fairway release
+- stronger rough bite
+- decisive bunker slowdown
 
-The score/result card now owns the bottom viewport instead of stacking over active gameplay controls.
+without returning to the earlier ice-rink sliding problem.
 
-## Current status
+## Numerical terrain validation
 
-TECHNICAL PASS.
-REAL-DEVICE VALIDATION REQUIRED.
+LOFT Field V2 validation:
+- finite height field: PASS
+- finite gradients: PASS
+- sampled min elevation: approximately -5.70 m
+- sampled max elevation: approximately 6.62 m
+- maximum sampled grade: approximately 0.73
+- terrain system: LOFT_FIELD_V2
 
-## Next device fixtures
+Representative probes:
+- Tee 01: tee
+- Ridge green: green
+- Shelf green: green
+- Lighthouse green: green
+- bunker center: sand
+- central corridor: fairway
+- coastline: water
 
-V01 — 20–35 FT green putt
-V02 — 1 FT tap-in address
-V03 — 1 FT tap-in result
-V04 — fairway/rough boundary roll
-V05 — fringe/green boundary roll
-V06 — ball resting on pronounced side slope
-V07 — golfer stance on pronounced side slope
-V08 — cup visible with flagstick faded
-V09 — cup visible after shot result
-V10 — result card with no underlying HUD controls
+## Critical device fixtures
 
-## Critical pass conditions
+V01 — long iron into rising fairway bank
+V02 — ball landing exactly on fairway / rough transition
+V03 — ball rolling across fringe / green
+V04 — bunker entry and stop
+V05 — bunker escape
+V06 — 30–40 FT putt across visible grade
+V07 — ball resting on side slope
+V08 — camera close-up of turf under ball
+V09 — coastline / bluff view
+V10 — long drive with flight-follow camera
+V11 — cup / green relationship at 1–3 FT
+V12 — three-hole complete round without terrain penetration
 
-- ball never visibly penetrates green, fringe, fairway, rough or sand
-- cup opening never disappears
-- no result-state HUD overlap
-- no camera passes through golfer during tap-in
-- no golfer foot is visibly buried in the terrain
-- visible surface boundary and collision boundary agree
-- ball remains settled unless actual slope overcomes turf resistance
+## Hard pass conditions
+
+- no visible ball-through-terrain event
+- no hidden slope that materially moves the ball
+- no coplanar fairway/green/sand z-fighting
+- bunker visual floor and physical floor agree
+- green contour is readable before the putt
+- terrain silhouettes are smooth at normal play distance
+- rough has true dimensional grass near the ball
+- environmental geometry reads as authored LOFT rather than primitive placeholders
+- a full three-hole round can be completed without terrain soft-lock
