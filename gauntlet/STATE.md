@@ -1,210 +1,165 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 010
+Current build: Prototype 1 / Integration 011
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: visual world / terrain / character / brand typography
-Iteration: integration_010
+Active subsystem: terrain integrity + world rendering
+Iteration: integration_011
 
-## Current provisional score
-96.5 / 100 — REAL-DEVICE VISUAL VALIDATION REQUIRED
+## Previous round
 
-Integration 010 begins the first major visual-graphics overhaul after the user completed the full three-hole demo.
+Integration 010: LOSS — CRITICAL VISUAL / RUNTIME FAILURE.
 
-User evidence:
-- core gameplay is now a credible foundation
-- THE SIGNAL / putting / round loop are good enough to move forward
-- character still reads low-poly, separated and goofy
-- swing exposes gaps between body parts
-- course terrain reads too flat and synthetic
-- cliffs / rocks / trees / rough / bunkers lack authored depth
-- visual geometry overlaps remain distracting
-- prototype typography still reads like an engineering fallback instead of LOFT
+Real-device evidence showed:
+- terrain rendered near-black
+- intended elevation existed physically but was visually unreadable
+- visible/physical terrain diverged around green / fringe
+- billboard grass rendered as large rectangular artifacts
+- character framing could leave the golfer partly off screen
+- a ball could enter an invalid terrain state and leave the shot soft-locked
+- shadow / overlay banding damaged course readability
 
-## World Art Rebuild
+Largest meaningful gap:
+THE PLAYABLE HEIGHTFIELD WAS NOT BEING PRESENTED AS A TRUSTWORTHY VISIBLE SURFACE.
 
-Coastal Ridge is no longer built as a flat green plane with box cliffs.
+Why it matters:
+LOFT depends on the player reading slope, lie, elevation and landing geometry instantly. Invisible hills or a ball disappearing beneath terrain is a critical failure.
 
-The terrain system now includes:
-- broad authored elevation architecture
-- climbing coastal shelf
-- middle saddle / valley
-- lighthouse rise
-- long-wave contouring
-- coastal falloff
-- bunker depressions integrated into terrain height
-- higher-resolution terrain tessellation
-- textured rough / first cut / fairway / green / fringe surfaces
-- mowing-direction variation on fairway
-- near-field bump detail
-- tee shelves
-- sculpted dynamic green geometry
-- green visual surface and golf physics now share the same height function
+## Integration 011 rebuild
 
-## Bunker Rebuild
+### 1. Terrain colour / material failure fixed
 
-Bunkers now have:
-- irregular authored outlines
-- actual depressed sand floors
-- grass/sand transition lips
-- coarse sand material variation
-- visual depth that matches terrain height
+Root cause:
+The canvas turf textures already contained the intended surface colour, but the MeshStandardMaterial was also using the same coloured base. Three.js multiplied them together, pushing dark greens toward near-black.
 
-The previous flat beige shape-on-top-of-grass approach is retired.
+Fix:
+Textured turf / sand materials now use white material albedo and let the texture own the final surface colour.
 
-## Coastal Geology Rebuild
+Result target:
+Readable coastal greens in daylight with preserved material contrast.
 
-Box cliffs have been removed.
+### 2. Terrain architecture rewritten
 
-Coast now uses:
-- layered irregular rock shelves
-- clustered boulders
-- broad faceted planes
-- dark secondary stone variation
-- an actual falling coastal edge into water
+The terrain function now uses broad golf-scale landforms rather than micro-noise:
+- progressive 3.4 m course climb
+- authored middle shelf
+- ridge shelf
+- lighthouse shelf
+- two broad saddles
+- gentle crossfall
+- low-frequency roll only
+- real coastal falloff
 
-## Vegetation Rebuild
+No procedural high-frequency divots are allowed in the playable heightfield.
 
-Course vegetation now contains:
-- multi-layer coastal pines
-- native rough blades
-- shrubs / low bushes
-- denser edge ecology
-- restrained play corridor so gameplay remains readable
+### 3. Coastline made real
 
-Near the current ball lie, a dynamic grass-detail field communicates actual grass length:
-- GREEN = extremely tight
-- TEE / FAIRWAY = short
-- FRINGE = intermediate
-- ROUGH = visibly taller
-- SAND / WATER = none
+The terrain now physically falls beneath the ocean beyond the coastal edge instead of continuing as hidden land underneath the water plane.
 
-This gives close camera shots real surface identity without rendering millions of blades on mobile.
+The playable water boundary stops the ball before invalid terrain travel.
 
-## Architecture / Landmark Rebuild
+### 4. Visual / physics surface lock
 
-The lighthouse and lodge were upgraded with:
-- more segments
-- better silhouette
-- material hierarchy
-- windows / balcony details
-- more deliberate proportion
+Green and fringe now use the same authored surface function in:
+- rendering
+- ball physics
+- camera ground protection
+- target placement
+- The Line
 
-Coastal Ridge retains the lighthouse as its hero visual landmark.
+Visible footprints were aligned:
+- green = 24.4 m × 18.0 m authored ellipse
+- fringe = 27.0 m × 20.4 m authored ellipse
 
-## Lighting Rebuild
+This removes invisible green/fringe height changes.
 
-The previous over-bright dual-light setup flattened form.
+### 5. Broken grass cards removed
 
-New lighting:
-- warm directional coastal key
-- cool sky hemisphere fill
-- restrained secondary cool fill
-- lower exposure
-- farther atmospheric fog
-- physically readable surface shadows
+The large rectangular billboard blades visible on iPhone are retired.
 
-Goal:
-warm, dimensional, editorial coastal light rather than flat mobile-game illumination.
+New near-lie turf uses restrained tapered 3-sided volumetric blades only in a small radius around the current ball:
+- green: extremely tight
+- tee/fairway: short
+- fringe: medium
+- rough: tall
+- sand/water: none
 
-## Character Rebuild
+No giant planar grass cards remain.
 
-The current procedural golfer remains a prototype asset, but the primitive mannequin system has been materially rebuilt.
+### 6. Bunker / terrain relationship preserved
 
-Changes:
-- overlapping anatomical joints prevent visible limb separation
-- shoulder seals
-- hip seals
-- wrist seals
-- ankle seals
-- broader authored shirt volume
-- dynamically oriented ribcage
-- dynamically oriented pelvis
-- torso rotation now follows shoulder / hip motion
-- neck now physically overlaps torso and head
-- quieter head proportions
-- refined cap
-- quieter face
-- smaller / more believable driver, woods and putter heads
-- left-hand golf glove
-- polo placket and collar wings
-- belt buckle
-- garment details move with the body rather than floating
+Bunkers remain actual depressions in the master heightfield, with:
+- irregular sand floor
+- visible transition lip
+- lowered floor
+- surface-specific physics
 
-The goal is a connected stylized human silhouette at every swing phase.
+### 7. Physics soft-lock protection
 
-## Brand Typography
+The deterministic ball solver now includes:
+- non-finite numeric guard
+- heightfield validity guard
+- below-terrain penetration resolution
+- playable-world boundary recovery
+- 26-second absolute shot watchdog
+- rolling-water stop
+- last-safe-position recovery
+- automatic physics deactivation on settled balls
 
-Canonical family architecture is now represented directly in the prototype:
+A bad shot may produce a bad golf result.
+It may not freeze LOFT.
 
-LOFT Display
-LOFT Text
+### 8. Camera terrain lock
 
-The custom font files do not yet exist in the repository, so the browser currently falls back to Avenir Next / neutral humanist system faces.
+The camera now protects itself against the same PLAYABLE surface used by the ball, including green and fringe.
 
-However, hierarchy, tracking, casing and weight now follow the LOFT type system:
-- Display for hero numerals, club data, result states and primary actions
-- Text for body copy and utility language
-- uppercase tracked micro-labels
-- tight, confident display numerals
-- Inter removed as the visual default
+Aim framing was widened and shifted toward the golfer so the body remains in frame without sacrificing the ball-to-target axis.
 
-When official LOFT font files are authored later, the existing CSS family names can receive them without redesigning the interface.
+### 9. Shadow field repaired
 
-## Official Brand Assets
+Directional-light target and shadow frustum are centered on Coastal Ridge.
+Normal bias is increased to reduce terrain striping / self-shadow acne.
 
-The locked official LOFT wordmark and LOFT Ball assets remain the boot / round-result source of truth.
+### 10. Character continuity fix
 
-Core UI colors remain:
-- Clubhouse Ink #0B0D0D
-- Scorecard Cream #F2EFE8
-- Fairway Stone #B8B1A6
-- Flag Orange #FF6A2A
+The procedural shirt mesh is now capped at neck and waist.
+Large spherical shoulder seals were reduced / tucked inside the sleeve connection.
+This targets the disconnected-body silhouette visible in Integration 010.
 
-Flag Orange remains a signal, not decoration.
+## Runtime health
 
-## Performance Discipline
+A terrain validator now samples the heightfield before play.
+If a non-finite height or grade is found, LOFT fails fast instead of starting a corrupted round.
 
-The new world remains mobile-first:
-- one higher-resolution terrain mesh
-- instanced native rough
-- instanced shrubs
-- dynamic near-ball grass detail only
-- no external runtime 3D assets
-- no backend
-- no generated imagery
-- no fragile CDN asset dependency added
+## Current status
 
-## Technical validation
+TECHNICAL PASS.
+REAL-DEVICE VISUAL VALIDATION REQUIRED.
 
-PASS:
-- game.js
-- world.js
-- characterRig.js
-- camera.js
-- topoMap.js
-- physics.js
-- feedback.js
+No graduation score is assigned until Integration 011 is played on iPhone.
 
-PASS:
-- DOM ID contract
-- CSS brace integrity
-- authored green physics/render height lock
+## Next A/B fixtures
 
-## Largest meaningful gap
+A01 — tee address
+A02 — fairway lie
+A03 — rough lie
+A04 — bunker floor and lip
+A05 — green / fringe transition
+A06 — side view showing elevation
+A07 — coastline / lighthouse
+M01 — full shot landing on slope
+M02 — putt across green grade
+M03 — intentionally wild shot toward course boundary
+M04 — swing top / impact / finish
 
-Real iPhone visual validation.
+## Critical pass conditions
 
-Required screenshots:
-1. tee address wide
-2. fairway address
-3. rough address
-4. bunker lie
-5. green / putting
-6. Level 1 top-of-backswing
-7. Level 50 top-of-backswing
-8. impact
-9. finish
-10. coastline / lighthouse no-UI view
-
-The next visual gap should be chosen from actual device evidence, not guessed from code.
+- no near-black terrain
+- no rectangular grass artifacts
+- no invisible hills
+- no ball below visible terrain
+- no terrain soft-lock
+- no full-width black geometry bands
+- green / fringe ball height matches visible surface
+- elevation reads visually before the ball reveals it
+- golfer remains compositionally readable
