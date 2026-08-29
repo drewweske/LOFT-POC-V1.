@@ -75,6 +75,24 @@ export function fairwayProfile(z){
   return {t,center,width,insideRange:z<=12&&z>=-252};
 }
 
+
+function fairwayEdgeWidth(z,side){
+  const p=fairwayProfile(z);
+  const phase=side<0?1.37:-.62;
+  const organic=
+    .62*Math.sin((z+24)*.061+phase)+
+    .28*Math.sin((z-17)*.143-phase*.7)+
+    .16*Math.cos((z+81)*.227+phase);
+  return p.width+organic;
+}
+
+function fairwaySignedDistance(x,z){
+  const p=fairwayProfile(z);
+  if(!p.insideRange)return Infinity;
+  const side=x<p.center?-1:1;
+  return Math.abs(x-p.center)-fairwayEdgeWidth(z,side);
+}
+
 function hash2(ix,iz){
   let n=(ix*374761393+iz*668265263)^0x5bf03635;
   n=(n^(n>>>13))*1274126177;
@@ -115,15 +133,20 @@ function baseLandHeight(x,z){
   const saddleB=-.52*Math.exp(-Math.pow((z+203)/27,2))*Math.exp(-Math.pow((lateral-8)/25,2));
 
   // Visible, low-frequency natural shaping. No invisible micro-divots.
-  const earth=.24*fbm((x+140)*.030,(z+330)*.030)+.075*fbm((x-60)*.071,(z+70)*.071);
+  const earth=.23*fbm((x+140)*.030,(z+330)*.030)+.070*fbm((x-60)*.071,(z+70)*.071);
   const crossfall=.0096*lateral*Math.sin((z+22)*.0115);
   const broadRoll=.14*Math.sin((z+20)*.021)+.085*Math.cos((z-42)*.038);
+  // Drainage and shoulder rolls are deliberately broad and visible.
+  const shoulder=.105*Math.sin((z+40)*.034)*
+    Math.exp(-Math.pow((Math.abs(lateral)-p.width*.72)/6.8,2));
+  const swale=-.085*Math.exp(-Math.pow((lateral+6.5)/8.4,2))*
+    Math.exp(-Math.pow((z+148)/62,2));
 
   // Coastal bluff transitions gradually into the ocean shelf.
   const coastEdge=37.5+2.1*Math.sin((z+32)*.020)+1.1*Math.sin((z-50)*.057);
   const coast=-5.75*smoothstep(coastEdge,coastEdge+12,x);
 
-  return climb+ridge+shelfA+shelfB+saddleA+saddleB+earth+crossfall+broadRoll+coast;
+  return climb+ridge+shelfA+shelfB+saddleA+saddleB+earth+crossfall+broadRoll+shoulder+swale+coast;
 }
 
 function nearestGreen(x,z){
@@ -150,11 +173,21 @@ function shapedGreenHeight(g,x,z){
   return lerp(base,authored,blend);
 }
 
+
+function bunkerMetric(b,x,z){
+  const nx=(x-b.x)/b.sx,nz=(z-b.z)/b.sz;
+  const a=Math.atan2(nz,nx);
+  const warp=1+
+    .085*Math.sin(a*3+b.seed)+
+    .045*Math.cos(a*5-b.seed*.7)+
+    .022*Math.sin(a*8+b.seed*.3);
+  return Math.hypot(nx,nz)/warp;
+}
+
 function bunkerShape(x,z){
   let delta=0;
   for(const b of BUNKERS){
-    const dx=(x-b.x)/b.sx,dz=(z-b.z)/b.sz;
-    const r=Math.hypot(dx,dz);
+    const r=bunkerMetric(b,x,z);
     if(r<1.16){
       const bowl=-.62*Math.pow(1-smoothstep(.20,1.00,r),1.60);
       const lip=.105*(1-smoothstep(.84,1.12,Math.abs(r-.94)+.84));
@@ -178,13 +211,52 @@ function teeShape(x,z,current){
   return h;
 }
 
-export function terrainHeight(x,z){
+function rawTerrainHeight(x,z){
   let h=baseLandHeight(x,z);
   const ng=nearestGreen(x,z);
   if(ng.g&&ng.d<1.12)h=shapedGreenHeight(ng.g,x,z);
   h=teeShape(x,z,h);
   h+=bunkerShape(x,z);
   return h;
+}
+
+const TERRAIN_GRID=Object.freeze({
+  xMin:-92,xMax:92,zMin:-292,zMax:52,nx:184,nz:344
+});
+const GRID_DX=(TERRAIN_GRID.xMax-TERRAIN_GRID.xMin)/TERRAIN_GRID.nx;
+const GRID_DZ=(TERRAIN_GRID.zMax-TERRAIN_GRID.zMin)/TERRAIN_GRID.nz;
+const GRID_W=TERRAIN_GRID.nx+1;
+const GRID_CACHE=new Float32Array(GRID_W*(TERRAIN_GRID.nz+1));
+GRID_CACHE.fill(NaN);
+
+function gridSample(ix,iz){
+  ix=clamp(ix,0,TERRAIN_GRID.nx);iz=clamp(iz,0,TERRAIN_GRID.nz);
+  const k=iz*GRID_W+ix;
+  let h=GRID_CACHE[k];
+  if(Number.isNaN(h)){
+    const x=TERRAIN_GRID.xMin+ix*GRID_DX;
+    const z=TERRAIN_GRID.zMin+iz*GRID_DZ;
+    h=rawTerrainHeight(x,z);GRID_CACHE[k]=h;
+  }
+  return h;
+}
+
+export function terrainHeight(x,z){
+  if(x<TERRAIN_GRID.xMin||x>TERRAIN_GRID.xMax||z<TERRAIN_GRID.zMin||z>TERRAIN_GRID.zMax){
+    return rawTerrainHeight(x,z);
+  }
+  const gx=(x-TERRAIN_GRID.xMin)/GRID_DX;
+  const gz=(z-TERRAIN_GRID.zMin)/GRID_DZ;
+  let ix=Math.floor(gx),iz=Math.floor(gz);
+  if(ix>=TERRAIN_GRID.nx)ix=TERRAIN_GRID.nx-1;
+  if(iz>=TERRAIN_GRID.nz)iz=TERRAIN_GRID.nz-1;
+  const u=clamp(gx-ix,0,1),v=clamp(gz-iz,0,1);
+  const h00=gridSample(ix,iz),h10=gridSample(ix+1,iz);
+  const h01=gridSample(ix,iz+1),h11=gridSample(ix+1,iz+1);
+  // Custom terrain geometry uses diagonal B↔C. Interpolate the exact same
+  // triangles rather than a curved analytic field beneath a planar mesh.
+  if(u+v<=1)return h00+u*(h10-h00)+v*(h01-h00);
+  return h11+(1-u)*(h01-h11)+(1-v)*(h10-h11);
 }
 
 export function greenSurfaceHeight(center,x,z){
@@ -197,8 +269,7 @@ export function greenSurfaceHeight(center,x,z){
 
 function bunkerAt(x,z){
   for(const b of BUNKERS){
-    const dx=(x-b.x)/(b.sx*1.00),dz=(z-b.z)/(b.sz*1.00);
-    if(dx*dx+dz*dz<=1)return true;
+    if(bunkerMetric(b,x,z)<=1)return true;
   }
   return false;
 }
@@ -209,11 +280,21 @@ function teeAt(x,z){
   }
   return false;
 }
+function greenMetric(g,x,z,fringe=false){
+  const rx=fringe?g.fringeX:g.rx,rz=fringe?g.fringeZ:g.rz;
+  const nx=(x-g.x)/rx,nz=(z-g.z)/rz;
+  const a=Math.atan2(nz,nx);
+  const warp=1+
+    .038*Math.sin(a*3+g.seed*.13)+
+    .022*Math.cos(a*5-g.seed*.07)+
+    .011*Math.sin(a*7+g.seed*.19);
+  return Math.hypot(nx,nz)/warp;
+}
 function greenMetrics(x,z){
   let bestGreen=Infinity,bestFringe=Infinity;
   for(const g of GREENS){
-    bestGreen=Math.min(bestGreen,Math.hypot((x-g.x)/g.rx,(z-g.z)/g.rz));
-    bestFringe=Math.min(bestFringe,Math.hypot((x-g.x)/g.fringeX,(z-g.z)/g.fringeZ));
+    bestGreen=Math.min(bestGreen,greenMetric(g,x,z,false));
+    bestFringe=Math.min(bestFringe,greenMetric(g,x,z,true));
   }
   return {green:bestGreen,fringe:bestFringe};
 }
@@ -229,10 +310,7 @@ export function courseSurfaceAt(x,z){
   if(gm.fringe<=1)return'fringe';
   if(teeAt(x,z))return'tee';
   const p=fairwayProfile(z);
-  if(p.insideRange){
-    const a=Math.abs(x-p.center);
-    if(a<=p.width)return'fairway';
-  }
+  if(p.insideRange&&fairwaySignedDistance(x,z)<=0)return'fairway';
   return'rough';
 }
 
@@ -247,9 +325,9 @@ function mixColor(a,b,t){
 }
 function colorAt(x,z){
   const p=fairwayProfile(z);
-  const lateral=Math.abs(x-p.center);
-  const fairBlend=p.insideRange?1-smoothstep(p.width*.92,p.width+2.2,lateral):0;
-  const firstBlend=p.insideRange?1-smoothstep(p.width+1.8,p.width+4.8,lateral):0;
+  const edgeD=fairwaySignedDistance(x,z);
+  const fairBlend=p.insideRange?1-smoothstep(-.55,1.20,edgeD):0;
+  const firstBlend=p.insideRange?1-smoothstep(1.0,4.25,edgeD):0;
 
   let c=mixColor(COLORS.rough,COLORS.roughLight,clamp(firstBlend-fairBlend*.35,0,1));
   if(fairBlend>0){
@@ -282,14 +360,60 @@ function colorAt(x,z){
     c=[S.r*n,S.g*n,S.b*n];
   }
 
-  // Make physical grade legible in the color field in addition to lighting.
-  const e=.55;
-  const dx=(terrainHeight(x+e,z)-terrainHeight(x-e,z))/(2*e);
-  const dz=(terrainHeight(x,z+e)-terrainHeight(x,z-e))/(2*e);
-  const grade=Math.hypot(dx,dz);
-  const face=clamp(1-dx*.13+dz*.08-grade*.045,.88,1.09);
-  const earth=.985+.018*valueNoise((x+80)*.24,(z+310)*.24);
-  return [clamp(c[0]*face*earth,0,1),clamp(c[1]*face*earth,0,1),clamp(c[2]*face*earth,0,1)];
+  // Subtle material grain is evaluated per texel. True slope readability now
+  // comes from the dense mesh normals + light, avoiding triangular color bands.
+  const earth=.982+.024*valueNoise((x+80)*.24,(z+310)*.24);
+  return [clamp(c[0]*earth,0,1),clamp(c[1]*earth,0,1),clamp(c[2]*earth,0,1)];
+}
+
+
+function makeCourseAlbedo(){
+  const W=640,H=1200;
+  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  const img=ctx.createImageData(W,H),d=img.data;
+  for(let py=0;py<H;py++){
+    const v=py/(H-1);
+    const z=lerp(TERRAIN_GRID.zMax,TERRAIN_GRID.zMin,v);
+    for(let px=0;px<W;px++){
+      const u=px/(W-1);
+      const x=lerp(TERRAIN_GRID.xMin,TERRAIN_GRID.xMax,u);
+      const col=colorAt(x,z);
+      const k=(py*W+px)*4;
+      d[k]=Math.round(clamp(col[0],0,1)*255);
+      d[k+1]=Math.round(clamp(col[1],0,1)*255);
+      d[k+2]=Math.round(clamp(col[2],0,1)*255);
+      d[k+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  const t=new THREE.CanvasTexture(canvas);
+  t.colorSpace=THREE.SRGBColorSpace;
+  t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;
+  t.minFilter=THREE.LinearMipmapLinearFilter;
+  t.magFilter=THREE.LinearFilter;
+  t.generateMipmaps=true;t.anisotropy=8;
+  return t;
+}
+
+function makeCourseRoughness(){
+  const W=320,H=600;
+  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  const img=ctx.createImageData(W,H),d=img.data;
+  const values={green:198,fringe:216,fairway:224,tee:220,rough:246,sand:252,water:180};
+  for(let py=0;py<H;py++){
+    const z=lerp(TERRAIN_GRID.zMax,TERRAIN_GRID.zMin,py/(H-1));
+    for(let px=0;px<W;px++){
+      const x=lerp(TERRAIN_GRID.xMin,TERRAIN_GRID.xMax,px/(W-1));
+      const q=values[courseSurfaceAt(x,z)]??240;
+      const k=(py*W+px)*4;d[k]=d[k+1]=d[k+2]=q;d[k+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.NoColorSpace;
+  t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;
+  return t;
 }
 
 function makeMicroTexture(){
@@ -322,18 +446,32 @@ function makeMicroBump(){
 }
 
 function buildUnifiedTerrain(){
-  const width=154,depth=322,segX=154,segZ=300,zCenter=-119;
-  const g=new THREE.PlaneGeometry(width,depth,segX,segZ);g.rotateX(-Math.PI/2);
-  const p=g.attributes.position;
-  const colors=new Float32Array(p.count*3);
-  for(let i=0;i<p.count;i++){
-    const x=p.getX(i),z=p.getZ(i)+zCenter;
-    p.setZ(i,z);p.setY(i,terrainHeight(x,z));
-    const c=colorAt(x,z);
-    colors[i*3]=c[0];colors[i*3+1]=c[1];colors[i*3+2]=c[2];
+  const nx=TERRAIN_GRID.nx,nz=TERRAIN_GRID.nz;
+  const pos=new Float32Array((nx+1)*(nz+1)*3);
+  const uv=new Float32Array((nx+1)*(nz+1)*2);
+  const idx=new Uint32Array(nx*nz*6);
+  let pk=0,uk=0;
+  for(let iz=0;iz<=nz;iz++){
+    const z=TERRAIN_GRID.zMin+iz*GRID_DZ;
+    for(let ix=0;ix<=nx;ix++){
+      const x=TERRAIN_GRID.xMin+ix*GRID_DX;
+      pos[pk++]=x;pos[pk++]=gridSample(ix,iz);pos[pk++]=z;
+      uv[uk++]=ix/nx;uv[uk++]=1-iz/nz;
+    }
   }
-  p.needsUpdate=true;g.setAttribute('color',new THREE.BufferAttribute(colors,3));
-  g.computeVertexNormals();
+  let q=0;
+  for(let iz=0;iz<nz;iz++){
+    for(let ix=0;ix<nx;ix++){
+      const a=iz*GRID_W+ix,b=a+1,c=a+GRID_W,d=c+1;
+      idx[q++]=a;idx[q++]=c;idx[q++]=b;
+      idx[q++]=b;idx[q++]=c;idx[q++]=d;
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  g.setIndex(new THREE.BufferAttribute(idx,1));
+  g.computeVertexNormals();g.computeBoundingSphere();
   return g;
 }
 
@@ -428,10 +566,10 @@ export function buildWorld(scene,pin){
 
   // --- ONE CONTINUOUS PLAYABLE SURFACE ------------------------------------
   const terrainGeo=buildUnifiedTerrain();
-  const micro=makeMicroTexture(),bump=makeMicroBump();
+  const albedo=makeCourseAlbedo(),roughnessMap=makeCourseRoughness(),bump=makeMicroBump();
   const terrainMat=new THREE.MeshStandardMaterial({
-    color:0xffffff,vertexColors:true,map:micro,bumpMap:bump,bumpScale:.018,
-    roughness:.93,metalness:0
+    color:0xffffff,map:albedo,bumpMap:bump,bumpScale:.014,
+    roughness:1.0,roughnessMap,metalness:0
   });
   const terrain=new THREE.Mesh(terrainGeo,terrainMat);
   terrain.receiveShadow=true;terrain.castShadow=false;world.add(terrain);
