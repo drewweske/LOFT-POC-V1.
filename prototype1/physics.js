@@ -7,9 +7,11 @@ const AIR_DENSITY=1.225;
 const BALL_MASS=.04593;
 const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
-const CUP_RADIUS=.086;
-const CUP_CAPTURE=.074;
-export const BALL_CONTACT_HEIGHT=.036;
+// Regulation geometry. The visual ball is very slightly enlarged for mobile
+// readability, but cup/ball physics stay anchored to real golf dimensions.
+const CUP_RADIUS=.053975;
+const CUP_CAPTURE=.0495;
+export const BALL_CONTACT_HEIGHT=.0265;
 const CONTACT_HEIGHT=BALL_CONTACT_HEIGHT;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
@@ -140,7 +142,7 @@ export class GolfPhysics{
     // The continuous segment test prevents a perfectly aimed putt tunneling
     // across the cup between 120 Hz fixed steps.
     const edge=clamp(d/CUP_CAPTURE,0,1);
-    const captureSpeed=2.18-(2.18-.66)*Math.pow(edge,1.55);
+    const captureSpeed=1.95-(1.95-.58)*Math.pow(edge,1.62);
     const normalCapture=direct&&speed<captureSpeed;
 
     if(normalCapture){
@@ -210,24 +212,53 @@ export class GolfPhysics{
       }
       const acc=new THREE.Vector3(0,-G,0).add(drag).add(magnus);
 
+      const previous=s.pos.clone();
       s.vel.addScaledVector(acc,FIXED);
       s.pos.addScaledVector(s.vel,FIXED);
       s.spinOmega*=.9994;
 
-      const surface=this.surfaceAt(s.pos.x,s.pos.z);
-      const sampled=this.terrainHeight(s.pos.x,s.pos.z);
+      let surface=this.surfaceAt(s.pos.x,s.pos.z);
+      let sampled=this.terrainHeight(s.pos.x,s.pos.z);
       if(!Number.isFinite(sampled)){this._recover('HEIGHTFIELD');return;}
-      const ground=surface==='water'?-0.16:sampled+CONTACT_HEIGHT;
+      let ground=surface==='water'?-0.16:sampled+CONTACT_HEIGHT;
+      let sweptContact=false;
 
-      // Continuous heightfield safety: if a fast fixed step ever places the
-      // ball meaningfully below the terrain, resolve it immediately instead of
-      // letting it disappear under the course.
-      if(surface!=='water'&&s.pos.y<ground-.10){
-        s.pos.y=ground;
-        s.vel.y=Math.min(0,s.vel.y);
+      // Swept height-field contact. A driver can travel more than half a metre
+      // per 120 Hz step. Sampling only the endpoint can visually tunnel through
+      // a rising bank. If clearance changes sign, binary-search the exact
+      // terrain crossing on the travelled segment before resolving bounce.
+      if(surface!=='water'){
+        const prevGround=this.terrainHeight(previous.x,previous.z)+CONTACT_HEIGHT;
+        const prevClear=previous.y-prevGround;
+        const nextClear=s.pos.y-ground;
+        if(Number.isFinite(prevGround)&&prevClear>0&&nextClear<=0){
+          let lo=0,hi=1;
+          for(let i=0;i<9;i++){
+            const t=(lo+hi)*.5;
+            const x=previous.x+(s.pos.x-previous.x)*t;
+            const y=previous.y+(s.pos.y-previous.y)*t;
+            const z=previous.z+(s.pos.z-previous.z)*t;
+            const gy=this.terrainHeight(x,z)+CONTACT_HEIGHT;
+            if(y>gy)lo=t;else hi=t;
+          }
+          const t=hi;
+          s.pos.set(
+            previous.x+(s.pos.x-previous.x)*t,
+            previous.y+(s.pos.y-previous.y)*t,
+            previous.z+(s.pos.z-previous.z)*t
+          );
+          surface=this.surfaceAt(s.pos.x,s.pos.z);
+          sampled=this.terrainHeight(s.pos.x,s.pos.z);
+          ground=sampled+CONTACT_HEIGHT;
+          s.pos.y=ground;
+          sweptContact=true;
+        }else if(s.pos.y<ground-.045){
+          // Defensive recovery for starts already very close to the ground.
+          s.pos.y=ground;sweptContact=true;
+        }
       }
 
-      if(s.pos.y<=ground&&s.vel.y<=0){
+      if(s.pos.y<=ground&&(s.vel.y<=0||sweptContact)){
         s.pos.y=ground;
         s.lastImpactSurface=surface;
 
