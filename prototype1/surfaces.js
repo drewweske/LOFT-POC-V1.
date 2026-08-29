@@ -7,7 +7,8 @@ const freeze=o=>Object.freeze(o);
   difficulty multipliers. The design target is believable golf with readable
   consequences and predictable stopping behavior on mobile.
 
-  rollingDecel: m/s² of rolling resistance on level ground.
+  rollingDecel: low-speed m/s² rolling resistance on level ground.
+  speedDrag: additional turf resistance proportional to speed².
   staticGrade:  slope ratio under which a nearly stopped ball may settle.
   restitution: normal-energy return on first bounce.
   tangentRetain: horizontal/tangential energy retained at impact.
@@ -19,6 +20,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:.19,
     tangentRetain:.54,
     rollingDecel:1.75,
+    speedDrag:.045,
     staticGrade:.22,
     settleSpeed:.075,
     spinGrip:.085,
@@ -31,6 +33,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:.17,
     tangentRetain:.52,
     rollingDecel:1.58,
+    speedDrag:.052,
     staticGrade:.20,
     settleSpeed:.070,
     spinGrip:.120,
@@ -43,6 +46,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:.11,
     tangentRetain:.47,
     rollingDecel:.72,
+    speedDrag:.020,
     staticGrade:.070,
     settleSpeed:.038,
     spinGrip:.240,
@@ -55,6 +59,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:.13,
     tangentRetain:.49,
     rollingDecel:1.05,
+    speedDrag:.038,
     staticGrade:.115,
     settleSpeed:.052,
     spinGrip:.170,
@@ -67,6 +72,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:.055,
     tangentRetain:.28,
     rollingDecel:3.65,
+    speedDrag:.085,
     staticGrade:.40,
     settleSpeed:.105,
     spinGrip:.050,
@@ -79,6 +85,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:.018,
     tangentRetain:.11,
     rollingDecel:6.40,
+    speedDrag:.135,
     staticGrade:.62,
     settleSpeed:.125,
     spinGrip:.180,
@@ -91,6 +98,7 @@ export const SURFACE_PHYSICS=freeze({
     restitution:0,
     tangentRetain:0,
     rollingDecel:99,
+    speedDrag:0,
     staticGrade:1,
     settleSpeed:1,
     spinGrip:0,
