@@ -1,8 +1,8 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB} from './equipment.js';
-import {COLORS,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,validateTerrain,buildWorld} from './world.js';
+import {COLORS,SURFACE_LIFT,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,validateTerrain,buildWorld} from './world.js';
 import {LoftGolferRig} from './characterRig.js';
-import {GolfPhysics} from './physics.js';
+import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
@@ -378,10 +378,11 @@ function surfaceAt(x,z){
 }
 function playingHeight(x,z){
   const surface=surfaceAt(x,z);
-  if(surface==='green'||surface==='fringe'){
-    return greenSurfaceHeight(pin,x,z);
-  }
-  return terrainHeight(x,z);
+  if(surface==='green')return greenSurfaceHeight(pin,x,z)+SURFACE_LIFT.green;
+  if(surface==='fringe')return greenSurfaceHeight(pin,x,z)+SURFACE_LIFT.fringe;
+  if(surface==='sand')return terrainHeight(x,z)+SURFACE_LIFT.sand;
+  if(surface==='fairway')return terrainHeight(x,z)+SURFACE_LIFT.fairway;
+  return terrainHeight(x,z)+SURFACE_LIFT.rough;
 }
 
 function cupDistanceFeet(){
@@ -403,7 +404,7 @@ function updatePuttPaceGhost(feet){
   const d=Math.max(.15,feet*.3048);
   const forward=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
   const x=TEE.x+forward.x*d,z=TEE.z+forward.z*d;
-  puttPaceGhost.position.set(x,playingHeight(x,z)+BALL_VISUAL_R*.94,z);
+  puttPaceGhost.position.set(x,playingHeight(x,z)+BALL_CONTACT_HEIGHT,z);
   const intended=intendedPuttFeet();
   const err=Math.abs(feet-intended);
   const close=err<=Math.max(.50,intended*.05);
@@ -671,7 +672,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   if(penalty)state.strokes++;
 
   TEE.copy(position);
-  TEE.y=playingHeight(TEE.x,TEE.z)+BALL_VISUAL_R;
+  TEE.y=playingHeight(TEE.x,TEE.z)+BALL_CONTACT_HEIGHT;
   state.currentLie=lieOverride||surfaceAt(TEE.x,TEE.z);
   world.setDetailFocus?.(TEE,state.currentLie);
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
@@ -686,7 +687,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
 
   lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');
-  document.getElementById('app')?.classList.remove('swing-focus');
+  document.getElementById('app')?.classList.remove('swing-focus','result-open');
   cam.resetAim();
   updateLine();updateHoleHUD();updateTip();
 }
@@ -703,7 +704,7 @@ function startHole(index,{intro=true}={}){
   physics.wind.copy(wind);physics.setCup(pin);
   world.setPin(pin);
 
-  const originalTee=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+BALL_VISUAL_R,holeDef.tee[1]);
+  const originalTee=new THREE.Vector3(holeDef.tee[0],playingHeight(holeDef.tee[0],holeDef.tee[1])+BALL_CONTACT_HEIGHT,holeDef.tee[1]);
   topo.setHole(originalTee,pin);
   TEE.copy(originalTee);
   state.currentLie='tee';
@@ -717,7 +718,7 @@ function startHole(index,{intro=true}={}){
   golfer.setPose(0,LEVELS[state.level]);
   feedback.clear();hidePuttPace();hideStrokeSignal();lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');$('round-end').classList.remove('show');
-  document.getElementById('app')?.classList.remove('swing-focus','hole-transition');
+  document.getElementById('app')?.classList.remove('swing-focus','hole-transition','result-open');
   cam.resetAim();updateLine();updateHoleHUD();updateTip();
   if(intro)showHoleIntro();
 }
@@ -757,6 +758,7 @@ function finishShot(){
     $('again').textContent=holeIndex<ROUND_HOLES.length-1?'NEXT HOLE':'FINISH ROUND';
     state.resultAction=holeIndex<ROUND_HOLES.length-1?'nextHole':'finishRound';
     showContext('IN THE HOLE',900);
+    document.getElementById('app')?.classList.add('result-open');
     setTimeout(()=>$('result').classList.add('show'),620);
     updateHoleHUD();return;
   }
@@ -773,11 +775,13 @@ function finishShot(){
     $('again').textContent='NEXT SHOT';
     state.resultAction='continue';
   }
+  document.getElementById('app')?.classList.add('result-open');
   $('result').classList.add('show');updateTip();
 }
 
 function handleResultAction(){
   $('result').classList.remove('show');
+  document.getElementById('app')?.classList.remove('result-open');
   if(state.resultAction==='continue'){
     prepareShotAt(ballGroup.position.clone());
   }else if(state.resultAction==='waterDrop'){
@@ -1063,6 +1067,10 @@ function frame(now){
     const ps=physics.step(dt);
     if(ps){
       ballGroup.position.copy(ps.pos);
+      if(ps.surface!=='air'&&ps.surface!=='cup'&&!ps.holed){
+        const visualGround=playingHeight(ballGroup.position.x,ballGroup.position.z)+BALL_CONTACT_HEIGHT;
+        if(Number.isFinite(visualGround)&&ballGroup.position.y<visualGround)ballGroup.position.y=visualGround;
+      }
       ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;
       if(!state.shot?.putting)feedback.flight(ballGroup.position,state.shot?.quality||.8);
       if(ps.surfaceChanged){
@@ -1106,6 +1114,7 @@ function frame(now){
 
   const tendingPin=(state.phase==='ready'&&isPutting())||(state.phase==='flight'&&state.shot?.putting)||(state.phase==='result'&&state.shot?.putting);
   world.setPinFade(tendingPin ? .10 : 1);
+  if(world.cupGroup)world.cupGroup.visible=true;
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
