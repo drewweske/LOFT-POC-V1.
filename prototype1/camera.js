@@ -37,6 +37,7 @@ export class LoftCamera{
     this.lockedAimYaw=0;
     this.impactKick=0;
     this.resultCup=false;
+    this.resultNear=false;
   }
 
   get isSwingLocked(){return this.mode===CAMERA_MODE.SWING;}
@@ -68,10 +69,12 @@ export class LoftCamera{
   beginResult(ball,pin,{cup=false}={}){
     const toPin=pin.clone().sub(ball);toPin.y=0;
     if(toPin.lengthSq()>.01)this.flightHeading=Math.atan2(toPin.x,-toPin.z);
+    const dist=toPin.length();
     this.resultCup=cup;
+    this.resultNear=dist<2.2;
     this.resultOrbit=this.resultOrbitT=0;
-    this.resultPitch=this.resultPitchT=cup?.06:.18;
-    this.resultDist=this.resultDistT=cup?3.25:5.9;
+    this.resultPitch=this.resultPitchT=cup?.18:(this.resultNear?.28:.18);
+    this.resultDist=this.resultDistT=cup?4.4:(this.resultNear?5.4:5.9);
     this._enter(CAMERA_MODE.RESULT);
   }
 
@@ -125,7 +128,7 @@ export class LoftCamera{
     this.camera.lookAt(this.look);
   }
 
-  updateAim(dt,{ball,aimYaw,putting=false}){
+  updateAim(dt,{ball,pin=null,aimYaw,putting=false}){
     if(this.mode!==CAMERA_MODE.AIM)this._enter(CAMERA_MODE.AIM);
     this.aimPitch=smooth(this.aimPitch,this.aimPitchT,10,dt);
     this.aimDist=smooth(this.aimDist,this.aimDistT,11,dt);
@@ -137,24 +140,28 @@ export class LoftCamera{
     // PUTT READ: camera axis is the intended roll axis.
     // No cinematic side angle here — the player must visually trust that
     // straight on screen means straight in the simulation.
-    const viewDist=putting ? clamp(5.9+(this.aimDist-8.7)*.30,5.15,6.45) : this.aimDist;
+    const pinDistance=pin?Math.hypot(pin.x-ball.x,pin.z-ball.z):999;
+    const tapIn=putting&&pinDistance<2.2;
+    const viewDist=putting
+      ? (tapIn?7.15:clamp(5.9+(this.aimDist-8.7)*.30,5.15,6.45))
+      : this.aimDist;
     const desiredPos=ball.clone()
       .addScaledVector(forward,-viewDist*(putting ? .985 : .93))
-      // Shift toward the golfer enough to keep the full body in frame while
-      // preserving a visually trustworthy ball-to-target axis.
-      .addScaledVector(right,putting ? .27 : .54)
-      .add(new THREE.Vector3(0,(putting ? 1.30 : 1.76)+this.aimPitch*(putting ? 1.70 : 3.25),0));
+      // Tap-ins pull back and rise so the camera cannot physically enter the
+      // golfer rig. The ball-to-cup axis remains straight and readable.
+      .addScaledVector(right,putting ? (tapIn?.62:.27) : .54)
+      .add(new THREE.Vector3(0,(putting ? (tapIn?2.05:1.30) : 1.76)+this.aimPitch*(putting ? 1.70 : 3.25),0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,putting ? 2.55 : 2.95)
-      .addScaledVector(right,putting ? .04 : .10)
-      .add(new THREE.Vector3(0,putting ? .17 : .60,0));
+      .addScaledVector(forward,putting ? (tapIn?1.15:2.55) : 2.95)
+      .addScaledVector(right,putting ? (tapIn?.10:.04) : .10)
+      .add(new THREE.Vector3(0,putting ? (tapIn?.08:.17) : .60,0));
 
     this._safeY(desiredPos,1.20);
     this._commit(desiredPos,desiredLook,putting ? 8.8 : 11.5,putting ? 10.4 : 12.5,dt);
   }
 
-  updateSwing(dt,{ball,swingProgress=0,putting=false}){
+  updateSwing(dt,{ball,pin=null,swingProgress=0,putting=false}){
     if(this.mode!==CAMERA_MODE.SWING)return;
     this._setFov(putting ? 36.8 : 39.2,dt);
 
@@ -163,10 +170,12 @@ export class LoftCamera{
 
     const turn=Math.sin(clamp(swingProgress,0,1)*Math.PI);
     const impactPulse=Math.exp(-Math.pow((swingProgress-.58)/.12,2));
+    const pinDistance=pin?Math.hypot(pin.x-ball.x,pin.z-ball.z):999;
+    const tapIn=putting&&pinDistance<2.2;
     const desiredPos=ball.clone()
-      .addScaledVector(forward,putting ? (-5.70+impactPulse*.04) : (-6.55+impactPulse*.16))
-      .addScaledVector(right,putting ? .07 : (1.12+turn*.14))
-      .add(new THREE.Vector3(0,putting ? (1.25-impactPulse*.015) : (2.28-impactPulse*.04),0));
+      .addScaledVector(forward,putting ? ((tapIn?-6.85:-5.70)+impactPulse*.04) : (-6.55+impactPulse*.16))
+      .addScaledVector(right,putting ? (tapIn?.58:.07) : (1.12+turn*.14))
+      .add(new THREE.Vector3(0,putting ? ((tapIn?1.95:1.25)-impactPulse*.015) : (2.28-impactPulse*.04),0));
 
     const desiredLook=ball.clone()
       .addScaledVector(forward,putting ? (2.20+impactPulse*.08) : (1.55+impactPulse*.22))
@@ -217,18 +226,20 @@ export class LoftCamera{
     this.resultOrbit=smooth(this.resultOrbit,this.resultOrbitT,8.5,dt);
     this.resultPitch=smooth(this.resultPitch,this.resultPitchT,8.5,dt);
     this.resultDist=smooth(this.resultDist,this.resultDistT,9,dt);
-    this._setFov(this.resultCup?34.5:38.0,dt);
+    this._setFov(this.resultCup?38.0:(this.resultNear?39.5:38.0),dt);
 
     const toPin=pin.clone().sub(ball);toPin.y=0;
     const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):this.flightHeading;
     const yaw=base+this.resultOrbit;
 
     const forward=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw)).normalize();
+    const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
     const pinDir=toPin.lengthSq()>.01?toPin.normalize():new THREE.Vector3(Math.sin(base),0,-Math.cos(base));
 
     const desiredPos=ball.clone()
       .addScaledVector(forward,-this.resultDist)
-      .add(new THREE.Vector3(0,1.65+this.resultPitch*2.45,0));
+      .addScaledVector(right,this.resultNear?.82:0)
+      .add(new THREE.Vector3(0,(this.resultNear?2.05:1.65)+this.resultPitch*2.45,0));
 
     const desiredLook=ball.clone()
       .addScaledVector(pinDir,this.resultCup?.32:.95)
