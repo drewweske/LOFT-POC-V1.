@@ -454,11 +454,11 @@ export function buildWorld(scene,pin){
   function setDetailFocus(position,surface='fairway'){
     const seed=Math.floor((position.x+96)*31+(position.z+330)*19);
     const rr=seeded(seed>>>0);
-    let height=.030,radius=3.1,count=150,color=0x7f976f;
-    if(surface==='rough'){height=.115;radius=3.8;count=330;color=0x657b55;}
-    else if(surface==='fringe'){height=.052;radius=3.2;count=210;color=0x789268;}
-    else if(surface==='green'){height=.010;radius=2.6;count=70;color=0x93aa7e;}
-    else if(surface==='tee'){height=.026;radius=3.0;count=140;color=0x819a70;}
+    let height=.026,radius=3.0,count=105,color=0x7f976f;
+    if(surface==='rough'){height=.105;radius=3.6;count=265;color=0x657b55;}
+    else if(surface==='fringe'){height=.045;radius=3.0;count=145;color=0x789268;}
+    else if(surface==='green'){height=0;radius=2.4;count=0;color=0x93aa7e;}
+    else if(surface==='tee'){height=.024;radius=2.8;count=100;color=0x819a70;}
     else if(surface==='sand'||surface==='water'){height=0;count=0;}
     detailGrass.material.color.setHex(color);
 
