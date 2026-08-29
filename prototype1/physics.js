@@ -67,7 +67,10 @@ export class GolfPhysics{
       holed:false,
       lipTouched:false,
       lastSurface:null,
-      surfaceChanged:null
+      surfaceChanged:null,
+      simTime:0,
+      recovered:false,
+      lastSafePos:position.clone()
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -95,7 +98,10 @@ export class GolfPhysics{
       holed:false,
       lipTouched:false,
       lastSurface:this.surfaceAt(position.x,position.z),
-      surfaceChanged:null
+      surfaceChanged:null,
+      simTime:0,
+      recovered:false,
+      lastSafePos:position.clone()
     };
     this.active=true;this.accum=0;
     return this.state;
@@ -153,8 +159,36 @@ export class GolfPhysics{
     return false;
   }
 
+  _recover(reason='SAFETY'){
+    const s=this.state;if(!s)return;
+    const p=s.lastSafePos&&Number.isFinite(s.lastSafePos.x)?s.lastSafePos:new THREE.Vector3(0,0,0);
+    const x=clamp(p.x,-78,78),z=clamp(p.z,-272,38);
+    const ground=this.terrainHeight(x,z);
+    s.pos.set(x,Number.isFinite(ground)?ground+CONTACT_HEIGHT:CONTACT_HEIGHT,z);
+    s.vel.set(0,0,0);
+    s.surface=this.surfaceAt(x,z);
+    s.lastSurface=s.surface;
+    s.stopped=true;
+    s.recovered=reason;
+    this.active=false;
+  }
+
   _fixed(){
     const s=this.state;if(s.stopped)return;
+    s.simTime=(s.simTime||0)+FIXED;
+
+    // A golf shot may never soft-lock the game. Protect the deterministic
+    // height-field solver from NaN, runaway coordinates and endless rolling.
+    const finite=
+      Number.isFinite(s.pos.x)&&Number.isFinite(s.pos.y)&&Number.isFinite(s.pos.z)&&
+      Number.isFinite(s.vel.x)&&Number.isFinite(s.vel.y)&&Number.isFinite(s.vel.z);
+    if(!finite){this._recover('NUMERIC');return;}
+    if(Math.abs(s.pos.x)>88||s.pos.z>48||s.pos.z<-286){this._recover('BOUNDARY');return;}
+    if(s.simTime>26){this._recover('TIMEOUT');return;}
+
+    if(Math.abs(s.pos.x)<78&&s.pos.z<38&&s.pos.z>-272&&s.pos.y>-4){
+      s.lastSafePos.copy(s.pos);
+    }
 
     if(s.surface==='air'){
       const rel=s.vel.clone().sub(this.wind);
@@ -179,9 +213,19 @@ export class GolfPhysics{
       s.spinOmega*=.9994;
 
       const surface=this.surfaceAt(s.pos.x,s.pos.z);
-      const ground=surface==='water'?-0.16:this.terrainHeight(s.pos.x,s.pos.z)+CONTACT_HEIGHT;
+      const sampled=this.terrainHeight(s.pos.x,s.pos.z);
+      if(!Number.isFinite(sampled)){this._recover('HEIGHTFIELD');return;}
+      const ground=surface==='water'?-0.16:sampled+CONTACT_HEIGHT;
 
-      if(s.pos.y<=ground&&s.vel.y<0){
+      // Continuous heightfield safety: if a fast fixed step ever places the
+      // ball meaningfully below the terrain, resolve it immediately instead of
+      // letting it disappear under the course.
+      if(surface!=='water'&&s.pos.y<ground-.10){
+        s.pos.y=ground;
+        s.vel.y=Math.min(0,s.vel.y);
+      }
+
+      if(s.pos.y<=ground&&s.vel.y<=0){
         s.pos.y=ground;
         s.lastImpactSurface=surface;
 
@@ -232,6 +276,9 @@ export class GolfPhysics{
     }else{
       const surface=this.surfaceAt(s.pos.x,s.pos.z);
       s.surface=surface;
+      if(surface==='water'){
+        s.vel.set(0,0,0);s.stopped=true;this.active=false;return;
+      }
       const material=surfacePhysics(surface);
 
       // Crossing from one cut into another has a physical bite. A ball leaving
@@ -255,6 +302,7 @@ export class GolfPhysics{
       if(hs0<material.settleSpeed&&grade<material.staticGrade){
         s.vel.set(0,0,0);
         s.stopped=true;
+        this.active=false;
         return;
       }
 
@@ -274,13 +322,16 @@ export class GolfPhysics{
 
       const fromX=s.pos.x,fromZ=s.pos.z;
       s.pos.addScaledVector(s.vel,FIXED);
-      s.pos.y=this.terrainHeight(s.pos.x,s.pos.z)+CONTACT_HEIGHT;
+      const nextGround=this.terrainHeight(s.pos.x,s.pos.z);
+      if(!Number.isFinite(nextGround)){this._recover('HEIGHTFIELD');return;}
+      s.pos.y=nextGround+CONTACT_HEIGHT;
 
       if(this._tryCup(s,surface,fromX,fromZ))return;
 
       if(Math.hypot(s.vel.x,s.vel.z)<material.settleSpeed&&grade<material.staticGrade){
         s.vel.set(0,0,0);
         s.stopped=true;
+        this.active=false;
       }
     }
   }
