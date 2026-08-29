@@ -176,24 +176,30 @@ function deformedPlane(width,depth,segX,segZ,zOffset=0){
   p.needsUpdate=true;g.computeVertexNormals();return g;
 }
 
-function buildRibbon({z0=8,z1=-242,segments=160,widthScale=1,yOffset=.012}={}){
+function buildRibbon({z0=8,z1=-242,segments=160,crossSegments=12,widthScale=1,yOffset=.001}={}){
   const pos=[],uv=[],idx=[];
+  const stride=crossSegments+1;
+
   for(let i=0;i<=segments;i++){
     const t=i/segments,z=z0+(z1-z0)*t;
     const profile=fairwayProfile(z);
     const half=profile.width*widthScale;
-    for(const side of [-1,1]){
-      const x=profile.center+side*half;
+
+    for(let j=0;j<=crossSegments;j++){
+      const u=j/crossSegments;
+      const x=profile.center+(u*2-1)*half;
       pos.push(x,terrainHeight(x,z)+yOffset,z);
-      // One normalized longitudinal UV. Texture.repeat owns mowing frequency;
-      // multiplying both here and in the texture caused severe mobile moiré.
-      uv.push(side<0?0:1,t);
+      uv.push(u,t);
     }
+
     if(i<segments){
-      const a=i*2,b=a+1,c=a+2,d=a+3;
-      idx.push(a,c,b,b,c,d);
+      for(let j=0;j<crossSegments;j++){
+        const a=i*stride+j,b=a+1,c=a+stride,d=c+1;
+        idx.push(a,c,b,b,c,d);
+      }
     }
   }
+
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
