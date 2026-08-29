@@ -392,7 +392,7 @@ export function buildWorld(scene,pin){
     clearcoat:.28,clearcoatRoughness:.22
   });
   const water=new THREE.Mesh(new THREE.PlaneGeometry(170,340,1,1),waterMat);
-  water.rotation.x=-Math.PI/2;water.position.set(108,-1.08,-120);world.add(water);
+  water.rotation.x=-Math.PI/2;water.position.set(108,-.16,-120);world.add(water);
 
   const rockMat=mat(COLORS.rock,.97),rockDark=mat(COLORS.rockDark,.99);
   const rockGeo=makeRockGeometry(91);
