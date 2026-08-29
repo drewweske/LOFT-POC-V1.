@@ -136,8 +136,11 @@ function makeBumpTexture({size=256,seed=13}={}){
 }
 
 function applyTexture(material,map,bump,repeatX,repeatY,bumpScale=.035){
-  material.map=map;material.bumpMap=bump;material.bumpScale=bumpScale;
-  map.repeat.set(repeatX,repeatY);bump.repeat.set(repeatX,repeatY);
+  const m=map.clone(),b=bump.clone();
+  m.needsUpdate=true;b.needsUpdate=true;
+  m.wrapS=m.wrapT=THREE.RepeatWrapping;b.wrapS=b.wrapT=THREE.RepeatWrapping;
+  m.repeat.set(repeatX,repeatY);b.repeat.set(repeatX,repeatY);
+  material.map=m;material.bumpMap=b;material.bumpScale=bumpScale;
   return material;
 }
 
