@@ -32,28 +32,30 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.045;
+renderer.toneMappingExposure=1.02;
 renderer.setClearColor(COLORS.sky);
 $('stage').appendChild(renderer.domElement);
 const canvas=renderer.domElement;
 canvas.tabIndex=0;
 
 const scene=new THREE.Scene();
-scene.fog=new THREE.Fog(COLORS.sky,118,340);
+scene.fog=new THREE.Fog(COLORS.sky,136,372);
 const camera=new THREE.PerspectiveCamera(43,1,.1,750);
 
 // Coastal Ridge lighting: warm low-angle key, cool sky fill, soft bounce.
 // The previous high-intensity pair flattened every surface into the same value.
-const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.08);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffe6c7,2.62);
-sun.position.set(-62,78,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.12);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe2bf,2.38);
+// Lower coastal key light reveals the exact grade instead of flattening it.
+sun.position.set(-82,58,40);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
 sun.shadow.bias=-0.00030;sun.shadow.normalBias=.045;
 sun.shadow.camera.left=-112;sun.shadow.camera.right=112;
 sun.shadow.camera.top=126;sun.shadow.camera.bottom=-126;
 sun.shadow.camera.near=1;sun.shadow.camera.far=290;
 sun.target.position.set(0,0,-122);
 scene.add(sun);scene.add(sun.target);
-const fill=new THREE.DirectionalLight(0xbfd6d7,.30);fill.position.set(48,32,-65);scene.add(fill);
+const fill=new THREE.DirectionalLight(0xc4d9d8,.34);fill.position.set(52,30,-72);scene.add(fill);
+const groundBounce=new THREE.DirectionalLight(0xe7dfcf,.12);groundBounce.position.set(-18,12,64);scene.add(groundBounce);
 
 const terrainHealth=validateTerrain();
 if(!terrainHealth.ok)throw new Error('Terrain validation failed: '+terrainHealth.reason);
