@@ -145,6 +145,7 @@ export class GolfPhysics{
     if(normalCapture){
       s.holed=true;s.stopped=true;s.surface='cup';s.vel.set(0,0,0);
       s.pos.set(this.cup.x,this.terrainHeight(this.cup.x,this.cup.z)+CONTACT_HEIGHT,this.cup.z);
+      this.active=false;
       return true;
     }
 
@@ -235,6 +236,7 @@ export class GolfPhysics{
           s.surface='water';
           s.vel.set(0,0,0);
           s.stopped=true;
+          this.active=false;
           return;
         }
 
