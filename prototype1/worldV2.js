@@ -552,6 +552,65 @@ function placeOrganicPine(world,x,z,s,rnd){
   world.add(g);return g;
 }
 
+
+function makeSkyDome(){
+  const g=new THREE.SphereGeometry(430,40,22);
+  const p=g.attributes.position;
+  const colors=new Float32Array(p.count*3);
+  const top=new THREE.Color(0xb8cdd0);
+  const horizon=new THREE.Color(0xdbe4e1);
+  const warm=new THREE.Color(0xe8e0d2);
+  for(let i=0;i<p.count;i++){
+    const y=p.getY(i)/430;
+    let col;
+    if(y>=0){
+      const t=clamp(Math.pow(y,.55),0,1);
+      col=horizon.clone().lerp(top,t);
+    }else{
+      const t=clamp(-y*2.2,0,1);
+      col=horizon.clone().lerp(warm,t*.72);
+    }
+    colors[i*3]=col.r;colors[i*3+1]=col.g;colors[i*3+2]=col.b;
+  }
+  g.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  const m=new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide,depthWrite:false,fog:false});
+  const sky=new THREE.Mesh(g,m);sky.renderOrder=-100;return sky;
+}
+
+function makeCloudTexture(seed=1){
+  const rnd=seeded(seed);
+  const c=document.createElement('canvas');c.width=512;c.height=256;
+  const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
+  for(let i=0;i<8;i++){
+    const cx=60+rnd()*390,cy=95+rnd()*80,rx=52+rnd()*92,ry=24+rnd()*43;
+    const g=x.createRadialGradient(cx,cy,0,cx,cy,Math.max(rx,ry));
+    g.addColorStop(0,'rgba(255,252,245,.52)');
+    g.addColorStop(.48,'rgba(255,252,245,.25)');
+    g.addColorStop(1,'rgba(255,252,245,0)');
+    x.save();x.translate(cx,cy);x.scale(1,ry/rx);x.translate(-cx,-cy);
+    x.fillStyle=g;x.fillRect(cx-rx,cy-rx,rx*2,rx*2);x.restore();
+  }
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
+}
+
+function makeGableRoofGeometry(width,depth,rise){
+  const x=width/2,z=depth/2,y=0;
+  const pos=[
+    -x,y,-z, x,y,-z,  x,y,z, -x,y,z,
+    -x,rise,0, x,rise,0
+  ];
+  const idx=[
+    0,4,1, 1,4,5,
+    3,2,4, 2,5,4,
+    0,3,4,
+    1,5,2,
+    0,1,2, 0,2,3
+  ];
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx);g.computeVertexNormals();return g;
+}
+
 export function validateTerrain(){
   let min=Infinity,max=-Infinity,maxGrade=0,samples=0;
   const e=.45;
@@ -573,6 +632,26 @@ export function validateTerrain(){
 export function buildWorld(scene,pin){
   const world=new THREE.Group();world.name='LOFT_COASTAL_RIDGE_V2';scene.add(world);
   const rnd=seeded(204514);
+
+  // --- ATMOSPHERIC WORLD SHELL --------------------------------------------
+  const sky=makeSkyDome();sky.position.set(0,-32,-110);scene.add(sky);
+  const cloudTex=makeCloudTexture(77);
+  const cloudMat=new THREE.MeshBasicMaterial({
+    map:cloudTex,transparent:true,opacity:.42,depthWrite:false,
+    side:THREE.DoubleSide,fog:false
+  });
+  const clouds=[];
+  [
+    [-52,24,-190,42,16,.03],
+    [34,30,-236,52,18,-.02],
+    [4,27,-116,38,14,.01],
+    [-18,34,-274,58,19,-.015]
+  ].forEach(([x,y,z,w,h,r])=>{
+    const q=new THREE.Mesh(new THREE.PlaneGeometry(w,h),cloudMat.clone());
+    q.position.set(x,y,z);q.rotation.y=r;q.renderOrder=-20;
+    q.userData.baseX=x;q.userData.phase=r*70+z*.01;
+    world.add(q);clouds.push(q);
+  });
 
   // --- ONE CONTINUOUS PLAYABLE SURFACE ------------------------------------
   const terrainGeo=buildUnifiedTerrain();
@@ -619,7 +698,7 @@ export function buildWorld(scene,pin){
     [27,-35,.78],[29,-61,.72],[30,-94,.80],[31,-126,.88],[28,-151,.76],[-21,-204,.76],[-29,-222,.91],
     [-43,-35,.70],[-45,-89,.77],[-42,-145,.72],[22,-204,.70],[16,-235,.78],[-37,-256,.84]
   ];
-  treePts.forEach(v=>placeOrganicPine(world,...v,rnd));
+  const treeGroups=treePts.map(v=>placeOrganicPine(world,...v,rnd));
 
   const dummy=new THREE.Object3D();
   const shrubGeo=makeRockGeometry(501);
@@ -698,11 +777,24 @@ export function buildWorld(scene,pin){
   const roofMat=new THREE.MeshStandardMaterial({color:COLORS.ink,roughness:.84});
   const base=new THREE.Mesh(new THREE.BoxGeometry(10.8,2.1,6.4,1,1,1),lodgeStone);base.position.y=1.05;base.castShadow=true;lodge.add(base);
   const upper=new THREE.Mesh(new THREE.BoxGeometry(8.8,1.85,5.2),plaster);upper.position.y=3.0;upper.castShadow=true;lodge.add(upper);
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(9.7,.24,5.9),roofMat);roof.position.y=4.08;roof.castShadow=true;lodge.add(roof);
+  const roof=new THREE.Mesh(makeGableRoofGeometry(9.8,6.0,1.18),roofMat);
+  roof.position.y=3.98;roof.castShadow=true;roof.receiveShadow=true;lodge.add(roof);
+  const fasciaMat=new THREE.MeshStandardMaterial({color:0x332e28,roughness:.92});
+  const fascia=new THREE.Mesh(new THREE.BoxGeometry(10.0,.14,6.12),fasciaMat);
+  fascia.position.y=3.94;fascia.castShadow=true;lodge.add(fascia);
   for(const zz of [-1.55,-.52,.52,1.55]){
     const w=new THREE.Mesh(new THREE.PlaneGeometry(.62,.72),new THREE.MeshStandardMaterial({color:0x34454a,roughness:.25}));
     w.position.set(4.41,3.0,zz);w.rotation.y=Math.PI/2;lodge.add(w);
   }
+  const deckMat=new THREE.MeshStandardMaterial({color:0x665443,roughness:.96});
+  const deck=new THREE.Mesh(new THREE.BoxGeometry(11.7,.18,2.0),deckMat);
+  deck.position.set(.35,1.65,4.0);deck.castShadow=true;lodge.add(deck);
+  for(let i=-4;i<=4;i+=2){
+    const post=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.0,8),roofMat);
+    post.position.set(i*.95,2.15,4.78);lodge.add(post);
+  }
+  const rail=new THREE.Mesh(new THREE.BoxGeometry(8.2,.055,.055),roofMat);
+  rail.position.set(0,2.48,4.78);lodge.add(rail);
   lodge.position.set(-31,terrainHeight(-31,-150),-150);lodge.rotation.y=.10;world.add(lodge);
 
   const lighthouse=new THREE.Group();
@@ -759,11 +851,17 @@ export function buildWorld(scene,pin){
       waves.offset.x=(waves.offset.x+dt*.009)%1;
       waves.offset.y=(waves.offset.y+dt*.017)%1;
     }
-    // Very restrained living-course motion: no arcade swaying.
-    if(fieldGrass.material){
-      const pulse=.985+.015*Math.sin(worldTime*.55);
-      fieldGrass.material.color.setRGB(.38*pulse,.48*pulse,.33*pulse);
-    }
+    // Coastal wind is present, but restrained. The course should breathe,
+    // never wobble like an arcade diorama.
+    treeGroups.forEach((g,i)=>{
+      g.rotation.z=Math.sin(worldTime*.72+i*.81)*.0028;
+      g.rotation.x=Math.cos(worldTime*.54+i*.67)*.0016;
+    });
+    clouds.forEach((q,i)=>{
+      q.position.x=q.userData.baseX+Math.sin(worldTime*.035+q.userData.phase)*5.5;
+      q.position.y+=Math.sin(worldTime*.06+i)*.0009;
+    });
+    flag.rotation.z=Math.sin(worldTime*2.15)*.035+Math.sin(worldTime*3.8)*.012;
   }
 
   return {
