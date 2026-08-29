@@ -220,7 +220,7 @@ function rawTerrainHeight(x,z){
 }
 
 const TERRAIN_GRID=Object.freeze({
-  xMin:-92,xMax:92,zMin:-292,zMax:52,nx:184,nz:344
+  xMin:-92,xMax:92,zMin:-292,zMax:52,nx:230,nz:430
 });
 const GRID_DX=(TERRAIN_GRID.xMax-TERRAIN_GRID.xMin)/TERRAIN_GRID.nx;
 const GRID_DZ=(TERRAIN_GRID.zMax-TERRAIN_GRID.zMin)/TERRAIN_GRID.nz;
@@ -252,7 +252,9 @@ export function terrainHeight(x,z){
   const u=clamp(gx-ix,0,1),v=clamp(gz-iz,0,1);
   const h00=gridSample(ix,iz),h10=gridSample(ix+1,iz);
   const h01=gridSample(ix,iz+1),h11=gridSample(ix+1,iz+1);
-  // Custom terrain geometry uses diagonal B↔C. Interpolate the exact same
+  // ~0.80 m terrain cells preserve the authored roll while keeping the field
+  // efficient enough for current iPhones. Custom geometry uses diagonal B↔C.
+  // Interpolate the exact same
   // triangles rather than a curved analytic field beneath a planar mesh.
   if(u+v<=1)return h00+u*(h10-h00)+v*(h01-h00);
   return h11+(1-u)*(h01-h11)+(1-v)*(h10-h11);
