@@ -305,8 +305,8 @@ export function buildWorld(scene,pin){
   });
 
   // --- GREEN / FRINGE ------------------------------------------------------
-  const greenGeo=buildGreenGeometry(22.2,16.8,14,72);
-  const fringeGeo=buildGreenGeometry(24.7,19.1,14,72);
+  const greenGeo=buildGreenGeometry(24.4,18.0,14,72);
+  const fringeGeo=buildGreenGeometry(27.0,20.4,14,72);
   const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,7,7,.015);
   const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.028);
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
