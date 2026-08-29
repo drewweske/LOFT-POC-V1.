@@ -640,7 +640,12 @@ export function validateTerrain(){
       maxGrade=Math.max(maxGrade,grade);
     }
   }
-  return {ok:true,min,max,maxGrade,samples,system:'LOFT_FIELD_V2'};
+  return {
+    ok:true,min,max,maxGrade,samples,
+    system:'LOFT_FIELD_V3_EXACT',
+    grid:{nx:TERRAIN_GRID.nx,nz:TERRAIN_GRID.nz,dx:GRID_DX,dz:GRID_DZ},
+    renderPhysicsContract:'TRIANGLE_EXACT'
+  };
 }
 
 export function buildWorld(scene,pin){
@@ -750,6 +755,31 @@ export function buildWorld(scene,pin){
     dummy.updateMatrix();fieldGrass.setMatrixAt(fieldCount++,dummy.matrix);
   }
   fieldGrass.count=fieldCount;fieldGrass.castShadow=false;fieldGrass.receiveShadow=true;world.add(fieldGrass);
+
+  // Bunker lips get restrained dimensional turf. This is visual only; the
+  // single terrain field remains the sole collider.
+  const bunkerEdgeMat=new THREE.MeshStandardMaterial({color:0x6f845b,roughness:1,side:THREE.DoubleSide});
+  const bunkerEdgeGrass=new THREE.InstancedMesh(bladeGeo,bunkerEdgeMat,240);
+  let bunkerEdgeCount=0;
+  for(const b of BUNKERS){
+    for(let i=0;i<56&&bunkerEdgeCount<240;i++){
+      const a=(i/56)*Math.PI*2;
+      const warp=1+
+        .085*Math.sin(a*3+b.seed)+
+        .045*Math.cos(a*5-b.seed*.7)+
+        .022*Math.sin(a*8+b.seed*.3);
+      const rr=1.01+.045*Math.sin(a*7+b.seed*2.1);
+      const x=b.x+Math.cos(a)*b.sx*warp*rr;
+      const z=b.z+Math.sin(a)*b.sz*warp*rr;
+      dummy.position.set(x,terrainHeight(x,z)+.004,z);
+      dummy.rotation.set((rnd()-.5)*.06,a+(rnd()-.5)*.45,(rnd()-.5)*.06);
+      const h=.38+rnd()*.55;
+      dummy.scale.set(.55+rnd()*.38,h,.55+rnd()*.38);
+      dummy.updateMatrix();bunkerEdgeGrass.setMatrixAt(bunkerEdgeCount++,dummy.matrix);
+    }
+  }
+  bunkerEdgeGrass.count=bunkerEdgeCount;bunkerEdgeGrass.castShadow=false;bunkerEdgeGrass.receiveShadow=true;
+  world.add(bunkerEdgeGrass);
 
   // High-density near-ball grass, regenerated per lie.
   const detailMat=new THREE.MeshStandardMaterial({color:0x78906a,roughness:1,side:THREE.DoubleSide});
