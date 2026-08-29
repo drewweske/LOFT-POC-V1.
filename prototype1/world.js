@@ -90,6 +90,15 @@ export function terrainHeight(x,z){
   return climb+ridge+shelf+lighthouseRise+valley+roll+coast+bunkerDepression(x,z);
 }
 
+export function greenSurfaceHeight(center,x,z){
+  const dx=x-center.x,dz=z-center.z;
+  const ellipse=Math.sqrt((dx/23.5)*(dx/23.5)+(dz/18.0)*(dz/18.0));
+  const blend=1-smoothstep(.58,1.02,ellipse);
+  const authoredPlane=center.y+dx*.0062+dz*.0032+
+    .035*Math.sin(dx*.18)*Math.cos(dz*.14);
+  return terrainHeight(x,z)*(1-blend)+authoredPlane*blend;
+}
+
 const mat=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 
 function makeNoiseTexture(base,{size=256,grain=16,streak=0,seed=7}={}){
@@ -201,11 +210,12 @@ function buildGreenGeometry(rx=22,rz=17,rings=13,segments=72){
   g.setIndex(idx);return g;
 }
 
-function updateGreenGeometry(mesh,center,{gradeX=.007,gradeZ=.0035,offset=.018}={}){
+function updateGreenGeometry(mesh,center,{offset=.018}={}){
   const p=mesh.geometry.attributes.position;
   for(let i=0;i<p.count;i++){
     const lx=p.getX(i),lz=p.getZ(i);
-    p.setY(i,(lx*gradeX+lz*gradeZ)+offset);
+    const worldY=greenSurfaceHeight(center,center.x+lx,center.z+lz);
+    p.setY(i,worldY-center.y+offset);
   }
   p.needsUpdate=true;mesh.geometry.computeVertexNormals();
   mesh.position.set(center.x,center.y,center.z);
@@ -301,8 +311,8 @@ export function buildWorld(scene,pin){
   const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.028);
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
   const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
-  updateGreenGeometry(fringe,pin,{gradeX:.007,gradeZ:.0035,offset:.014});
-  updateGreenGeometry(green,pin,{gradeX:.007,gradeZ:.0035,offset:.027});
+  updateGreenGeometry(fringe,pin,{offset:.014});
+  updateGreenGeometry(green,pin,{offset:.027});
 
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.086,48),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
   holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.038,pin.z);world.add(holeDisc);
@@ -459,8 +469,8 @@ export function buildWorld(scene,pin){
   const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+3.88,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
-    updateGreenGeometry(fringe,next,{gradeX:.007,gradeZ:.0035,offset:.014});
-    updateGreenGeometry(green,next,{gradeX:.007,gradeZ:.0035,offset:.027});
+    updateGreenGeometry(fringe,next,{offset:.014});
+    updateGreenGeometry(green,next,{offset:.027});
     holeDisc.position.set(next.x,next.y+.038,next.z);
     pole.position.set(next.x,next.y+2.25,next.z);
     flag.position.set(next.x,next.y+3.88,next.z);
