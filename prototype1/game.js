@@ -556,6 +556,7 @@ function closeBag(){$('bag').classList.remove('open');$('bag').setAttribute('ari
 $('club-chip').onclick=openBag;$('bag-close').onclick=closeBag;$('bag').addEventListener('pointerdown',e=>{if(e.target===$('bag'))closeBag();});
 buildBag();
 topo.setHole(TEE,pin);
+world.setDetailFocus?.(TEE,state.currentLie);
 updateHoleHUD();
 
 $('level-chip').onclick=()=>{$('level-menu').classList.toggle('open');};
