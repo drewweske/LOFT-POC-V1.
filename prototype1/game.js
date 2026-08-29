@@ -32,20 +32,24 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.02;
+renderer.toneMappingExposure=.94;
 renderer.setClearColor(COLORS.sky);
 $('stage').appendChild(renderer.domElement);
 const canvas=renderer.domElement;
 canvas.tabIndex=0;
 
 const scene=new THREE.Scene();
-scene.fog=new THREE.Fog(COLORS.sky,108,315);
+scene.fog=new THREE.Fog(COLORS.sky,118,340);
 const camera=new THREE.PerspectiveCamera(43,1,.1,750);
-scene.add(new THREE.HemisphereLight(0xf8f1e5,0x304438,2.25));
-const sun=new THREE.DirectionalLight(0xffefd4,3.05);
-sun.position.set(-56,82,38);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+
+// Coastal Ridge lighting: warm low-angle key, cool sky fill, soft bounce.
+// The previous high-intensity pair flattened every surface into the same value.
+const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.42);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe6c7,2.18);
+sun.position.set(-62,78,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
 sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=105;sun.shadow.camera.bottom=-235;
 scene.add(sun);
+const fill=new THREE.DirectionalLight(0xbfd6d7,.38);fill.position.set(48,32,-65);scene.add(fill);
 
 const world=buildWorld(scene,pin);
 
