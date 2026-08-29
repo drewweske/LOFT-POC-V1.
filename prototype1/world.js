@@ -24,6 +24,16 @@ export const COLORS={
   sky:0xcbd8d7
 };
 
+export const SURFACE_LIFT=Object.freeze({
+  rough:.0020,
+  firstCut:.0025,
+  fairway:.0045,
+  tee:.0045,
+  fringe:.0060,
+  green:.0090,
+  sand:.0045
+});
+
 export const BUNKERS=[
   // Static Coastal Ridge hazards are deliberately kept outside every moving
   // prototype green footprint. Integration 010 allowed green and bunker
@@ -303,7 +313,7 @@ function shapeFromPoints(pts){
 }
 
 function buildBunkerFloorGeometry(b,rings=9,segments=48){
-  const pos=[0,terrainHeight(b.x,b.z)+.002,0],uv=[.5,.5],idx=[];
+  const pos=[0,terrainHeight(b.x,b.z)+SURFACE_LIFT.sand,0],uv=[.5,.5],idx=[];
   for(let r=1;r<=rings;r++){
     const q=r/rings;
     for(let i=0;i<segments;i++){
@@ -311,7 +321,7 @@ function buildBunkerFloorGeometry(b,rings=9,segments=48){
       const w=1+.10*Math.sin(a*3+b.seed)+.055*Math.cos(a*5-b.seed)+.025*Math.sin(a*9+b.seed*.7);
       const x=Math.cos(a)*b.sx*w*.90*q;
       const z=Math.sin(a)*b.sz*w*.90*q;
-      pos.push(x,terrainHeight(b.x+x,b.z+z)+.002,z);
+      pos.push(x,terrainHeight(b.x+x,b.z+z)+SURFACE_LIFT.sand,z);
       uv.push(.5+.5*Math.cos(a)*q,.5+.5*Math.sin(a)*q);
     }
   }
@@ -398,12 +408,12 @@ export function buildWorld(scene,pin){
 
   // A subtle second rough band around the fairway prevents the course from
   // looking like one flat green rectangle.
-  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.001});
+  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:SURFACE_LIFT.firstCut});
   const firstCutMat=applyTexture(mat(COLORS.roughLight,.95),roughMap,bump,4,24,.021);
   firstCutMat.vertexColors=true;firstCutMat.polygonOffset=true;firstCutMat.polygonOffsetFactor=-1;firstCutMat.polygonOffsetUnits=-1;
   const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
 
-  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.0015});
+  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:SURFACE_LIFT.fairway});
   const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,8,.014);
   fairMat.vertexColors=true;fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
   const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
@@ -415,7 +425,7 @@ export function buildWorld(scene,pin){
     const p=g.attributes.position;
     for(let i=0;i<p.count;i++){
       const wx=x+p.getX(i),wz=z+p.getZ(i);
-      p.setY(i,terrainHeight(wx,wz)+.0015);
+      p.setY(i,terrainHeight(wx,wz)+SURFACE_LIFT.tee);
     }
     p.needsUpdate=true;g.computeVertexNormals();
     const m=new THREE.Mesh(g,teeMat);m.position.set(x,0,z);m.receiveShadow=true;world.add(m);
@@ -430,11 +440,30 @@ export function buildWorld(scene,pin){
   fringeMat.vertexColors=true;fringeMat.polygonOffset=true;fringeMat.polygonOffsetFactor=-3;fringeMat.polygonOffsetUnits=-3;
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
   const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
-  updateGreenGeometry(fringe,pin,{offset:.0015});
-  updateGreenGeometry(green,pin,{offset:.0025});
+  updateGreenGeometry(fringe,pin,{offset:SURFACE_LIFT.fringe});
+  updateGreenGeometry(green,pin,{offset:SURFACE_LIFT.green});
 
-  const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.086,48),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
-  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.004,pin.z);world.add(holeDisc);
+  // CUP VISUAL: a dedicated raised render layer. The old single coplanar
+  // disc could vanish into the green on mobile depth buffers. The liner/rim
+  // now has a deterministic render separation while physics still owns capture.
+  const cupGroup=new THREE.Group();cupGroup.name='LOFT_CUP';world.add(cupGroup);
+  const holeMat=new THREE.MeshBasicMaterial({
+    color:0x050606,side:THREE.DoubleSide,depthWrite:false,
+    polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8
+  });
+  const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.082,64),holeMat);
+  holeDisc.rotation.x=-Math.PI/2;holeDisc.renderOrder=8;cupGroup.add(holeDisc);
+  const rimMat=new THREE.MeshBasicMaterial({
+    color:0xded8cc,side:THREE.DoubleSide,transparent:true,opacity:.94,depthWrite:false,
+    polygonOffset:true,polygonOffsetFactor:-10,polygonOffsetUnits:-10
+  });
+  const cupRim=new THREE.Mesh(new THREE.RingGeometry(.078,.097,64),rimMat);
+  cupRim.rotation.x=-Math.PI/2;cupRim.position.y=.0018;cupRim.renderOrder=9;cupGroup.add(cupRim);
+  cupGroup.position.set(
+    pin.x,
+    greenSurfaceHeight(pin,pin.x,pin.z)+SURFACE_LIFT.green+.0045,
+    pin.z
+  );
 
   // --- BUNKERS: depressed floor + grass/sand lip --------------------------
   function bunker(b){
@@ -604,17 +633,18 @@ export function buildWorld(scene,pin){
 
   // --- PIN -----------------------------------------------------------------
   const poleMat=mat(COLORS.cream,.90);poleMat.transparent=true;
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,4.5,12),poleMat);pole.position.set(pin.x,pin.y+2.25,pin.z);world.add(pole);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,4.5,12),poleMat);pole.position.set(pin.x,pin.y+SURFACE_LIFT.green+2.25,pin.z);world.add(pole);
   const fs=new THREE.Shape();fs.moveTo(0,0);fs.bezierCurveTo(.62,.08,1.55,.22,2.18,.49);fs.lineTo(0,1.02);fs.closePath();
   const flagMat=new THREE.MeshStandardMaterial({color:COLORS.orange,side:THREE.DoubleSide,roughness:.84,transparent:true});
-  const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+3.88,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
+  const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+SURFACE_LIFT.green+3.88,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
-    updateGreenGeometry(fringe,next,{offset:.0015});
-    updateGreenGeometry(green,next,{offset:.0025});
-    holeDisc.position.set(next.x,next.y+.004,next.z);
-    pole.position.set(next.x,next.y+2.25,next.z);
-    flag.position.set(next.x,next.y+3.88,next.z);
+    updateGreenGeometry(fringe,next,{offset:SURFACE_LIFT.fringe});
+    updateGreenGeometry(green,next,{offset:SURFACE_LIFT.green});
+    const cupY=greenSurfaceHeight(next,next.x,next.z)+SURFACE_LIFT.green+.0045;
+    cupGroup.position.set(next.x,cupY,next.z);
+    pole.position.set(next.x,next.y+SURFACE_LIFT.green+2.25,next.z);
+    flag.position.set(next.x,next.y+SURFACE_LIFT.green+3.88,next.z);
   }
 
   let pinAlpha=1;
@@ -624,5 +654,5 @@ export function buildWorld(scene,pin){
     pole.renderOrder=pinAlpha<.5?2:0;flag.renderOrder=pinAlpha<.5?2:0;
   }
 
-  return {world,terrain,fairway,green,fringe,holeDisc,pole,flag,water,setPin,setPinFade,setDetailFocus};
+  return {world,terrain,fairway,green,fringe,cupGroup,holeDisc,cupRim,pole,flag,water,setPin,setPinFade,setDetailFocus};
 }
