@@ -32,7 +32,7 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=.94;
+renderer.toneMappingExposure=1.02;
 renderer.setClearColor(COLORS.sky);
 $('stage').appendChild(renderer.domElement);
 const canvas=renderer.domElement;
@@ -47,6 +47,7 @@ const camera=new THREE.PerspectiveCamera(43,1,.1,750);
 const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.42);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffe6c7,2.18);
 sun.position.set(-62,78,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+sun.shadow.bias=-0.00035;sun.shadow.normalBias=.035;
 sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=105;sun.shadow.camera.bottom=-235;
 scene.add(sun);
 const fill=new THREE.DirectionalLight(0xbfd6d7,.38);fill.position.set(48,32,-65);scene.add(fill);
@@ -130,7 +131,7 @@ function showHoleIntro(){
 function syncTargetFromAim(){
   const x=TEE.x+Math.sin(state.aimYaw)*state.targetDistance;
   const z=TEE.z-Math.cos(state.aimYaw)*state.targetDistance;
-  state.target.set(x,terrainHeight(x,z)+.04,z);
+  state.target.set(x,playingHeight(x,z)+.04,z);
 }
 function defaultTarget(resetAim=true){
   const c=club();
@@ -410,7 +411,7 @@ function hidePuttPace(){puttPaceGhost.visible=false;}
 
 const physics=new GolfPhysics({terrainHeight:playingHeight,surfaceAt,wind});
 physics.setCup(pin);
-const cam=new LoftCamera(camera,{terrainHeight});
+const cam=new LoftCamera(camera,{terrainHeight:playingHeight});
 const topo=new LoftTopoMap($('course-map'));
 const feedback=new LoftFeedback(scene,COLORS);
 
@@ -1066,7 +1067,10 @@ function frame(now){
         feedback.land({surface:ps.lastImpactSurface,position:ballGroup.position,quality:state.shot?.quality||.8});
       }
 
-      if(ps.stopped)finishShot();
+      if(ps.stopped){
+        if(ps.recovered)showContext('BALL SETTLED',520);
+        finishShot();
+      }
     }
   }else if(state.phase==='result')cam.updateResult(dt,{ball:ballGroup.position,pin});
   if(state.ballCompression>0){
