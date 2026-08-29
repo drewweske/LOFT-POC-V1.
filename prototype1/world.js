@@ -420,6 +420,41 @@ export function buildWorld(scene,pin){
   }
   blades.count=bladeCount;blades.castShadow=false;blades.receiveShadow=true;world.add(blades);
 
+  // Near-ball grass detail is regenerated only when the lie changes. This is
+  // where fairway/rough length becomes tangible without rendering millions of
+  // blades across the entire mobile scene.
+  const detailGeo=new THREE.PlaneGeometry(.032,.20);detailGeo.translate(0,.10,0);
+  const detailMat=new THREE.MeshStandardMaterial({color:0x78906a,roughness:1,side:THREE.DoubleSide});
+  const detailGrass=new THREE.InstancedMesh(detailGeo,detailMat,260);
+  detailGrass.castShadow=false;detailGrass.receiveShadow=true;detailGrass.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  world.add(detailGrass);
+
+  function setDetailFocus(position,surface='fairway'){
+    const seed=Math.floor((position.x+80)*29+(position.z+310)*17);
+    const rr=seeded(seed>>>0);
+    let base=.04,spread=7.5,count=220,color=0x78906a;
+    if(surface==='rough'){base=.135;spread=8.6;count=250;color=0x64794f;}
+    else if(surface==='fringe'){base=.070;spread=6.8;count=235;color=0x789466;}
+    else if(surface==='green'){base=.015;spread=6.2;count=150;color=0x8ea878;}
+    else if(surface==='tee'){base=.040;spread=6.5;count=210;color=0x7f986a;}
+    else if(surface==='sand'||surface==='water'){base=0;count=0;}
+    detailGrass.material.color.setHex(color);
+
+    for(let i=0;i<260;i++){
+      if(i>=count||base===0){
+        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);continue;
+      }
+      const a=rr()*Math.PI*2,r=Math.sqrt(rr())*spread;
+      const x=position.x+Math.cos(a)*r,z=position.z+Math.sin(a)*r;
+      const h=base*(.68+rr()*.72);
+      dummy.position.set(x,terrainHeight(x,z)+.012,z);
+      dummy.rotation.set(0,rr()*Math.PI,0);
+      dummy.scale.set(.72+rr()*.55,h/.20,.72+rr()*.55);
+      dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);
+    }
+    detailGrass.instanceMatrix.needsUpdate=true;
+  }
+
   const shrubGeo=new THREE.IcosahedronGeometry(.48,1);
   const shrubMat=mat(0x506342,.995);
   const shrubs=new THREE.InstancedMesh(shrubGeo,shrubMat,180);let shrubCount=0;
@@ -483,5 +518,5 @@ export function buildWorld(scene,pin){
     pole.renderOrder=pinAlpha<.5?2:0;flag.renderOrder=pinAlpha<.5?2:0;
   }
 
-  return {world,terrain,fairway,green,fringe,holeDisc,pole,flag,water,setPin,setPinFade};
+  return {world,terrain,fairway,green,fringe,holeDisc,pole,flag,water,setPin,setPinFade,setDetailFocus};
 }
