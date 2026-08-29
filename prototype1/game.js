@@ -32,7 +32,7 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.02;
+renderer.toneMappingExposure=1.045;
 renderer.setClearColor(COLORS.sky);
 $('stage').appendChild(renderer.domElement);
 const canvas=renderer.domElement;
@@ -44,8 +44,8 @@ const camera=new THREE.PerspectiveCamera(43,1,.1,750);
 
 // Coastal Ridge lighting: warm low-angle key, cool sky fill, soft bounce.
 // The previous high-intensity pair flattened every surface into the same value.
-const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.42);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffe6c7,2.18);
+const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.08);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe6c7,2.62);
 sun.position.set(-62,78,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
 sun.shadow.bias=-0.00030;sun.shadow.normalBias=.045;
 sun.shadow.camera.left=-112;sun.shadow.camera.right=112;
@@ -53,7 +53,7 @@ sun.shadow.camera.top=126;sun.shadow.camera.bottom=-126;
 sun.shadow.camera.near=1;sun.shadow.camera.far=290;
 sun.target.position.set(0,0,-122);
 scene.add(sun);scene.add(sun.target);
-const fill=new THREE.DirectionalLight(0xbfd6d7,.38);fill.position.set(48,32,-65);scene.add(fill);
+const fill=new THREE.DirectionalLight(0xbfd6d7,.30);fill.position.set(48,32,-65);scene.add(fill);
 
 const terrainHealth=validateTerrain();
 if(!terrainHealth.ok)throw new Error('Terrain validation failed: '+terrainHealth.reason);
@@ -1048,8 +1048,8 @@ function frame(now){
 
   const yaw=aimYaw();
   if(state.phase==='ready'){
-    if(cam.isSwingLocked)cam.updateSwing(dt,{ball:ballGroup.position,aimYaw:yaw,swingProgress:state.swingPhase,putting:isPutting()});
-    else cam.updateAim(dt,{ball:ballGroup.position,aimYaw:yaw,putting:isPutting()});
+    if(cam.isSwingLocked)cam.updateSwing(dt,{ball:ballGroup.position,pin,aimYaw:yaw,swingProgress:state.swingPhase,putting:isPutting()});
+    else cam.updateAim(dt,{ball:ballGroup.position,pin,aimYaw:yaw,putting:isPutting()});
   }else if(state.phase==='flight'){
     const L=LEVELS[state.level];
     if(state.hitStop>0){
@@ -1068,6 +1068,9 @@ function frame(now){
       if(ps.surfaceChanged){
         feedback.surfaceTransition(ps.surfaceChanged.to,Math.hypot(ps.vel.x,ps.vel.z));
         ps.surfaceChanged=null;
+      }
+      if(ps.surface!=='air'&&ps.surface!=='cup'&&ps.surface!=='water'&&!ps.stopped){
+        feedback.roll(ps.surface,Math.hypot(ps.vel.x,ps.vel.z));
       }
       cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin,putting:Boolean(state.shot?.putting)});
 
