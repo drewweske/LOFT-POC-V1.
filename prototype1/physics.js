@@ -299,9 +299,12 @@ export class GolfPhysics{
       const grade=Math.hypot(dx,dz);
       const hs0=Math.hypot(s.vel.x,s.vel.z);
 
-      // Static friction matters. Once a ball has almost finished, ordinary
-      // fairway/rough slopes should hold it instead of letting it creep forever.
-      if(hs0<material.settleSpeed&&grade<material.staticGrade){
+      // Static friction / turf indentation matters. A nearly stopped golf ball
+      // should not mysteriously creep on a grade whose downslope gravity is
+      // weaker than the surface's calibrated rolling resistance.
+      const slopeAccel=G*grade/Math.sqrt(1+grade*grade);
+      const canPhysicallyHold=slopeAccel<material.rollingDecel*.94;
+      if(hs0<material.settleSpeed*1.55&&(grade<material.staticGrade||canPhysicallyHold)){
         s.vel.set(0,0,0);
         s.stopped=true;
         this.active=false;
@@ -330,7 +333,7 @@ export class GolfPhysics{
 
       if(this._tryCup(s,surface,fromX,fromZ))return;
 
-      if(Math.hypot(s.vel.x,s.vel.z)<material.settleSpeed&&grade<material.staticGrade){
+      if(Math.hypot(s.vel.x,s.vel.z)<material.settleSpeed*1.35&&(grade<material.staticGrade||canPhysicallyHold)){
         s.vel.set(0,0,0);
         s.stopped=true;
         this.active=false;
