@@ -322,7 +322,7 @@ export function buildWorld(scene,pin){
   const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
 
   const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.015});
-  const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,32,.014);
+  const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,8,.014);
   fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
   const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
 
