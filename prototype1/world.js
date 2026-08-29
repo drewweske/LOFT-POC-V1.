@@ -34,6 +34,12 @@ export const SURFACE_LIFT=Object.freeze({
   sand:.0045
 });
 
+export const TEE_PADS=[
+  {x:.46,z:0,rx:3.8,rz:2.35},
+  {x:-8,z:10,rx:3.7,rz:2.25},
+  {x:8,z:18,rx:3.9,rz:2.35}
+];
+
 export const BUNKERS=[
   // Static Coastal Ridge hazards are deliberately kept outside every moving
   // prototype green footprint. Integration 010 allowed green and bunker
@@ -98,14 +104,21 @@ export function terrainHeight(x,z){
   // enough to be visible and predictable; there are no invisible divots.
   const crossfall=.0105*lateral*Math.sin((z+28)*.012);
   const broadRoll=
-    .17*Math.sin((z+20)*.022)+
-    .10*Math.cos((z-42)*.041)+
-    .07*Math.sin((x+8)*.055);
+    .19*Math.sin((z+20)*.022)+
+    .11*Math.cos((z-42)*.041)+
+    .075*Math.sin((x+8)*.055);
+
+  // Long golf-scale undulations. Wavelengths stay large enough that the player
+  // can read them in the lighting; LOFT never hides gameplay in micro-noise.
+  const naturalUndulation=
+    .095*Math.sin((x*.105)+(z*.041))+
+    .070*Math.cos((x*.072)-(z*.033))+
+    .045*Math.sin((x*.036)+(z*.079));
 
   // The ocean side rolls away toward the cliff instead of becoming a sudden wall.
   const coast=-5.20*smoothstep(29,45,x)*(0.88+0.12*Math.cos((z+35)*.017));
 
-  return climb+ridge+middleShelf+lighthouseShelf+saddleA+saddleB+crossfall+broadRoll+coast+bunkerDepression(x,z);
+  return climb+ridge+middleShelf+lighthouseShelf+saddleA+saddleB+crossfall+broadRoll+naturalUndulation+coast+bunkerDepression(x,z);
 }
 
 export function greenSurfaceHeight(center,x,z){
@@ -115,6 +128,55 @@ export function greenSurfaceHeight(center,x,z){
   const authoredPlane=center.y+dx*.0062+dz*.0032+
     .035*Math.sin(dx*.18)*Math.cos(dz*.14);
   return terrainHeight(x,z)*(1-blend)+authoredPlane*blend;
+}
+
+
+export function bunkerMask(x,z){
+  let best=Infinity;
+  for(const b of BUNKERS){
+    const dx=(x-b.x)/b.sx,dz=(z-b.z)/b.sz;
+    const r=Math.sqrt(dx*dx+dz*dz);
+    best=Math.min(best,r);
+  }
+  return best;
+}
+
+export function greenEllipse(center,x,z,rx=18.5,rz=14.5){
+  const dx=(x-center.x)/rx,dz=(z-center.z)/rz;
+  return Math.sqrt(dx*dx+dz*dz);
+}
+
+export function courseSurfaceAt(x,z,center){
+  if(x>38&&z<-18)return 'water';
+
+  const g=greenEllipse(center,x,z,18.5,14.5);
+  if(g<=1)return 'green';
+  const fr=greenEllipse(center,x,z,21.0,16.5);
+  if(fr<=1)return 'fringe';
+
+  for(const b of BUNKERS){
+    const dx=(x-b.x)/(b.sx*.96),dz=(z-b.z)/(b.sz*.96);
+    if(dx*dx+dz*dz<=1)return 'sand';
+  }
+
+  for(const tee of TEE_PADS){
+    const dx=(x-tee.x)/tee.rx,dz=(z-tee.z)/tee.rz;
+    if(dx*dx+dz*dz<=1)return 'tee';
+  }
+
+  const p=fairwayProfile(z);
+  if(p.insideRange&&Math.abs(x-p.center)<=p.width)return 'fairway';
+  return 'rough';
+}
+
+export function courseSurfaceHeight(x,z,center){
+  const s=courseSurfaceAt(x,z,center);
+  if(s==='green')return greenSurfaceHeight(center,x,z)+SURFACE_LIFT.green;
+  if(s==='fringe')return greenSurfaceHeight(center,x,z)+SURFACE_LIFT.fringe;
+  if(s==='sand')return terrainHeight(x,z)+SURFACE_LIFT.sand;
+  if(s==='fairway')return terrainHeight(x,z)+SURFACE_LIFT.fairway;
+  if(s==='tee')return terrainHeight(x,z)+SURFACE_LIFT.tee;
+  return terrainHeight(x,z)+SURFACE_LIFT.rough;
 }
 
 const mat=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
@@ -216,6 +278,123 @@ function deformedPlane(width,depth,segX,segZ,zOffset=0){
   p.needsUpdate=true;g.computeVertexNormals();
   applySlopeColors(g,terrainHeight,{strength:.78});
   return g;
+}
+
+
+function colorMix(a,b,t){
+  const ca=new THREE.Color(a),cb=new THREE.Color(b);
+  return ca.lerp(cb,clamp(t,0,1));
+}
+
+function teeVisualWeight(x,z){
+  let w=0;
+  for(const t of TEE_PADS){
+    const r=Math.sqrt(Math.pow((x-t.x)/t.rx,2)+Math.pow((z-t.z)/t.rz,2));
+    w=Math.max(w,1-smoothstep(.82,1.12,r));
+  }
+  return w;
+}
+
+function fairwayVisualWeights(x,z){
+  const p=fairwayProfile(z);
+  if(!p.insideRange)return {fair:0,first:0};
+  const d=Math.abs(x-p.center)-p.width;
+  const fair=1-smoothstep(-.25,1.05,d);
+  const first=(1-smoothstep(.55,3.1,d))*(1-fair*.72);
+  return {fair,first};
+}
+
+function terrainVisualColor(x,z,center){
+  const base=new THREE.Color(COLORS.rough);
+  const fw=fairwayVisualWeights(x,z);
+  if(fw.first>0)base.lerp(new THREE.Color(COLORS.roughLight),fw.first*.86);
+  if(fw.fair>0)base.lerp(new THREE.Color(COLORS.fair),fw.fair);
+
+  const teeW=teeVisualWeight(x,z);
+  if(teeW>0)base.lerp(new THREE.Color(0x809b6c),teeW);
+
+  const fr=greenEllipse(center,x,z,21.0,16.5);
+  const greenR=greenEllipse(center,x,z,18.5,14.5);
+  const fringeW=(1-smoothstep(.91,1.055,fr))*(smoothstep(.78,1.00,greenR));
+  const greenW=1-smoothstep(.88,1.035,greenR);
+  if(fringeW>0)base.lerp(new THREE.Color(COLORS.fringe),fringeW);
+  if(greenW>0)base.lerp(new THREE.Color(COLORS.green),greenW);
+
+  const bm=bunkerMask(x,z);
+  const sandW=1-smoothstep(.82,1.04,bm);
+  if(sandW>0)base.lerp(new THREE.Color(COLORS.sand),sandW);
+
+  // Mowing / rake direction lives inside the surface instead of as extra
+  // geometry. It adds human-made golf texture without z-fighting.
+  let weave=1;
+  if(greenW>.1)weave+=.018*Math.sin((x+z*.18)*1.22);
+  else if(fw.fair>.1)weave+=.020*Math.sin((z+18)*.58);
+  else weave+=.008*Math.sin((x*.42-z*.19));
+  if(sandW>.25)weave+=.018*Math.sin((x*.70+z*.47));
+
+  const shade=terrainReadShade(
+    (xx,zz)=>courseSurfaceHeight(xx,zz,center),
+    x,z,.78
+  );
+  const gain=clamp(shade*weave,.78,1.16);
+  base.multiplyScalar(gain);
+  return base;
+}
+
+function buildTerrainFabricGeometry(center){
+  // ~55k vertices / ~110k triangles: dense enough for round bunker lips and
+  // smooth elevation on modern phones while remaining dramatically cheaper
+  // than multiple overlapping course meshes.
+  const width=176,depth=326,segX=168,segZ=310,zOffset=-116;
+  const g=new THREE.PlaneGeometry(width,depth,segX,segZ);
+  g.rotateX(-Math.PI/2);
+  const p=g.attributes.position;
+  const colors=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i),z=p.getZ(i)+zOffset;
+    p.setZ(i,z);
+    p.setY(i,courseSurfaceHeight(x,z,center));
+    const col=terrainVisualColor(x,z,center);
+    colors[i*3]=col.r;colors[i*3+1]=col.g;colors[i*3+2]=col.b;
+  }
+  p.needsUpdate=true;
+  g.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  g.computeVertexNormals();
+  return g;
+}
+
+function updateTerrainFabric(mesh,center){
+  const p=mesh.geometry.attributes.position;
+  const colors=mesh.geometry.attributes.color;
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i),z=p.getZ(i);
+    p.setY(i,courseSurfaceHeight(x,z,center));
+    const col=terrainVisualColor(x,z,center);
+    colors.setXYZ(i,col.r,col.g,col.b);
+  }
+  p.needsUpdate=true;colors.needsUpdate=true;
+  mesh.geometry.computeVertexNormals();
+  mesh.geometry.computeBoundingSphere();
+}
+
+function neutralFiberTexture({size=256,seed=2045}={}){
+  const rnd=seeded(seed);
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+  const x=canvas.getContext('2d');
+  x.fillStyle='#ededeb';x.fillRect(0,0,size,size);
+  for(let i=0;i<10500;i++){
+    const v=218+Math.floor(rnd()*34);
+    const a=.045+rnd()*.075;
+    x.fillStyle=`rgba(${v},${v},${v},${a})`;
+    const px=rnd()*size,py=rnd()*size;
+    x.fillRect(px,py,.45+rnd()*1.1,.9+rnd()*2.6);
+  }
+  const tex=new THREE.CanvasTexture(canvas);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.repeat.set(22,42);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.anisotropy=4;
+  return tex;
 }
 
 function buildRibbon({z0=8,z1=-242,segments=160,crossSegments=12,widthScale=1,yOffset=.001}={}){
