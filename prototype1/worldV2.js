@@ -355,7 +355,9 @@ function colorAt(x,z){
 
   if(bunkerAt(x,z)){
     const S=rgb(COLORS.sand);
-    const n=.94+.06*(.5+.5*Math.sin(x*2.3+z*1.7));
+    const rake=.5+.5*Math.sin(x*2.45+z*1.74);
+    const grain=valueNoise((x+40)*1.18,(z-10)*1.18);
+    const n=.935+.050*rake+.020*grain;
     c=[S.r*n,S.g*n,S.b*n];
   }
 
@@ -378,10 +380,20 @@ function makeCourseAlbedo(){
       const u=px/(W-1);
       const x=lerp(TERRAIN_GRID.xMin,TERRAIN_GRID.xMax,u);
       const col=colorAt(x,z);
+      // Broad baked relief complements real lighting and makes grade readable
+      // even on a small phone display. Sampling across 1.6 m prevents any
+      // single terrain triangle from becoming visible as a color polygon.
+      const e=1.6;
+      const h0=terrainHeight(x,z);
+      const hL=terrainHeight(x-e,z),hR=terrainHeight(x+e,z);
+      const hD=terrainHeight(x,z-e),hU=terrainHeight(x,z+e);
+      const dx=(hR-hL)/(2*e),dz=(hU-hD)/(2*e);
+      const curvature=((hL+hR+hD+hU)*.25-h0);
+      const relief=clamp(1-dx*.095+dz*.060+curvature*.025,.91,1.085);
       const k=(py*W+px)*4;
-      d[k]=Math.round(clamp(col[0],0,1)*255);
-      d[k+1]=Math.round(clamp(col[1],0,1)*255);
-      d[k+2]=Math.round(clamp(col[2],0,1)*255);
+      d[k]=Math.round(clamp(col[0]*relief,0,1)*255);
+      d[k+1]=Math.round(clamp(col[1]*relief,0,1)*255);
+      d[k+2]=Math.round(clamp(col[2]*relief,0,1)*255);
       d[k+3]=255;
     }
   }
