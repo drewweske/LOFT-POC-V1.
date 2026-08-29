@@ -258,6 +258,33 @@ function shapeFromPoints(pts){
   s.closePath();return s;
 }
 
+function buildBunkerFloorGeometry(b,rings=9,segments=48){
+  const pos=[0,terrainHeight(b.x,b.z)+.002,0],uv=[.5,.5],idx=[];
+  for(let r=1;r<=rings;r++){
+    const q=r/rings;
+    for(let i=0;i<segments;i++){
+      const a=i/segments*Math.PI*2;
+      const w=1+.10*Math.sin(a*3+b.seed)+.055*Math.cos(a*5-b.seed)+.025*Math.sin(a*9+b.seed*.7);
+      const x=Math.cos(a)*b.sx*w*.90*q;
+      const z=Math.sin(a)*b.sz*w*.90*q;
+      pos.push(x,terrainHeight(b.x+x,b.z+z)+.002,z);
+      uv.push(.5+.5*Math.cos(a)*q,.5+.5*Math.sin(a)*q);
+    }
+  }
+  for(let i=0;i<segments;i++)idx.push(0,1+i,1+((i+1)%segments));
+  for(let r=1;r<rings;r++){
+    const a0=1+(r-1)*segments,b0=1+r*segments;
+    for(let i=0;i<segments;i++){
+      const n=(i+1)%segments;
+      idx.push(a0+i,b0+i,a0+n,a0+n,b0+i,b0+n);
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  g.setIndex(idx);g.computeVertexNormals();return g;
+}
+
 function makeRockGeometry(seed=1){
   const rnd=seeded(seed);
   const g=new THREE.IcosahedronGeometry(1,1);
@@ -365,14 +392,12 @@ export function buildWorld(scene,pin){
     const inner=irregularBoundary(b,48,.90);
     const outer=irregularBoundary(b,48,1.06);
 
-    const floorGeo=new THREE.ShapeGeometry(shapeFromPoints(inner));floorGeo.rotateX(-Math.PI/2);
-    const fp=floorGeo.attributes.position;
-    for(let i=0;i<fp.count;i++){
-      const lx=fp.getX(i),lz=fp.getZ(i);
-      fp.setY(i,terrainHeight(b.x+lx,b.z+lz)+.002);
-    }
-    fp.needsUpdate=true;floorGeo.computeVertexNormals();
-    const floorMat=applyTexture(mat(COLORS.sand,.995),sandMap,bump,4.5,4.5,.070);
+    // Radially tessellated sand bowl. Every visible floor vertex samples the
+    // same heightfield used by ball physics, so the ball cannot disappear into
+    // an invisible depression.
+    const floorGeo=buildBunkerFloorGeometry(b,9,48);
+    const floorMat=applyTexture(mat(COLORS.sand,.995),sandMap,bump,4.5,4.5,.050);
+    floorMat.polygonOffset=true;floorMat.polygonOffsetFactor=-2;floorMat.polygonOffsetUnits=-2;
     const floor=new THREE.Mesh(floorGeo,floorMat);floor.position.set(b.x,0,b.z);floor.receiveShadow=true;world.add(floor);
 
     const pos=[],uv=[],idx=[];
