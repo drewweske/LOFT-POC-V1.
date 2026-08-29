@@ -18,7 +18,7 @@ let holeIndex=0;
 let holeDef=ROUND_HOLES[holeIndex];
 let pin=new THREE.Vector3(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
 let wind=new THREE.Vector3(holeDef.wind[0],0,holeDef.wind[1]);
-let TEE=new THREE.Vector3(holeDef.tee[0],terrainHeight(holeDef.tee[0],holeDef.tee[1])+BALL_VISUAL_R,holeDef.tee[1]);
+let TEE=new THREE.Vector3(holeDef.tee[0],playingHeight(holeDef.tee[0],holeDef.tee[1])+BALL_CONTACT_HEIGHT,holeDef.tee[1]);
 let COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
 
 window.addEventListener('error',e=>{
@@ -350,6 +350,19 @@ function updateLine(){
   const rigYaw=-yaw;
   const localAddressBall=new THREE.Vector3(.46,BALL_VISUAL_R,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw);
   golfer.group.position.copy(ballGroup.position).sub(localAddressBall);
+
+  // Stance grounding: one scalar root height on a sloped course can bury a
+  // foot / ankle into the turf. Sample both sides of the stance and lift the
+  // rig to the highest local contact. This is a conservative pre-IK solution:
+  // no limb is allowed to visually penetrate the playable surface.
+  const stanceA=new THREE.Vector3(-.18,0,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw).add(golfer.group.position);
+  const stanceB=new THREE.Vector3(.18,0,0).applyAxisAngle(new THREE.Vector3(0,1,0),rigYaw).add(golfer.group.position);
+  const stanceGround=Math.max(
+    playingHeight(golfer.group.position.x,golfer.group.position.z),
+    playingHeight(stanceA.x,stanceA.z),
+    playingHeight(stanceB.x,stanceB.z)
+  );
+  golfer.group.position.y=Math.max(golfer.group.position.y,stanceGround+.010);
   golfer.group.rotation.y=rigYaw;
 }
 updateLine();
