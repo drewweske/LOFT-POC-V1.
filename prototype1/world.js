@@ -316,12 +316,12 @@ export function buildWorld(scene,pin){
 
   // A subtle second rough band around the fairway prevents the course from
   // looking like one flat green rectangle.
-  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.008});
+  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.001});
   const firstCutMat=applyTexture(mat(COLORS.roughLight,.95),roughMap,bump,4,24,.021);
   firstCutMat.polygonOffset=true;firstCutMat.polygonOffsetFactor=-1;firstCutMat.polygonOffsetUnits=-1;
   const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
 
-  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.015});
+  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.0015});
   const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,8,.014);
   fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
   const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
@@ -333,7 +333,7 @@ export function buildWorld(scene,pin){
     const p=g.attributes.position;
     for(let i=0;i<p.count;i++){
       const wx=x+p.getX(i),wz=z+p.getZ(i);
-      p.setY(i,terrainHeight(wx,wz)+.016);
+      p.setY(i,terrainHeight(wx,wz)+.0015);
     }
     p.needsUpdate=true;g.computeVertexNormals();
     const m=new THREE.Mesh(g,teeMat);m.position.set(x,0,z);m.receiveShadow=true;world.add(m);
@@ -348,11 +348,11 @@ export function buildWorld(scene,pin){
   fringeMat.polygonOffset=true;fringeMat.polygonOffsetFactor=-3;fringeMat.polygonOffsetUnits=-3;
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
   const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
-  updateGreenGeometry(fringe,pin,{offset:.010});
-  updateGreenGeometry(green,pin,{offset:.018});
+  updateGreenGeometry(fringe,pin,{offset:.0015});
+  updateGreenGeometry(green,pin,{offset:.0025});
 
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.086,48),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
-  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.026,pin.z);world.add(holeDisc);
+  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.004,pin.z);world.add(holeDisc);
 
   // --- BUNKERS: depressed floor + grass/sand lip --------------------------
   function bunker(b){
@@ -363,7 +363,7 @@ export function buildWorld(scene,pin){
     const fp=floorGeo.attributes.position;
     for(let i=0;i<fp.count;i++){
       const lx=fp.getX(i),lz=fp.getZ(i);
-      fp.setY(i,terrainHeight(b.x+lx,b.z+lz)+.025);
+      fp.setY(i,terrainHeight(b.x+lx,b.z+lz)+.002);
     }
     fp.needsUpdate=true;floorGeo.computeVertexNormals();
     const floorMat=applyTexture(mat(COLORS.sand,.995),sandMap,bump,4.5,4.5,.070);
@@ -372,8 +372,8 @@ export function buildWorld(scene,pin){
     const pos=[],uv=[],idx=[];
     for(let i=0;i<outer.length;i++){
       const o=outer[i],inn=inner[i];
-      const oy=terrainHeight(b.x+o.x,b.z+o.y)+.030;
-      const iy=terrainHeight(b.x+inn.x,b.z+inn.y)+.030;
+      const oy=terrainHeight(b.x+o.x,b.z+o.y)+.004;
+      const iy=terrainHeight(b.x+inn.x,b.z+inn.y)+.004;
       pos.push(o.x,oy,o.y,inn.x,iy,inn.y);
       uv.push(0,i/outer.length,1,i/outer.length);
       const n=(i+1)%outer.length,a=i*2,bb=a+1,c=n*2,d=c+1;
@@ -530,9 +530,9 @@ export function buildWorld(scene,pin){
   const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+3.88,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
-    updateGreenGeometry(fringe,next,{offset:.010});
-    updateGreenGeometry(green,next,{offset:.018});
-    holeDisc.position.set(next.x,next.y+.026,next.z);
+    updateGreenGeometry(fringe,next,{offset:.0015});
+    updateGreenGeometry(green,next,{offset:.0025});
+    holeDisc.position.set(next.x,next.y+.004,next.z);
     pole.position.set(next.x,next.y+2.25,next.z);
     flag.position.set(next.x,next.y+3.88,next.z);
   }
