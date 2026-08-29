@@ -1,189 +1,195 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 011
+Current build: Prototype 1 / Integration 012
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: terrain integrity + world rendering
-Iteration: integration_011
+Active subsystem: terrain readability + physical soundscape
+Iteration: integration_012
 
-## Previous round
+## Integration 011 device verdict
 
-Integration 010: LOSS — CRITICAL VISUAL / RUNTIME FAILURE.
+PARTIAL PASS.
 
-Real-device evidence showed:
-- terrain rendered near-black
-- intended elevation existed physically but was visually unreadable
-- visible/physical terrain diverged around green / fringe
-- billboard grass rendered as large rectangular artifacts
-- character framing could leave the golfer partly off screen
-- a ball could enter an invalid terrain state and leave the shot soft-locked
-- shadow / overlay banding damaged course readability
+What improved:
+- course no longer rendered near-black
+- heightfield remained playable across all three holes
+- coastline / world silhouette became substantially more coherent
+- severe terrain soft-lock from Integration 010 did not recur
 
-Largest meaningful gap:
-THE PLAYABLE HEIGHTFIELD WAS NOT BEING PRESENTED AS A TRUSTWORTHY VISIBLE SURFACE.
+What still failed:
+- ground grade was visually too ambiguous
+- visible land could still read flatter than the physics surface
+- long dark seams / strips remained in several views
+- putting and short-game camera could clip deeply into the golfer near the cup
+- very slow ball motion could look like unexplained terrain creep
+- audio remained too synthetic / UI-like for the physical golf experience
 
-Why it matters:
-LOFT depends on the player reading slope, lie, elevation and landing geometry instantly. Invisible hills or a ball disappearing beneath terrain is a critical failure.
+The player still had to GUESS some slopes rather than READ them.
+That is not acceptable for LOFT.
 
-## Integration 011 rebuild
+## Integration 012 rebuild
 
-### 1. Terrain colour / material failure fixed
+### 1. Surface normal orientation fixed
 
-Root cause:
-The canvas turf textures already contained the intended surface colour, but the MeshStandardMaterial was also using the same coloured base. Three.js multiplied them together, pushing dark greens toward near-black.
+Root cause discovered:
+The custom fairway ribbon, green mesh and bunker bowl used reversed triangle winding.
 
-Fix:
-Textured turf / sand materials now use white material albedo and let the texture own the final surface colour.
+That produced downward-facing normals on surfaces that should face up.
 
-Result target:
-Readable coastal greens in daylight with preserved material contrast.
+Consequences included:
+- flattened or incorrect light response
+- intermittent dark strip artifacts
+- poor slope readability
+- inconsistent mobile rendering
 
-### 2. Terrain architecture rewritten
+All playable custom terrain meshes now use upward-facing triangle winding.
 
-The terrain function now uses broad golf-scale landforms rather than micro-noise:
-- progressive 3.4 m course climb
-- authored middle shelf
-- ridge shelf
-- lighthouse shelf
-- two broad saddles
-- gentle crossfall
-- low-frequency roll only
-- real coastal falloff
+### 2. Terrain Read shading
 
-No procedural high-frequency divots are allowed in the playable heightfield.
+A restrained baked slope-light term is now generated from the SAME height function used by ball physics.
 
-### 3. Coastline made real
+It is applied to:
+- rough base terrain
+- first cut
+- fairway
+- green
+- fringe
+- bunker floors
 
-The terrain now physically falls beneath the ocean beyond the coastal edge instead of continuing as hidden land underneath the water plane.
+This is not an arbitrary contour overlay.
 
-The playable water boundary stops the ball before invalid terrain travel.
+Each vertex samples the physical grade around itself and receives a subtle light/dark multiplier matching the scene key-light direction.
 
-### 4. Visual / physics surface lock
+Design goal:
+A player should be able to look at a hill and understand which way it falls before the ball proves it.
 
-Green and fringe now use the same authored surface function in:
-- rendering
-- ball physics
-- camera ground protection
-- target placement
-- The Line
+### 3. Stronger terrain lighting
 
-The earlier oversized moving greens also collided with static hazards and the lighthouse.
-Integration 011 uses golf-scale footprints and moves the landmark clear of play:
-- green = 18.5 m × 14.5 m radius ellipse
-- fringe = 21.0 m × 16.5 m radius ellipse
+The previous hemisphere fill was flattening the course.
 
-This removes invisible green/fringe height changes and landmark overlap.
+Integration 012:
+- reduces ambient hemisphere intensity
+- increases directional key light
+- slightly increases exposure
+- keeps cool fill restrained
 
-### 5. Fairway / bunker meshes now conform to physics
+This creates actual shape on ridges, saddles and green contours without returning to the near-black failure.
 
-The old fairway ribbon only had two vertices across its width. It could visually bridge over cross-slope while physics followed the real heightfield.
+### 4. False terrain creep removed
 
-Integration 011 rebuilds fairway and first cut as cross-tessellated 3D ribbons. Every strip vertex samples terrainHeight.
+Rolling physics now tests whether downslope gravity is strong enough to overcome the calibrated rolling resistance of the current surface.
 
-Bunker floors had the same hidden problem: the sand polygon was triangulated only from its boundary while physics used a deeper bowl in the center.
+At very low speed:
+- if turf can physically hold the ball, it settles
+- if the grade truly overcomes the surface, it continues to roll
 
-Bunker floors are now radially tessellated bowls. Every sand vertex samples the same bunker depression used by physics.
+This replaces the old grade-threshold-only settle test.
 
-Rendered turf offsets were reduced to millimetres and polygon offset now handles layer priority. A 34 mm visual golf ball should no longer appear buried because the rendered grass surface is centimetres above the physical one.
+Surface static hold thresholds were also recalibrated.
 
-### 6. Broken grass cards removed
+The ball should no longer perform tiny unexplained slides on visually gentle ground.
 
-The large rectangular billboard blades visible on iPhone are retired.
+### 5. Tap-in camera protection
 
-New near-lie turf uses restrained tapered 3-sided volumetric blades only in a small radius around the current ball:
-- green: extremely tight
-- tee/fairway: short
-- fringe: medium
-- rough: tall
-- sand/water: none
+Very short putts now use a dedicated close-range composition:
+- camera pulls farther back
+- camera rises
+- slight lateral offset clears the golfer rig
+- ball-to-cup axis remains visually straight
+- result camera also protects against body / arm clipping
 
-No giant planar grass cards remain.
+This specifically addresses the giant-arm / club closeups seen near 1 FT.
 
-### 7. Bunker / terrain relationship preserved
+### 6. LOFT physical golf soundscape
 
-Bunkers remain actual depressions in the master heightfield, with:
-- irregular sand floor
-- visible transition lip
-- lowered floor
-- surface-specific physics
+The old oscillator-heavy feedback has been rebuilt.
 
-### 8. Physics soft-lock protection
+The new sound architecture uses layered physical transients rather than obvious UI tones:
 
-The deterministic ball solver now includes:
-- non-finite numeric guard
-- heightfield validity guard
-- below-terrain penetration resolution
-- playable-world boundary recovery
-- 26-second absolute shot watchdog
-- rolling-water stop
-- last-safe-position recovery
-- automatic physics deactivation on settled balls
+Driver / wood:
+- compressed low ball-body impact
+- composite face crack
+- short high-frequency air snap
+- tighter transient for elite contact
 
-A bad shot may produce a bad golf result.
-It may not freeze LOFT.
+Iron / wedge:
+- dense metallic face transient
+- lower body resonance
+- turf component on wedge / iron contact
 
-### 9. Camera terrain lock
+Putter:
+- soft body knock
+- milled-face tick
+- delicate high-frequency contact only on centered strike
 
-The camera now protects itself against the same PLAYABLE surface used by the ball, including green and fringe.
+Landing:
+- green/fairway turf contact
+- rough absorption
+- sand burst
+- water splash body
 
-Aim framing was widened and shifted toward the golfer so the body remains in frame without sacrificing the ball-to-target axis.
+Ball roll:
+- sparse surface-specific micro-grains
+- green roll is light and crisp
+- fairway is softer
+- rough is muted
+- sand is granular
 
-### 10. Shadow field repaired
+Cup:
+- liner catch
+- physical drop
+- restrained flagstick / liner tail
 
-Directional-light target and shadow frustum are centered on Coastal Ridge.
-Normal bias is increased to reduce terrain striping / self-shadow acne.
+Ambient course:
+- low coastal wind
+- distant surf bed
+- slow organic amplitude movement
 
-### 11. Character continuity fix
+All audio remains generated locally in WebAudio so the prototype has no network sample dependency and no third-party licensing dependency.
 
-The procedural shirt mesh is now capped at neck and waist.
-Large spherical shoulder seals were reduced / tucked inside the sleeve connection.
-This targets the disconnected-body silhouette visible in Integration 010.
+### 7. LOFT sound rule
 
-## Runtime health
+Sound must communicate MATERIAL + CONTACT + QUALITY.
 
-A terrain validator now samples the heightfield before play.
-If a non-finite height or grade is found, LOFT fails fast instead of starting a corrupted round.
+It may not communicate success by playing a gamey reward jingle.
+
+A perfect strike should sound cleaner, tighter and more compressed.
+A poor strike should sound duller and less resolved.
+The cup should be a physical reward first.
 
 ## Current status
 
 TECHNICAL PASS.
-REAL-DEVICE VISUAL VALIDATION REQUIRED.
+REAL-DEVICE VISUAL + AUDIO VALIDATION REQUIRED.
 
-No graduation score is assigned until Integration 011 is played on iPhone.
+## Next device fixtures
 
-## Next A/B fixtures
+T01 — fairway side slope
+T02 — ridge / saddle transition
+T03 — green break from 20–35 FT
+T04 — fringe transition
+T05 — bunker lip + bowl
+T06 — long course view with fairway strips
+T07 — tap-in at 1–2 FT
 
-A01 — tee address
-A02 — fairway lie
-A03 — rough lie
-A04 — bunker floor and lip
-A05 — green / fringe transition
-A06 — side view showing elevation
-A07 — coastline / lighthouse
-M01 — full shot landing on slope
-M02 — putt across green grade
-M03 — intentionally wild shot toward course boundary
-M04 — swing top / impact / finish
+A01 — driver center strike
+A02 — driver poor contact
+A03 — iron center strike
+A04 — wedge + turf
+A05 — putter center strike
+A06 — putt rolling on green
+A07 — cup drop
+A08 — bunker landing
+A09 — ambient idle for 20 seconds
 
 ## Critical pass conditions
 
-- no near-black terrain
-- no rectangular grass artifacts
-- no invisible hills
-- no ball below visible terrain
-- no terrain soft-lock
-- no full-width black geometry bands
-- green / fringe ball height matches visible surface
-- elevation reads visually before the ball reveals it
-- golfer remains compositionally readable
-
-
-## Additional rendering repairs
-
-- Fairway UV frequency was normalized; the old code multiplied longitudinal UVs and texture repeat, creating mobile moiré / striping.
-- Mowing bands now operate at golf-scale spacing rather than sub-metre screen noise.
-- Turf albedo is no longer multiplied twice.
-- Ocean render height and water physics use the same level.
-- Static bunkers were repositioned so no current prototype green can occupy the same space.
-- Lodge / lighthouse positions were cleared from moving green/fringe footprints.
-- Coastal terrain now falls below the water plane, producing an actual edge rather than hidden land underneath the ocean.
+- no black terrain strips
+- no reversed / disappearing fairway faces
+- no invisible grade
+- visible slope direction agrees with ball break
+- ball settles when turf friction should hold it
+- ball continues only when grade physically earns it
+- no camera inside golfer on tap-ins
+- golf sounds read as physical golf contact, not UI beeps
+- cup sound feels like a reward without becoming arcade audio
