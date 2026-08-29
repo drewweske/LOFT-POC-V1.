@@ -662,6 +662,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   TEE.copy(position);
   TEE.y=playingHeight(TEE.x,TEE.z)+BALL_VISUAL_R;
   state.currentLie=lieOverride||surfaceAt(TEE.x,TEE.z);
+  world.setDetailFocus?.(TEE,state.currentLie);
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
 
   COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
@@ -695,6 +696,7 @@ function startHole(index,{intro=true}={}){
   topo.setHole(originalTee,pin);
   TEE.copy(originalTee);
   state.currentLie='tee';
+  world.setDetailFocus?.(TEE,state.currentLie);
 
   COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
   state.aimYaw=COURSE_YAW;state.aimYawTarget=COURSE_YAW;
