@@ -9,7 +9,11 @@ export class LoftFeedback{
     this.C=C;
     this.audio=null;
     this.master=null;
+    this.compressor=null;
     this.noiseBuffer=null;
+    this.ambientBuffer=null;
+    this.ambienceStarted=false;
+    this.rollCooldown=0;
 
     this.impactLife=0;
     this.landLife=0;
@@ -62,21 +66,84 @@ export class LoftFeedback{
   async unlock(){
     if(this.audio){
       if(this.audio.state==='suspended')try{await this.audio.resume();}catch{}
+      if(!this.ambienceStarted)this._startAmbience();
       return;
     }
     try{
       const AC=window.AudioContext||window.webkitAudioContext;
       if(!AC)return;
       this.audio=new AC();
-      this.master=this.audio.createGain();
-      this.master.gain.value=.56;
-      this.master.connect(this.audio.destination);
 
-      const len=Math.floor(this.audio.sampleRate*.16);
+      this.master=this.audio.createGain();
+      this.master.gain.value=.68;
+
+      this.compressor=this.audio.createDynamicsCompressor();
+      this.compressor.threshold.value=-13;
+      this.compressor.knee.value=12;
+      this.compressor.ratio.value=4;
+      this.compressor.attack.value=.0025;
+      this.compressor.release.value=.13;
+      this.master.connect(this.compressor).connect(this.audio.destination);
+
+      // Short transient source for clubface / turf / cup events.
+      const len=Math.floor(this.audio.sampleRate*.42);
       this.noiseBuffer=this.audio.createBuffer(1,len,this.audio.sampleRate);
       const d=this.noiseBuffer.getChannelData(0);
-      for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
+      let brown=0;
+      for(let i=0;i<len;i++){
+        const white=Math.random()*2-1;
+        brown=(brown*.86+white*.14);
+        d[i]=(white*.78+brown*.22);
+      }
+
+      // Long non-repeating-ish coastal bed. Filtering and slow modulation make
+      // this read as wind / distant surf rather than electronic white noise.
+      const ambLen=Math.floor(this.audio.sampleRate*5.4);
+      this.ambientBuffer=this.audio.createBuffer(1,ambLen,this.audio.sampleRate);
+      const a=this.ambientBuffer.getChannelData(0);
+      let low=0;
+      for(let i=0;i<ambLen;i++){
+        const white=Math.random()*2-1;
+        low=low*.992+white*.008;
+        a[i]=white*.32+low*1.8;
+      }
+      this._startAmbience();
     }catch{}
+  }
+
+  _startAmbience(){
+    if(!this.audio||!this.master||!this.ambientBuffer||this.ambienceStarted)return;
+    this.ambienceStarted=true;
+    const now=this.audio.currentTime;
+
+    const wind=this.audio.createBufferSource();
+    const windFilter=this.audio.createBiquadFilter();
+    const windGain=this.audio.createGain();
+    wind.buffer=this.ambientBuffer;wind.loop=true;
+    windFilter.type='bandpass';windFilter.frequency.value=620;windFilter.Q.value=.34;
+    windGain.gain.value=.016;
+    wind.connect(windFilter).connect(windGain).connect(this.master);
+
+    const windLfo=this.audio.createOscillator();
+    const windLfoGain=this.audio.createGain();
+    windLfo.frequency.value=.075;windLfoGain.gain.value=.008;
+    windLfo.connect(windLfoGain).connect(windGain.gain);
+
+    const surf=this.audio.createBufferSource();
+    const surfFilter=this.audio.createBiquadFilter();
+    const surfGain=this.audio.createGain();
+    surf.buffer=this.ambientBuffer;surf.loop=true;
+    surfFilter.type='lowpass';surfFilter.frequency.value=290;surfFilter.Q.value=.55;
+    surfGain.gain.value=.010;
+    surf.connect(surfFilter).connect(surfGain).connect(this.master);
+
+    const surfLfo=this.audio.createOscillator();
+    const surfLfoGain=this.audio.createGain();
+    surfLfo.frequency.value=.115;surfLfoGain.gain.value=.009;
+    surfLfo.connect(surfLfoGain).connect(surfGain.gain);
+
+    wind.start(now);windLfo.start(now);
+    surf.start(now+.21);surfLfo.start(now);
   }
 
   _tone(freq0,freq1,dur,gain,type='sine',delay=0){
@@ -88,13 +155,17 @@ export class LoftFeedback{
     o.connect(g).connect(this.master);o.start(t);o.stop(t+dur+.02);
   }
 
-  _noise({freq=2200,q=.7,dur=.08,gain=.05,delay=0}={}){
+  _noise({freq=2200,q=.7,dur=.08,gain=.05,delay=0,type='bandpass'}={}){
     if(!this.audio||!this.master||!this.noiseBuffer)return;
     const t=this.audio.currentTime+delay;
     const s=this.audio.createBufferSource(),f=this.audio.createBiquadFilter(),g=this.audio.createGain();
-    s.buffer=this.noiseBuffer;f.type='bandpass';f.frequency.value=freq;f.Q.value=q;
-    g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    s.connect(f).connect(g).connect(this.master);s.start(t);s.stop(t+dur+.02);
+    s.buffer=this.noiseBuffer;
+    f.type=type;f.frequency.value=freq;f.Q.value=q;
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),t+.002);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f).connect(g).connect(this.master);
+    s.start(t,Math.random()*.08);s.stop(t+dur+.025);
   }
 
   _vibrate(pattern){
@@ -103,8 +174,8 @@ export class LoftFeedback{
 
   loadSet(load=.8){
     const l=clamp(load,0,1.08);
-    this._tone(74,58,.045,.010+.010*l,'sine');
-    this._tone(520,330,.028,.006+.005*l,'triangle',.003);
+    this._noise({freq:520+180*l,q:.72,dur:.026,gain:.006+.006*l});
+    this._tone(82,58,.034,.004+.004*l,'sine');
     this._vibrate(3);
   }
 
@@ -113,8 +184,8 @@ export class LoftFeedback{
     this.transitionCooldown=.11;
     // A tiny "magnetic" confirmation when the live pace ghost crosses the
     // chosen landing distance. It is a cue, never an auto-lock.
-    this._tone(610,455,.038,.012,'sine');
-    this._tone(980,720,.026,.007,'triangle',.006);
+    this._noise({freq:1650,q:1.25,dur:.018,gain:.010});
+    this._tone(150,104,.025,.004,'sine');
     this._vibrate(2);
   }
 
@@ -122,21 +193,23 @@ export class LoftFeedback{
     if(this.transitionCooldown>0)return;
     this.transitionCooldown=.06;
     const l=clamp(load,0,1);
-    this._tone(118,92,.035,.010+.007*l,'sine');
+    this._noise({freq:620+260*l,q:.55,dur:.028,gain:.006+.006*l});
     this._vibrate(2);
   }
 
   transition(load=.75){
     if(this.transitionCooldown>0)return;
     this.transitionCooldown=.08;
-    this._tone(92,72,.055,.018+.018*clamp(load,0,1),'sine');
+    this._noise({freq:460,q:.48,dur:.040,gain:.010+.012*clamp(load,0,1)});
+    this._tone(76,54,.045,.006+.006*clamp(load,0,1),'sine');
     this._vibrate(4);
   }
 
   release(speed=.75){
     const s=clamp(speed,0,1.15);
-    this._noise({freq:760+520*s,q:.42,dur:.075,gain:.014+.025*s});
-    this._tone(220+120*s,105,.055,.009+.010*s,'triangle');
+    this._noise({freq:880+980*s,q:.38,dur:.085,gain:.012+.030*s,type:'highpass'});
+    this._noise({freq:540+420*s,q:.50,dur:.060,gain:.007+.010*s});
+
   }
 
   impact({quality=.8,power=.8,position,direction,club='iron'}){
@@ -150,20 +223,27 @@ export class LoftFeedback{
     this.impactDot.material.opacity=club==='putter'?(.22+.24*q):(.30+.42*q);
 
     if(club==='putter'){
-      // LOFT putter strike: soft body + crisp face tick. Great contact gets a
-      // delicate upper harmonic instead of the full-swing air transient.
-      this._tone(286,138,.075,.028+.014*p,'sine');
-      this._tone(1120,690,.040,.027+.040*q,'triangle',.001);
-      this._noise({freq:2450,q:1.15,dur:.027,gain:.006+.011*q,delay:.002});
-      if(q>.955)this._tone(1680,1120,.045,.014,'sine',.008);
+      // Real putting character: elastomer/body knock + milled face tick.
+      // No musical success chime; quality is heard as a cleaner, shorter strike.
+      this._tone(318,190,.050,.014+.010*p,'sine');
+      this._noise({freq:1450+650*q,q:1.35,dur:.025,gain:.026+.032*q});
+      this._noise({freq:4200,q:.82,dur:.012,gain:.008+.012*q,delay:.001,type:'highpass'});
+      if(q>.955)this._noise({freq:2850,q:2.4,dur:.018,gain:.013,delay:.004});
+    }else if(club==='driver'||club==='wood'){
+      // Driver / wood: compressed ball-body crack, composite face transient,
+      // then a very short air snap. Better strike = tighter transient, not louder UI.
+      const body=club==='driver'?104:118;
+      this._tone(body,54,.090,.032+.020*p,'sine');
+      this._noise({freq:club==='driver'?2450:2850,q:.82,dur:.037,gain:.052+.050*q});
+      this._noise({freq:5200,q:.55,dur:.018,gain:.018+.024*q,delay:.002,type:'highpass'});
+      if(q>.94)this._noise({freq:3550,q:2.1,dur:.020,gain:.018,delay:.003});
     }else{
-      // Three-layer strike: low compression body, metallic face click, air snap.
-      const body=club==='driver'?112:club==='wood'?124:142;
-      const click=club==='driver'?1180:club==='wood'?1320:1760;
-      this._tone(body,58,.105,.055+.035*p,'sine');
-      this._tone(click,click*.34,.055,.045+.075*q,'triangle',.002);
-      this._noise({freq:1800+2200*q,q:.72,dur:.065,gain:.025+.050*q,delay:.001});
-      if(q>.94)this._tone(2820,1540,.040,.023,'sine',.006);
+      // Iron / wedge: dense metallic face contact with a small turf component.
+      const wedge=club==='wedge';
+      this._tone(wedge?132:146,66,.070,.025+.018*p,'sine');
+      this._noise({freq:wedge?2650:3300,q:1.55,dur:.030,gain:.045+.050*q});
+      this._noise({freq:6100,q:.72,dur:.014,gain:.012+.018*q,delay:.001,type:'highpass'});
+      this._noise({freq:wedge?520:680,q:.42,dur:wedge?.085:.060,gain:wedge?.025:.016,delay:.010});
     }
 
     const dir=direction.clone().normalize();
@@ -221,11 +301,13 @@ export class LoftFeedback{
       this.landRing.position.copy(position);this.landRing.position.y+=.02;
       this.landRing.scale.setScalar(.42);this.landRing.material.opacity=.42;
     }
-    // The LOFT cup sound is intentionally small and physical: ball, liner, flagstick.
-    this._tone(410,188,.085,.050,'triangle');
-    this._tone(780,330,.075,.038,'sine',.025);
-    this._noise({freq:1450,q:1.2,dur:.10,gain:.025,delay:.018});
-    if(score<0)this._tone(1180,620,.13,.026,'sine',.095);
+    // Cup is the most important reward sound in LOFT: ball catches liner,
+    // drops into the cup, then a restrained flagstick/liner tail.
+    this._noise({freq:1750,q:1.45,dur:.028,gain:.060});
+    this._tone(360,150,.080,.030,'sine',.010);
+    this._noise({freq:760,q:.60,dur:.095,gain:.030,delay:.020});
+    this._noise({freq:2850,q:2.0,dur:.036,gain:.020,delay:.050});
+    if(score<0)this._noise({freq:2100,q:1.25,dur:.050,gain:.018,delay:.090});
     this._vibrate(score<0?[7,18,10,24,16]:[8,18,12]);
   }
 
@@ -249,22 +331,51 @@ export class LoftFeedback{
     this.trailMat.opacity*=.45;
 
     if(surface==='sand'){
-      this._noise({freq:730,q:.55,dur:.12,gain:.06});
-      this._tone(96,56,.085,.028,'sine');
+      this._noise({freq:430,q:.36,dur:.150,gain:.058});
+      this._noise({freq:1150,q:.48,dur:.070,gain:.022,delay:.006});
+      this._tone(82,48,.095,.015,'sine');
       this._vibrate([5,8,5]);
     }else if(surface==='water'){
-      this._noise({freq:420,q:.45,dur:.15,gain:.07});
-      this._tone(180,72,.13,.035,'sine');
+      this._noise({freq:310,q:.30,dur:.190,gain:.072});
+      this._noise({freq:1350,q:.40,dur:.110,gain:.028,delay:.010});
+      this._tone(120,52,.120,.018,'sine');
       this._vibrate([5,10,5]);
-    }else{
-      this._tone(surface==='green'?122:108,52,.085,.032,'sine');
-      this._noise({freq:980,q:.5,dur:.055,gain:.018});
+    }else if(surface==='rough'){
+      this._noise({freq:520,q:.38,dur:.105,gain:.034});
+      this._tone(94,52,.070,.012,'sine');
       this._vibrate(5);
+    }else{
+      const green=surface==='green'||surface==='fringe';
+      this._tone(green?108:96,52,.070,.016,'sine');
+      this._noise({freq:green?1280:860,q:.52,dur:green?.045:.060,gain:green?.018:.024});
+      this._vibrate(green?3:5);
     }
+  }
+
+  roll(surface='fairway',speed=0){
+    if(!this.audio||speed<.035||this.rollCooldown>0)return;
+    const v=clamp(speed,0,8);
+    const green=surface==='green'||surface==='fringe';
+    const rough=surface==='rough';
+    const sand=surface==='sand';
+
+    // Sparse grains imply the ball's dimples interacting with the cut without
+    // turning the soundtrack into a continuous hiss.
+    if(sand){
+      this._noise({freq:360,q:.32,dur:.028,gain:.004+.004*clamp(v/2,0,1)});
+    }else if(rough){
+      this._noise({freq:520,q:.40,dur:.020,gain:.003+.004*clamp(v/3,0,1)});
+    }else if(green){
+      this._noise({freq:1500,q:.80,dur:.010,gain:.0025+.0035*clamp(v/2.2,0,1)});
+    }else{
+      this._noise({freq:920,q:.55,dur:.014,gain:.003+.004*clamp(v/4,0,1)});
+    }
+    this.rollCooldown=clamp(.115-v*.008,.045,.115);
   }
 
   update(dt){
     this.transitionCooldown=Math.max(0,this.transitionCooldown-dt);
+    this.rollCooldown=Math.max(0,this.rollCooldown-dt);
 
     if(this.impactLife>0){
       this.impactLife=Math.max(0,this.impactLife-dt*7.2);
