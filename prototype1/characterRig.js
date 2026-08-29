@@ -75,12 +75,23 @@ export class LoftGolferRig{
       [.35,.142,.278]
     ],this.cream,18);
 
+    // Golf-specific garment construction. These are children of the shirt so
+    // they rotate with the ribcage instead of floating during the swing.
+    this.placket=new THREE.Mesh(new THREE.BoxGeometry(.012,.145,.030),this.stone);
+    this.placket.position.set(.150,.185,0);this.placket.castShadow=true;this.torso.add(this.placket);
+    this.collarWingL=new THREE.Mesh(new THREE.BoxGeometry(.018,.090,.085),this.stone);
+    this.collarWingL.position.set(.145,.295,-.064);this.collarWingL.rotation.x=-.32;this.collarWingL.rotation.y=.12;this.torso.add(this.collarWingL);
+    this.collarWingR=this.collarWingL.clone();
+    this.collarWingR.position.z=.064;this.collarWingR.rotation.y=-.12;this.torso.add(this.collarWingR);
+
     this.chest=this._lathe([[.01,-.01],[.01,.01]],this.cream,8);
     this.chest.visible=false;
     this.waist=this._lathe([[.01,-.01],[.01,.01]],this.cream,8);
     this.waist.visible=false;
 
     this.belt=this._shape(new THREE.CylinderGeometry(.198,.198,.048,30),this.ink);
+    this.buckle=new THREE.Mesh(new THREE.BoxGeometry(.022,.060,.075),this.steel);
+    this.buckle.position.set(.178,.015,0);this.buckle.castShadow=true;this.pelvis.add(this.buckle);
 
     // Hidden overlap volumes are deliberate: this is a stylized human, not a
     // collection of disconnected primitives. These seals keep silhouette
@@ -89,7 +100,7 @@ export class LoftGolferRig{
     this.hipSealR=this._shape(new THREE.SphereGeometry(.098,20,14),this.ink,[0,0,0],[.92,.78,1.02]);
     this.shoulderSealL=this._shape(new THREE.SphereGeometry(.092,20,14),this.cream,[0,0,0],[1.10,.92,1.02]);
     this.shoulderSealR=this._shape(new THREE.SphereGeometry(.092,20,14),this.cream,[0,0,0],[1.10,.92,1.02]);
-    this.wristSealL=this._shape(new THREE.SphereGeometry(.040,16,12),this.skin,[0,0,0],[.90,.86,.90]);
+    this.wristSealL=this._shape(new THREE.SphereGeometry(.040,16,12),this.cream,[0,0,0],[.90,.86,.90]);
     this.wristSealR=this._shape(new THREE.SphereGeometry(.040,16,12),this.skin,[0,0,0],[.90,.86,.90]);
     this.ankleSealL=this._shape(new THREE.SphereGeometry(.062,16,12),this.ink,[0,0,0],[.86,.72,.90]);
     this.ankleSealR=this._shape(new THREE.SphereGeometry(.062,16,12),this.ink,[0,0,0],[.86,.72,.90]);
@@ -108,7 +119,7 @@ export class LoftGolferRig{
     this.foreL=this._segment(.046,this.skin,.78,16);this.foreR=this._segment(.046,this.skin,.78,16);
     this.elbowL=this._shape(new THREE.SphereGeometry(.050,16,12),this.skin);
     this.elbowR=this._shape(new THREE.SphereGeometry(.050,16,12),this.skin);
-    this.handL=this._shape(new THREE.CapsuleGeometry(.035,.050,5,12),this.skin,[0,0,0],[.92,.92,.78]);
+    this.handL=this._shape(new THREE.CapsuleGeometry(.035,.050,5,12),this.cream,[0,0,0],[.92,.92,.78]);
     this.handR=this._shape(new THREE.CapsuleGeometry(.035,.050,5,12),this.skin,[0,0,0],[.92,.92,.78]);
 
     this.neck=this._shape(new THREE.CylinderGeometry(.068,.075,.165,18),this.skin);
