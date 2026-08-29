@@ -66,20 +66,20 @@ export function terrainHeight(x,z){
   // LOFT terrain is authored in golf-scale landforms, not procedural micro-noise.
   // The full hole rises gradually from tee to lighthouse while three large
   // shelves create readable strategic elevation changes.
-  const climb=2.15*smoothstep(.03,.92,t);
+  const climb=3.40*smoothstep(.03,.92,t);
   const ridge=
-    2.15*Math.exp(-Math.pow((z+168)/64,2))*
+    2.70*Math.exp(-Math.pow((z+168)/64,2))*
     (.66+.34*Math.exp(-Math.pow((lateral+2)/28,2)));
   const middleShelf=
-    1.05*Math.exp(-Math.pow((z+86)/47,2))*
+    1.35*Math.exp(-Math.pow((z+86)/47,2))*
     (.72+.28*Math.exp(-Math.pow((lateral-3)/30,2)));
   const lighthouseShelf=
-    1.65*Math.exp(-Math.pow((z+224)/38,2))*
+    2.20*Math.exp(-Math.pow((z+224)/38,2))*
     (.70+.30*Math.exp(-Math.pow((lateral+1)/31,2)));
 
   // Two broad saddles stop the course reading as one continuous ramp.
-  const saddleA=-.72*Math.exp(-Math.pow((z+122)/42,2))*Math.exp(-Math.pow((lateral+10)/31,2));
-  const saddleB=-.38*Math.exp(-Math.pow((z+205)/25,2))*Math.exp(-Math.pow((lateral-8)/24,2));
+  const saddleA=-1.00*Math.exp(-Math.pow((z+122)/42,2))*Math.exp(-Math.pow((lateral+10)/31,2));
+  const saddleB=-.55*Math.exp(-Math.pow((z+205)/25,2))*Math.exp(-Math.pow((lateral-8)/24,2));
 
   // Gentle crossfall gives golf-readable lies. These wavelengths are large
   // enough to be visible and predictable; there are no invisible divots.
@@ -90,7 +90,7 @@ export function terrainHeight(x,z){
     .07*Math.sin((x+8)*.055);
 
   // The ocean side rolls away toward the cliff instead of becoming a sudden wall.
-  const coast=-.62*smoothstep(25,46,x)*(0.82+0.18*Math.cos((z+35)*.017));
+  const coast=-5.20*smoothstep(29,45,x)*(0.88+0.12*Math.cos((z+35)*.017));
 
   return climb+ridge+middleShelf+lighthouseShelf+saddleA+saddleB+crossfall+broadRoll+coast+bunkerDepression(x,z);
 }
