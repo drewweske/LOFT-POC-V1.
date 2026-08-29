@@ -9,7 +9,8 @@ const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
 const CUP_RADIUS=.086;
 const CUP_CAPTURE=.074;
-const CONTACT_HEIGHT=.034;
+export const BALL_CONTACT_HEIGHT=.036;
+const CONTACT_HEIGHT=BALL_CONTACT_HEIGHT;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class GolfPhysics{
