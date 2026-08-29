@@ -100,7 +100,7 @@ export function terrainHeight(x,z){
 
 export function greenSurfaceHeight(center,x,z){
   const dx=x-center.x,dz=z-center.z;
-  const ellipse=Math.sqrt((dx/23.5)*(dx/23.5)+(dz/18.0)*(dz/18.0));
+  const ellipse=Math.sqrt((dx/18.5)*(dx/18.5)+(dz/14.5)*(dz/14.5));
   const blend=1-smoothstep(.58,1.02,ellipse);
   const authoredPlane=center.y+dx*.0062+dz*.0032+
     .035*Math.sin(dx*.18)*Math.cos(dz*.14);
@@ -373,8 +373,8 @@ export function buildWorld(scene,pin){
   });
 
   // --- GREEN / FRINGE ------------------------------------------------------
-  const greenGeo=buildGreenGeometry(24.4,18.0,14,72);
-  const fringeGeo=buildGreenGeometry(27.0,20.4,14,72);
+  const greenGeo=buildGreenGeometry(18.5,14.5,14,72);
+  const fringeGeo=buildGreenGeometry(21.0,16.5,14,72);
   const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,8,8,.008);
   greenMat.polygonOffset=true;greenMat.polygonOffsetFactor=-4;greenMat.polygonOffsetUnits=-4;
   const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.015);
@@ -535,7 +535,7 @@ export function buildWorld(scene,pin){
     const w=new THREE.Mesh(new THREE.PlaneGeometry(.82,.72),new THREE.MeshStandardMaterial({color:0x39494c,roughness:.3,metalness:.03}));
     w.position.set(4.31,3.12,zz);w.rotation.y=Math.PI/2;lodge.add(w);
   }
-  lodge.position.set(-24,terrainHeight(-24,-154),-154);lodge.rotation.y=.10;lodge.scale.set(.95,.95,.95);world.add(lodge);
+  lodge.position.set(-31,terrainHeight(-31,-150),-150);lodge.rotation.y=.10;lodge.scale.set(.95,.95,.95);world.add(lodge);
 
   const lighthouse=new THREE.Group();
   const tower=new THREE.Mesh(new THREE.CylinderGeometry(1.28,1.78,11.8,24),mat(COLORS.cream,.96));tower.position.y=5.9;tower.castShadow=true;lighthouse.add(tower);
@@ -543,7 +543,7 @@ export function buildWorld(scene,pin){
   const balcony=new THREE.Mesh(new THREE.CylinderGeometry(2.0,2.0,.18,24),mat(COLORS.ink,.84));balcony.position.y=11.08;lighthouse.add(balcony);
   const room=new THREE.Mesh(new THREE.CylinderGeometry(1.46,1.46,1.3,24),new THREE.MeshStandardMaterial({color:0x526061,roughness:.36,metalness:.06}));room.position.y=11.72;lighthouse.add(room);
   const roof2=new THREE.Mesh(new THREE.ConeGeometry(1.86,2.35,24),mat(COLORS.ink,.84));roof2.position.y=13.55;lighthouse.add(roof2);
-  lighthouse.position.set(30,terrainHeight(30,-166),-166);lighthouse.scale.set(.92,.92,.92);world.add(lighthouse);
+  lighthouse.position.set(37,terrainHeight(37,-172),-172);lighthouse.scale.set(.92,.92,.92);world.add(lighthouse);
 
   // --- ATMOSPHERE ----------------------------------------------------------
   const ctex=cloudTexture();
