@@ -356,10 +356,10 @@ updateLine();
 
 function surfaceAt(x,z){
   // Physics footprints match the visible authored geometry exactly.
-  const gx=(x-pin.x)/24.4,gz=(z-pin.z)/18.0;
+  const gx=(x-pin.x)/18.5,gz=(z-pin.z)/14.5;
   if(gx*gx+gz*gz<=1)return'green';
 
-  const fx=(x-pin.x)/27.0,fz=(z-pin.z)/20.4;
+  const fx=(x-pin.x)/21.0,fz=(z-pin.z)/16.5;
   if(fx*fx+fz*fz<=1)return'fringe';
 
   for(const b of BUNKERS){
