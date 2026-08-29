@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB} from './equipment.js';
-import {COLORS,BUNKERS,fairwayProfile,terrainHeight,buildWorld} from './world.js';
+import {COLORS,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,buildWorld} from './world.js';
 import {LoftGolferRig} from './characterRig.js';
 import {GolfPhysics} from './physics.js';
 import {LoftCamera} from './camera.js';
@@ -369,9 +369,7 @@ function surfaceAt(x,z){
 }
 function playingHeight(x,z){
   if(surfaceAt(x,z)==='green'){
-    // A subtle authored 0.7% / 0.35% green grade. Small enough to read as a
-    // designed putting surface, large enough for real break to matter.
-    return pin.y+(x-pin.x)*.007+(z-pin.z)*.0035;
+    return greenSurfaceHeight(pin,x,z);
   }
   return terrainHeight(x,z);
 }
