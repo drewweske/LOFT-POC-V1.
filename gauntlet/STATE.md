@@ -67,13 +67,26 @@ Green and fringe now use the same authored surface function in:
 - target placement
 - The Line
 
-Visible footprints were aligned:
-- green = 24.4 m × 18.0 m authored ellipse
-- fringe = 27.0 m × 20.4 m authored ellipse
+The earlier oversized moving greens also collided with static hazards and the lighthouse.
+Integration 011 uses golf-scale footprints and moves the landmark clear of play:
+- green = 18.5 m × 14.5 m radius ellipse
+- fringe = 21.0 m × 16.5 m radius ellipse
 
-This removes invisible green/fringe height changes.
+This removes invisible green/fringe height changes and landmark overlap.
 
-### 5. Broken grass cards removed
+### 5. Fairway / bunker meshes now conform to physics
+
+The old fairway ribbon only had two vertices across its width. It could visually bridge over cross-slope while physics followed the real heightfield.
+
+Integration 011 rebuilds fairway and first cut as cross-tessellated 3D ribbons. Every strip vertex samples terrainHeight.
+
+Bunker floors had the same hidden problem: the sand polygon was triangulated only from its boundary while physics used a deeper bowl in the center.
+
+Bunker floors are now radially tessellated bowls. Every sand vertex samples the same bunker depression used by physics.
+
+Rendered turf offsets were reduced to millimetres and polygon offset now handles layer priority. A 34 mm visual golf ball should no longer appear buried because the rendered grass surface is centimetres above the physical one.
+
+### 6. Broken grass cards removed
 
 The large rectangular billboard blades visible on iPhone are retired.
 
@@ -86,7 +99,7 @@ New near-lie turf uses restrained tapered 3-sided volumetric blades only in a sm
 
 No giant planar grass cards remain.
 
-### 6. Bunker / terrain relationship preserved
+### 7. Bunker / terrain relationship preserved
 
 Bunkers remain actual depressions in the master heightfield, with:
 - irregular sand floor
@@ -94,7 +107,7 @@ Bunkers remain actual depressions in the master heightfield, with:
 - lowered floor
 - surface-specific physics
 
-### 7. Physics soft-lock protection
+### 8. Physics soft-lock protection
 
 The deterministic ball solver now includes:
 - non-finite numeric guard
@@ -109,18 +122,18 @@ The deterministic ball solver now includes:
 A bad shot may produce a bad golf result.
 It may not freeze LOFT.
 
-### 8. Camera terrain lock
+### 9. Camera terrain lock
 
 The camera now protects itself against the same PLAYABLE surface used by the ball, including green and fringe.
 
 Aim framing was widened and shifted toward the golfer so the body remains in frame without sacrificing the ball-to-target axis.
 
-### 9. Shadow field repaired
+### 10. Shadow field repaired
 
 Directional-light target and shadow frustum are centered on Coastal Ridge.
 Normal bias is increased to reduce terrain striping / self-shadow acne.
 
-### 10. Character continuity fix
+### 11. Character continuity fix
 
 The procedural shirt mesh is now capped at neck and waist.
 Large spherical shoulder seals were reduced / tucked inside the sleeve connection.
@@ -163,3 +176,14 @@ M04 — swing top / impact / finish
 - green / fringe ball height matches visible surface
 - elevation reads visually before the ball reveals it
 - golfer remains compositionally readable
+
+
+## Additional rendering repairs
+
+- Fairway UV frequency was normalized; the old code multiplied longitudinal UVs and texture repeat, creating mobile moiré / striping.
+- Mowing bands now operate at golf-scale spacing rather than sub-metre screen noise.
+- Turf albedo is no longer multiplied twice.
+- Ocean render height and water physics use the same level.
+- Static bunkers were repositioned so no current prototype green can occupy the same space.
+- Lodge / lighthouse positions were cleared from moving green/fringe footprints.
+- Coastal terrain now falls below the water plane, producing an actual edge rather than hidden land underneath the ocean.
