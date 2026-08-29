@@ -47,9 +47,12 @@ const camera=new THREE.PerspectiveCamera(43,1,.1,750);
 const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.42);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffe6c7,2.18);
 sun.position.set(-62,78,42);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
-sun.shadow.bias=-0.00035;sun.shadow.normalBias=.035;
-sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=105;sun.shadow.camera.bottom=-235;
-scene.add(sun);
+sun.shadow.bias=-0.00030;sun.shadow.normalBias=.045;
+sun.shadow.camera.left=-112;sun.shadow.camera.right=112;
+sun.shadow.camera.top=126;sun.shadow.camera.bottom=-126;
+sun.shadow.camera.near=1;sun.shadow.camera.far=290;
+sun.target.position.set(0,0,-122);
+scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0xbfd6d7,.38);fill.position.set(48,32,-65);scene.add(fill);
 
 const terrainHealth=validateTerrain();
