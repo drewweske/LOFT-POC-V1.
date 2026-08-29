@@ -152,8 +152,7 @@ function baseLandHeight(x,z){
 function nearestGreen(x,z){
   let best=null,bestD=Infinity;
   for(const g of GREENS){
-    const dx=(x-g.x)/g.fringeX,dz=(z-g.z)/g.fringeZ;
-    const d=Math.hypot(dx,dz);
+    const d=greenMetric(g,x,z,true);
     if(d<bestD){bestD=d;best=g;}
   }
   return {g:best,d:bestD};
@@ -168,7 +167,7 @@ function shapedGreenHeight(g,x,z){
   const crown=.055*Math.exp(-((dx*dx)/(7.0*7.0)+(dz*dz)/(5.3*5.3)));
   const shoulder=-.028*Math.exp(-((dx-4.0)*(dx-4.0)/(4.6*4.6)+(dz+2.0)*(dz+2.0)/(4.0*4.0)));
   const authored=plane+crown+shoulder;
-  const d=Math.hypot(dx/g.fringeX,dz/g.fringeZ);
+  const d=greenMetric(g,x,z,true);
   const blend=1-smoothstep(.72,1.10,d);
   return lerp(base,authored,blend);
 }
@@ -368,7 +367,7 @@ function colorAt(x,z){
 
 
 function makeCourseAlbedo(){
-  const W=640,H=1200;
+  const W=720,H=1344;
   const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d',{alpha:false});
   const img=ctx.createImageData(W,H),d=img.data;
@@ -411,7 +410,7 @@ function makeCourseRoughness(){
     }
   }
   ctx.putImageData(img,0,0);
-  const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.NoColorSpace;
+  const t=new THREE.CanvasTexture(canvas);
   t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;
   return t;
 }
@@ -456,7 +455,7 @@ function buildUnifiedTerrain(){
     for(let ix=0;ix<=nx;ix++){
       const x=TERRAIN_GRID.xMin+ix*GRID_DX;
       pos[pk++]=x;pos[pk++]=gridSample(ix,iz);pos[pk++]=z;
-      uv[uk++]=ix/nx;uv[uk++]=1-iz/nz;
+      uv[uk++]=ix/nx;uv[uk++]=iz/nz;
     }
   }
   let q=0;
@@ -520,25 +519,36 @@ function waveTexture(){
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(8,20);return t;
 }
 
+const pineLobeGeo=new THREE.IcosahedronGeometry(1,2);
+const pineTrunkGeo=new THREE.CylinderGeometry(.12,.20,3.1,12);
+const pineBarkMat=new THREE.MeshStandardMaterial({color:0x49392c,roughness:1});
+const pineLeafMats=[
+  new THREE.MeshStandardMaterial({color:0x24432f,roughness:1}),
+  new THREE.MeshStandardMaterial({color:0x2e5037,roughness:1}),
+  new THREE.MeshStandardMaterial({color:0x395d40,roughness:1})
+];
+
 function placeOrganicPine(world,x,z,s,rnd){
   const g=new THREE.Group();
-  const bark=new THREE.MeshStandardMaterial({color:0x46392d,roughness:1});
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.10*s,.17*s,3.1*s,9),bark);
-  trunk.position.y=1.55*s;trunk.castShadow=true;g.add(trunk);
-  const shades=[0x23442f,0x2c5036,0x365a3d,0x2a4b34,0x3b6041,0x2b5037];
-  for(let i=0;i<6;i++){
-    const t=i/5;
-    const radius=(1.72-1.18*t)*s*(.92+rnd()*.14);
-    const height=(1.05+.32*(1-t))*s;
-    const y=(2.05+i*.58)*s;
-    const c=new THREE.Mesh(
-      new THREE.ConeGeometry(radius,height,14,1,false),
-      new THREE.MeshStandardMaterial({color:shades[i],roughness:1})
-    );
-    c.position.set((rnd()-.5)*.10*s,y,(rnd()-.5)*.10*s);
-    c.rotation.y=rnd()*Math.PI*2;c.castShadow=true;g.add(c);
-  }
-  g.position.set(x,terrainHeight(x,z),z);g.rotation.y=rnd()*Math.PI*2;
+  const trunk=new THREE.Mesh(pineTrunkGeo,pineBarkMat);
+  trunk.position.y=1.55*s;trunk.scale.setScalar(s);trunk.castShadow=true;g.add(trunk);
+
+  const lobes=[
+    {y:2.32,sc:[1.52,.60,1.34],off:[-.10,.00,.04],m:2},
+    {y:2.88,sc:[1.34,.62,1.20],off:[.12,.00,-.06],m:1},
+    {y:3.43,sc:[1.12,.64,1.02],off:[-.07,.00,.03],m:0},
+    {y:3.93,sc:[.88,.65,.81],off:[.06,.00,-.02],m:1},
+    {y:4.39,sc:[.59,.68,.55],off:[-.02,.00,.02],m:0}
+  ];
+  lobes.forEach((l,i)=>{
+    const crown=new THREE.Mesh(pineLobeGeo,pineLeafMats[l.m]);
+    crown.position.set(l.off[0]*s,l.y*s,l.off[2]*s);
+    crown.scale.set(l.sc[0]*s,l.sc[1]*s,l.sc[2]*s);
+    crown.rotation.set((rnd()-.5)*.07,rnd()*Math.PI,(rnd()-.5)*.06);
+    crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
+  });
+  g.position.set(x,terrainHeight(x,z),z);
+  g.rotation.y=rnd()*Math.PI*2;
   world.add(g);return g;
 }
 
