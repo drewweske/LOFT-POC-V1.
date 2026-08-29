@@ -316,10 +316,12 @@ export function buildWorld(scene,pin){
   // looking like one flat green rectangle.
   const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.008});
   const firstCutMat=applyTexture(mat(COLORS.roughLight,.95),roughMap,bump,4,24,.021);
+  firstCutMat.polygonOffset=true;firstCutMat.polygonOffsetFactor=-1;firstCutMat.polygonOffsetUnits=-1;
   const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
 
   const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.015});
   const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,32,.014);
+  fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
   const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
 
   // Tee shelves — small authored cuts, not giant rectangles.
@@ -339,7 +341,9 @@ export function buildWorld(scene,pin){
   const greenGeo=buildGreenGeometry(24.4,18.0,14,72);
   const fringeGeo=buildGreenGeometry(27.0,20.4,14,72);
   const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,8,8,.008);
+  greenMat.polygonOffset=true;greenMat.polygonOffsetFactor=-4;greenMat.polygonOffsetUnits=-4;
   const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.015);
+  fringeMat.polygonOffset=true;fringeMat.polygonOffsetFactor=-3;fringeMat.polygonOffsetUnits=-3;
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
   const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
   updateGreenGeometry(fringe,pin,{offset:.010});
