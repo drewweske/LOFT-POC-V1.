@@ -1,211 +1,240 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 014
+Current build: Prototype 1 / Integration 015
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: LOFT Field V2 — unified terrain, course ecology, swept collision
-Iteration: integration_014
+Active subsystem: LOFT Field V3 — triangle-exact terrain, course skin, terrain physics
+Iteration: integration_015
 
-## Device verdict entering 014
+## Device verdict entering 015
 
-Integration 013 fixed the cup and reduced several clipping regressions, but the course itself was still visually early-prototype:
-- geometric / low-poly landform language
-- stacked surface meshes and visible cut boundaries
-- terrain that could still disagree with ball contact
-- sparse environmental detail
-- stylized placeholder rocks / trees
-- insufficient material differentiation
-- occasional fast-ball penetration at rising terrain
-- physical terrain that was more complex than the player could visually read
+Integration 014 was a meaningful structural improvement, but real-device review still failed the visual bar.
 
-The new requirement is not another cosmetic pass.
-The world renderer and terrain physics must become the same authored field.
+Confirmed remaining problems:
+- terrain still read as geometric / prototype-grade at phone distance
+- large color regions exposed triangle / low-resolution surface language
+- grass cuts lacked enough material character
+- course edges were too mathematically clean
+- some ball / terrain penetration could still be perceived
+- trees / architecture still read as primitive assets
+- the world did not yet feel alive enough to carry the LOFT identity
 
-## Integration 014 — LOFT Field V2
+The requirement for 015 is a structural visual step, not another cosmetic tint pass.
 
-### 1. Unified terrain architecture
+## Integration 015 — LOFT Field V3 Exact
 
-A new /prototype1/worldV2.js system replaces the layered-course approach.
+### 1. Physics now samples the exact rendered terrain triangles
 
-The entire playable course is now one continuous, dense 3D terrain mesh.
+The previous unified field still had one subtle source of disagreement:
 
-There are no longer independent coplanar:
-- rough planes
-- fairway ribbons
-- green planes
-- fringe planes
-- bunker floors
+renderer:
+- interpolated between heightfield mesh vertices as triangles
 
-The same terrainHeight(x,z) function now drives:
-- every visible terrain vertex
-- ball collision
-- rolling slope
-- ready-ball placement
-- golfer grounding
-- camera floor safety
-- cup placement
+physics:
+- sampled the underlying continuous analytic terrain function
 
-This removes the most important structural source of ball/terrain clipping.
+Those two surfaces could differ slightly between grid vertices.
 
-### 2. Natural golf-scale landforms
+Integration 015 separates:
+- rawTerrainHeight(): authored continuous landform
+- terrainHeight(): the exact triangle-interpolated field that is rendered
 
-The terrain field now combines:
-- broad strategic climb
-- ridge systems
-- middle shelves
-- lighthouse shelf
-- two saddles
-- coastal crossfall
-- restrained low-frequency earth variation
-- shaped tee pads
-- shaped greens
-- actual bunker depressions
-- a continuous coastal bluff transition
+The terrain mesh and physics solver now share:
+- identical grid vertices
+- identical B↔C cell diagonal
+- identical triangle interpolation
+- identical ground Y
 
-Physical detail is intentionally low-frequency.
-No invisible micro-noise is allowed to alter ball roll.
+This removes the final architectural source of sub-cell ball penetration.
 
-If the ball reacts to a slope, the player should be able to see that slope.
+Current grid:
+- approximately 0.80 m cells
+- 230 × 430 cells
+- roughly 100k terrain vertices
+- roughly 198k terrain triangles
 
-### 3. Organic course-surface language
+System identifier:
+LOFT_FIELD_V3_EXACT
 
-Surface identity is painted into the unified mesh rather than stacked above it.
+Render / physics contract:
+TRIANGLE_EXACT
 
-The terrain color field now blends:
-- rough
-- first-cut transition
-- fairway
-- fairway mowing variation
-- fringe
-- green mowing variation
-- tee cuts
-- sand
+### 2. High-resolution course-space terrain skin
 
-Slope-facing and broad earth variation are also encoded into the color field so grade can be read visually before a shot.
+Vertex-color course painting has been replaced by a high-resolution course-space albedo.
 
-### 4. Bunkers are now actual terrain
+The terrain now receives:
+- sub-meter visual course boundaries
+- organic fairway edge modulation
+- organic green silhouettes
+- organic bunker silhouettes
+- fairway mowing direction
+- green mowing direction
+- bunker rake / grain character
+- subtle broad relief shading
+- physical roughness variation by cut
+- micro turf bump
+- mipmapped / anisotropic filtering
 
-Each bunker is carved into the physical height field.
+This removes the large triangular color shapes visible in earlier device captures.
 
-The sand surface and ball collision are therefore the same geometry.
+### 3. Organic surface geometry language
 
-Bunkers now include:
-- bowl depth
-- irregular elliptical shaping
-- restrained raised lip
-- sand-specific visual color field
-- realistic physical resistance through the existing surface solver
+Fairway edges now use several superimposed long-wavelength edge harmonics.
 
-There is no hidden depressed collision floor beneath a flat visual plane.
+Greens use seeded multi-frequency radial distortion rather than perfect ellipses.
 
-### 5. Denser world detail
+Bunkers use the same seeded organic metric for:
+- physical terrain depression
+- sand surface identity
+- visible boundary
 
-The Coastal Ridge environment now includes:
-- higher-detail organically distorted rocks
-- layered coastal bluff rock clusters
-- six-tier procedural conifers
-- expanded shrub ecology
-- 1,800-instance rough / dune grass field
-- up to 900 high-density near-ball grass instances
-- cut-specific near-lie grass height
-- refined clubhouse
-- higher-resolution lighthouse
-- animated ocean micro-bump
+The visual boundary and physics boundary therefore remain one authored system.
 
-The target remains LOFT's visual ratio:
-stylized authorship with physically believable terrain and materials.
+### 4. More natural strategic terrain
 
-### 6. Ball physics — swept terrain contact
+The existing ridge / shelf / saddle architecture remains, with additional restrained:
+- fairway shoulder rolls
+- drainage swale
+- long-wavelength earth movement
 
-The fixed solver remains 120 Hz.
+No micro-noise controls physics.
 
-Integration 014 adds swept height-field collision for airborne balls.
+If a slope can materially move the ball, it is intended to be visible through:
+- silhouette
+- lighting
+- broad baked relief
+- mowing / surface read
 
-When a fast ball crosses from above the terrain to below it inside one physics step:
-- the travelled segment is binary searched
-- the exact terrain crossing is found
-- contact is resolved at that point
-- bounce then uses the real local surface normal
+### 5. Final-demo terrain density
 
-This specifically prevents a fast iron / driver from tunneling through a rising bank.
+Terrain tessellation has been increased significantly.
 
-### 7. Regulation geometry
+This specifically improves:
+- bunker bowl curvature
+- green shoulder curvature
+- side-slope silhouettes
+- ridge transitions
+- camera-close terrain
 
-Physics now uses regulation golf dimensions for the destination relationship:
-- regulation ball physical radius
-- regulation cup radius
-- near-regulation capture radius
+The field remains one draw surface rather than multiple stacked meshes.
 
-The rendered ball remains slightly enlarged for mobile readability, but its visual radius has been reduced substantially from the earlier oversized prototype.
+### 6. Dimensional turf system
 
-### 8. Real ball rotation
+LOFT now has three turf-detail scales:
 
-The visible LOFT ball no longer spins by an arbitrary tiny multiplier.
+Global:
+- course-space albedo + micro bump
 
-In flight:
-- aerodynamic spin axis / angular velocity drive rotation.
+Mid-range:
+- permanent native rough / dune grass
 
-On the ground:
-- roll angle is derived from travel speed / ball radius.
+Near-ball:
+- regenerated instanced turf by local cut
 
-This makes the ball itself behave visually like a physical object.
+Near-ball grass now samples the actual local surface for each blade:
+- rough = tallest
+- fringe = medium
+- fairway = short
+- tee = short
+- green = extremely tight
 
-### 9. Speed-sensitive turf resistance
+A fairway / rough or fringe / green boundary therefore has dimensional grass-length continuity.
 
-Rolling resistance now combines:
-- low-speed rolling resistance
-- speed-squared turf deformation / grass drag
+Bunker lips also receive restrained dimensional turf detail without adding collision geometry.
 
-This allows:
-- controllable putting pace
-- believable fairway release
-- stronger rough bite
-- decisive bunker slowdown
+### 7. Sculpted LOFT vegetation
 
-without returning to the earlier ice-rink sliding problem.
+The previous stacked-cone conifers were replaced.
 
-## Numerical terrain validation
+New pines use:
+- shared higher-detail sculpted foliage lobes
+- asymmetrical wind-shaped crown placement
+- restrained tonal layering
+- smoother silhouette
+- tapered trunk
 
-LOFT Field V2 validation:
-- finite height field: PASS
-- finite gradients: PASS
-- sampled min elevation: approximately -5.70 m
-- sampled max elevation: approximately 6.62 m
-- maximum sampled grade: approximately 0.73
-- terrain system: LOFT_FIELD_V2
+This keeps LOFT stylized while removing the primitive mobile-placeholder read.
 
-Representative probes:
-- Tee 01: tee
-- Ridge green: green
-- Shelf green: green
-- Lighthouse green: green
-- bunker center: sand
-- central corridor: fairway
-- coastline: water
+### 8. Living Coastal Ridge atmosphere
 
-## Critical device fixtures
+The course now has:
+- gradient sky dome
+- soft procedural cloud banks
+- slowly moving coastal clouds
+- animated ocean bump
+- restrained tree movement
+- subtle flag movement
 
-V01 — long iron into rising fairway bank
-V02 — ball landing exactly on fairway / rough transition
-V03 — ball rolling across fringe / green
-V04 — bunker entry and stop
-V05 — bunker escape
-V06 — 30–40 FT putt across visible grade
-V07 — ball resting on side slope
-V08 — camera close-up of turf under ball
-V09 — coastline / bluff view
-V10 — long drive with flight-follow camera
-V11 — cup / green relationship at 1–3 FT
-V12 — three-hole complete round without terrain penetration
+Motion is deliberately quiet.
+
+LOFT should feel alive, not arcade-wobbly.
+
+### 9. Clubhouse pass
+
+The placeholder flat roof was replaced by a gabled clubhouse silhouette with:
+- fascia
+- terrace / deck
+- rail detail
+- retained warm stone / plaster language
+
+The lighthouse remains the course landmark.
+
+### 10. Golf-ball physics refinement
+
+Air / terrain collision now performs multi-probe swept contact across each fixed step before binary search.
+
+This catches rising terrain even when both fixed-step endpoints would otherwise miss a narrow crossing.
+
+Ground roll now uses the physical 5/7 rolling-sphere gravity factor instead of full point-mass slope acceleration.
+
+Result:
+- slopes remain important
+- greens no longer behave as if the ball is sliding on ice
+- visible grade produces a more physically credible break
+
+Spin is no longer discarded at the beginning of ground roll.
+
+A restrained spin-to-roll coupling now lets:
+- wedge shots check
+- low-spin shots release
+- rolling converge naturally toward pure roll
+
+### 11. Coastal lighting pass
+
+The key light has been lowered to a more grazing coastal angle.
+
+The lighting now prioritizes:
+- visible grade
+- long sculpted landforms
+- readable green contour
+- surface texture
+
+Fog begins farther from the player so near terrain keeps more contrast.
+
+## Non-negotiable device fixtures
+
+V01 — fairway / rough boundary at camera-close distance
+V02 — green / fringe boundary
+V03 — bunker lip and bowl
+V04 — ball rolling across a terrain-cell boundary
+V05 — high-speed iron into rising terrain
+V06 — wedge landing with visible check / release
+V07 — 30–40 FT putt across visible break
+V08 — ball at rest on side slope
+V09 — rough lie with dimensional grass
+V10 — clubhouse / trees / coastline wide view
+V11 — full three-hole round
+V12 — no ball penetration in slow-motion visual inspection
 
 ## Hard pass conditions
 
-- no visible ball-through-terrain event
-- no hidden slope that materially moves the ball
-- no coplanar fairway/green/sand z-fighting
-- bunker visual floor and physical floor agree
-- green contour is readable before the putt
-- terrain silhouettes are smooth at normal play distance
-- rough has true dimensional grass near the ball
-- environmental geometry reads as authored LOFT rather than primitive placeholders
-- a full three-hole round can be completed without terrain soft-lock
+- ball never renders inside solid terrain
+- visible field and physical field agree at sub-cell scale
+- no triangular course-color artifacts at normal phone distance
+- fairway / green / bunker edges read organic rather than primitive
+- bunker bowl reads as actual shaped terrain
+- grass length communicates the lie
+- slopes are visually legible before the shot
+- world assets no longer read as stacked primitive placeholders
+- terrain remains stable for a complete three-hole round
