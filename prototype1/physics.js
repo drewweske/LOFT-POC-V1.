@@ -7,6 +7,9 @@ const AIR_DENSITY=1.225;
 const BALL_MASS=.04593;
 const BALL_RADIUS=.021335;
 const BALL_AREA=Math.PI*BALL_RADIUS*BALL_RADIUS;
+// Pure rolling sphere acceleration down a slope is 5/7 g·sin(theta).
+// Using full gravity made greens and fairways feel like ice on visible grade.
+const ROLLING_GRAVITY_FACTOR=5/7;
 // Regulation geometry. The visual ball is very slightly enlarged for mobile
 // readability, but cup/ball physics stay anchored to real golf dimensions.
 const CUP_RADIUS=.053975;
@@ -177,6 +180,38 @@ export class GolfPhysics{
     this.active=false;
   }
 
+  _sweptTerrainHit(a,b){
+    // The rendered LOFT field is a triangle heightfield. A fast shot can cross
+    // more than one triangle in a fixed step, so endpoint-only collision is not
+    // sufficient. Sample the path, then bisect the first clearance crossing.
+    const clearance=(p)=>{
+      const h=this.terrainHeight(p.x,p.z);
+      return Number.isFinite(h)?p.y-(h+CONTACT_HEIGHT):Infinity;
+    };
+    let prevT=0,prevC=clearance(a);
+    if(prevC<=0)return {t:0,point:a.clone()};
+    const probe=new THREE.Vector3();
+    const samples=5;
+    for(let i=1;i<=samples;i++){
+      const t=i/samples;
+      probe.copy(a).lerp(b,t);
+      const cc=clearance(probe);
+      if(cc<=0){
+        let lo=prevT,hi=t;
+        for(let k=0;k<11;k++){
+          const m=(lo+hi)*.5;
+          probe.copy(a).lerp(b,m);
+          if(clearance(probe)>0)lo=m;else hi=m;
+        }
+        const hit=a.clone().lerp(b,hi);
+        hit.y=this.terrainHeight(hit.x,hit.z)+CONTACT_HEIGHT;
+        return {t:hi,point:hit};
+      }
+      prevT=t;prevC=cc;
+    }
+    return null;
+  }
+
   _fixed(){
     const s=this.state;if(s.stopped)return;
     s.simTime=(s.simTime||0)+FIXED;
@@ -223,37 +258,18 @@ export class GolfPhysics{
       let ground=surface==='water'?-0.16:sampled+CONTACT_HEIGHT;
       let sweptContact=false;
 
-      // Swept height-field contact. A driver can travel more than half a metre
-      // per 120 Hz step. Sampling only the endpoint can visually tunnel through
-      // a rising bank. If clearance changes sign, binary-search the exact
-      // terrain crossing on the travelled segment before resolving bounce.
       if(surface!=='water'){
-        const prevGround=this.terrainHeight(previous.x,previous.z)+CONTACT_HEIGHT;
-        const prevClear=previous.y-prevGround;
-        const nextClear=s.pos.y-ground;
-        if(Number.isFinite(prevGround)&&prevClear>0&&nextClear<=0){
-          let lo=0,hi=1;
-          for(let i=0;i<9;i++){
-            const t=(lo+hi)*.5;
-            const x=previous.x+(s.pos.x-previous.x)*t;
-            const y=previous.y+(s.pos.y-previous.y)*t;
-            const z=previous.z+(s.pos.z-previous.z)*t;
-            const gy=this.terrainHeight(x,z)+CONTACT_HEIGHT;
-            if(y>gy)lo=t;else hi=t;
-          }
-          const t=hi;
-          s.pos.set(
-            previous.x+(s.pos.x-previous.x)*t,
-            previous.y+(s.pos.y-previous.y)*t,
-            previous.z+(s.pos.z-previous.z)*t
-          );
+        const hit=this._sweptTerrainHit(previous,s.pos);
+        if(hit){
+          s.pos.copy(hit.point);
           surface=this.surfaceAt(s.pos.x,s.pos.z);
           sampled=this.terrainHeight(s.pos.x,s.pos.z);
           ground=sampled+CONTACT_HEIGHT;
           s.pos.y=ground;
           sweptContact=true;
-        }else if(s.pos.y<ground-.045){
-          // Defensive recovery for starts already very close to the ground.
+        }else if(s.pos.y<ground-.018){
+          // Should be unreachable with the exact rendered heightfield, but keep
+          // a tiny final guard rather than ever drawing the ball inside turf.
           s.pos.y=ground;sweptContact=true;
         }
       }
@@ -334,7 +350,7 @@ export class GolfPhysics{
       // Static friction / turf indentation matters. A nearly stopped golf ball
       // should not mysteriously creep on a grade whose downslope gravity is
       // weaker than the surface's calibrated rolling resistance.
-      const slopeAccel=G*grade/Math.sqrt(1+grade*grade);
+      const slopeAccel=G*ROLLING_GRAVITY_FACTOR*grade/Math.sqrt(1+grade*grade);
       const canPhysicallyHold=slopeAccel<material.rollingDecel*.94;
       if(hs0<material.settleSpeed*1.55&&(grade<material.staticGrade||canPhysicallyHold)){
         s.vel.set(0,0,0);
@@ -344,8 +360,8 @@ export class GolfPhysics{
       }
 
       // Gravity follows the local grade.
-      s.vel.x+=-dx*G*FIXED;
-      s.vel.z+=-dz*G*FIXED;
+      s.vel.x+=-dx*G*ROLLING_GRAVITY_FACTOR*FIXED;
+      s.vel.z+=-dz*G*ROLLING_GRAVITY_FACTOR*FIXED;
       s.vel.y=0;
 
       // Turf resistance has two physical-feeling components:
