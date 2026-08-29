@@ -201,3 +201,16 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}#app,#stage{position
   font-family:var(--loft-text);
   font-weight:500;
 }
+
+
+/* Result-state polish: the score card owns the lower viewport. Gameplay
+   controls remain in the DOM but cannot ghost through or compete visually. */
+#app.result-open .club-chip,
+#app.result-open .right-tools,
+#app.result-open #tip,
+#app.result-open #swing-meter{
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .14s ease;
+}
+#app.result-open #result{bottom:max(18px,env(safe-area-inset-bottom))}
