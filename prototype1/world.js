@@ -25,10 +25,13 @@ export const COLORS={
 };
 
 export const BUNKERS=[
-  {x:-14,z:-148,sx:8.8,sz:4.9,seed:.4},
-  {x:17,z:-160,sx:7.8,sz:4.2,seed:1.7},
-  {x:12,z:-94,sx:6.0,sz:3.3,seed:2.8},
-  {x:-8,z:-202,sx:6.4,sz:3.1,seed:3.7}
+  // Static Coastal Ridge hazards are deliberately kept outside every moving
+  // prototype green footprint. Integration 010 allowed green and bunker
+  // geometry to occupy the same space, creating impossible visual overlaps.
+  {x:-13,z:-125,sx:7.2,sz:3.7,seed:.4},
+  {x:24,z:-138,sx:7.4,sz:3.6,seed:1.7},
+  {x:28,z:-190,sx:7.0,sz:3.8,seed:2.8},
+  {x:-30,z:-239,sx:6.8,sz:3.4,seed:3.7}
 ];
 
 export function fairwayProfile(z){
