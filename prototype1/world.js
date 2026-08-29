@@ -10,12 +10,12 @@ export const COLORS={
   cream:0xF2EFE8,
   stone:0xB8B1A6,
   orange:0xFF6A2A,
-  rough:0x405d3f,
-  roughLight:0x58734d,
-  fair:0x718c61,
-  fairLight:0x87a36f,
-  green:0x8ea878,
-  fringe:0x789466,
+  rough:0x536f4c,
+  roughLight:0x667f58,
+  fair:0x789568,
+  fairLight:0x8aa776,
+  green:0x94ad7d,
+  fringe:0x7f996c,
   sand:0xd9c9a7,
   sandShade:0xc2ad83,
   water:0x597a80,
@@ -60,34 +60,39 @@ function bunkerDepression(x,z){
 
 export function terrainHeight(x,z){
   const t=clamp((-z+12)/270,0,1);
+  const profile=fairwayProfile(z);
+  const lateral=x-profile.center;
 
-  // Broad course architecture first: a climbing coastal shelf with a soft
-  // saddle through the middle and a higher lighthouse finish.
-  const climb=.38*t+1.18*smoothstep(.10,.80,t);
+  // LOFT terrain is authored in golf-scale landforms, not procedural micro-noise.
+  // The full hole rises gradually from tee to lighthouse while three large
+  // shelves create readable strategic elevation changes.
+  const climb=2.15*smoothstep(.03,.92,t);
   const ridge=
-    1.72*Math.exp(-Math.pow((z+164)/57,2))*
-    (.58+.42*Math.exp(-Math.pow((x+5)/34,2)));
-  const shelf=
-    .78*Math.exp(-Math.pow((z+78)/37,2))*
-    (.62+.38*Math.exp(-Math.pow((x-4)/27,2)));
-  const lighthouseRise=
-    1.18*Math.exp(-Math.pow((z+220)/30,2))*
-    (.65+.35*Math.exp(-Math.pow((x+4)/31,2)));
-  const valley=-.52*Math.exp(-Math.pow((z+119)/30,2))*Math.exp(-Math.pow((x+13)/24,2));
+    2.15*Math.exp(-Math.pow((z+168)/64,2))*
+    (.66+.34*Math.exp(-Math.pow((lateral+2)/28,2)));
+  const middleShelf=
+    1.05*Math.exp(-Math.pow((z+86)/47,2))*
+    (.72+.28*Math.exp(-Math.pow((lateral-3)/30,2)));
+  const lighthouseShelf=
+    1.65*Math.exp(-Math.pow((z+224)/38,2))*
+    (.70+.30*Math.exp(-Math.pow((lateral+1)/31,2)));
 
-  // Long-wave contouring; intentionally low frequency so the course feels
-  // shaped by earthwork rather than noise.
-  const roll=
-    .24*Math.sin((z+18)*.026)+
-    .16*Math.sin((z-9)*.057)+
-    .13*Math.sin(x*.078+z*.018)+
-    .08*Math.cos(x*.135-z*.021);
+  // Two broad saddles stop the course reading as one continuous ramp.
+  const saddleA=-.72*Math.exp(-Math.pow((z+122)/42,2))*Math.exp(-Math.pow((lateral+10)/31,2));
+  const saddleB=-.38*Math.exp(-Math.pow((z+205)/25,2))*Math.exp(-Math.pow((lateral-8)/24,2));
 
-  // Coastal edge starts to fall before the rock shelf. Physics remains usable
-  // while the silhouette reads as real elevation.
-  const coast=-.42*smoothstep(25,42,x)*(0.6+0.4*Math.sin((z+35)*.019));
+  // Gentle crossfall gives golf-readable lies. These wavelengths are large
+  // enough to be visible and predictable; there are no invisible divots.
+  const crossfall=.0105*lateral*Math.sin((z+28)*.012);
+  const broadRoll=
+    .17*Math.sin((z+20)*.022)+
+    .10*Math.cos((z-42)*.041)+
+    .07*Math.sin((x+8)*.055);
 
-  return climb+ridge+shelf+lighthouseRise+valley+roll+coast+bunkerDepression(x,z);
+  // The ocean side rolls away toward the cliff instead of becoming a sudden wall.
+  const coast=-.62*smoothstep(25,46,x)*(0.82+0.18*Math.cos((z+35)*.017));
+
+  return climb+ridge+middleShelf+lighthouseShelf+saddleA+saddleB+crossfall+broadRoll+coast+bunkerDepression(x,z);
 }
 
 export function greenSurfaceHeight(center,x,z){
@@ -149,6 +154,11 @@ function applyTexture(material,map,bump,repeatX,repeatY,bumpScale=.035){
   m.needsUpdate=true;b.needsUpdate=true;
   m.wrapS=m.wrapT=THREE.RepeatWrapping;b.wrapS=b.wrapT=THREE.RepeatWrapping;
   m.repeat.set(repeatX,repeatY);b.repeat.set(repeatX,repeatY);
+
+  // The canvas texture already contains the intended turf/sand colour.
+  // Leaving the MeshStandardMaterial coloured multiplied the albedo twice and
+  // produced the near-black course seen on iPhone.
+  material.color.setHex(0xffffff);
   material.map=m;material.bumpMap=b;material.bumpScale=bumpScale;
   return material;
 }
@@ -276,19 +286,19 @@ export function buildWorld(scene,pin){
 
   // --- LAND ---------------------------------------------------------------
   const terrainGeo=deformedPlane(170,320,108,196,-116);
-  const roughMat=applyTexture(mat(COLORS.rough,.96),roughMap,bump,23,44,.055);
+  const roughMat=applyTexture(mat(COLORS.rough,.96),roughMap,bump,18,34,.028);
   roughMat.vertexColors=false;
   const terrain=new THREE.Mesh(terrainGeo,roughMat);
   terrain.receiveShadow=true;world.add(terrain);
 
   // A subtle second rough band around the fairway prevents the course from
   // looking like one flat green rectangle.
-  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.014});
-  const firstCutMat=applyTexture(mat(0x58734d,.95),roughMap,bump,5,28,.035);
+  const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.008});
+  const firstCutMat=applyTexture(mat(COLORS.roughLight,.95),roughMap,bump,4,24,.021);
   const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
 
-  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.026});
-  const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.6,36,.025);
+  const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.015});
+  const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,32,.014);
   const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
 
   // Tee shelves — small authored cuts, not giant rectangles.
@@ -298,7 +308,7 @@ export function buildWorld(scene,pin){
     const p=g.attributes.position;
     for(let i=0;i<p.count;i++){
       const wx=x+p.getX(i),wz=z+p.getZ(i);
-      p.setY(i,terrainHeight(wx,wz)+.030);
+      p.setY(i,terrainHeight(wx,wz)+.016);
     }
     p.needsUpdate=true;g.computeVertexNormals();
     const m=new THREE.Mesh(g,teeMat);m.position.set(x,0,z);m.receiveShadow=true;world.add(m);
@@ -307,15 +317,15 @@ export function buildWorld(scene,pin){
   // --- GREEN / FRINGE ------------------------------------------------------
   const greenGeo=buildGreenGeometry(24.4,18.0,14,72);
   const fringeGeo=buildGreenGeometry(27.0,20.4,14,72);
-  const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,7,7,.015);
-  const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.028);
+  const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,8,8,.008);
+  const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.015);
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
   const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
-  updateGreenGeometry(fringe,pin,{offset:.014});
-  updateGreenGeometry(green,pin,{offset:.027});
+  updateGreenGeometry(fringe,pin,{offset:.010});
+  updateGreenGeometry(green,pin,{offset:.018});
 
   const holeDisc=new THREE.Mesh(new THREE.CircleGeometry(.086,48),new THREE.MeshBasicMaterial({color:COLORS.ink,side:THREE.DoubleSide}));
-  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.038,pin.z);world.add(holeDisc);
+  holeDisc.rotation.x=-Math.PI/2;holeDisc.position.set(pin.x,pin.y+.026,pin.z);world.add(holeDisc);
 
   // --- BUNKERS: depressed floor + grass/sand lip --------------------------
   function bunker(b){
@@ -402,58 +412,12 @@ export function buildWorld(scene,pin){
   ];
   trees.forEach(v=>pine(...v));
 
-  // Instanced native rough. Sparse near play corridors, richer at edges.
-  const bladeGeo=new THREE.PlaneGeometry(.075,.38);bladeGeo.translate(0,.19,0);
-  const bladeMat=new THREE.MeshStandardMaterial({color:0x6f7c51,roughness:1,side:THREE.DoubleSide});
-  const blades=new THREE.InstancedMesh(bladeGeo,bladeMat,1050);
-  const dummy=new THREE.Object3D();let bladeCount=0;
-  for(let i=0;i<1800&&bladeCount<1050;i++){
-    const z=12-rnd()*270;
-    const p=fairwayProfile(z);
-    const side=rnd()<.5?-1:1;
-    const x=p.center+side*(p.width+3+rnd()*30);
-    if(x>28||Math.abs(x)>61)continue;
-    const y=terrainHeight(x,z);
-    const s=.55+rnd()*1.15;
-    dummy.position.set(x,y+.01,z);dummy.rotation.set(0,rnd()*Math.PI,0);dummy.scale.set(s,s,s);
-    dummy.updateMatrix();blades.setMatrixAt(bladeCount++,dummy.matrix);
-  }
-  blades.count=bladeCount;blades.castShadow=false;blades.receiveShadow=true;world.add(blades);
-
-  // Near-ball grass detail is regenerated only when the lie changes. This is
-  // where fairway/rough length becomes tangible without rendering millions of
-  // blades across the entire mobile scene.
-  const detailGeo=new THREE.PlaneGeometry(.032,.20);detailGeo.translate(0,.10,0);
-  const detailMat=new THREE.MeshStandardMaterial({color:0x78906a,roughness:1,side:THREE.DoubleSide});
-  const detailGrass=new THREE.InstancedMesh(detailGeo,detailMat,260);
-  detailGrass.castShadow=false;detailGrass.receiveShadow=true;detailGrass.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  world.add(detailGrass);
-
-  function setDetailFocus(position,surface='fairway'){
-    const seed=Math.floor((position.x+80)*29+(position.z+310)*17);
-    const rr=seeded(seed>>>0);
-    let base=.04,spread=7.5,count=220,color=0x78906a;
-    if(surface==='rough'){base=.135;spread=8.6;count=250;color=0x64794f;}
-    else if(surface==='fringe'){base=.070;spread=6.8;count=235;color=0x789466;}
-    else if(surface==='green'){base=.015;spread=6.2;count=150;color=0x8ea878;}
-    else if(surface==='tee'){base=.040;spread=6.5;count=210;color=0x7f986a;}
-    else if(surface==='sand'||surface==='water'){base=0;count=0;}
-    detailGrass.material.color.setHex(color);
-
-    for(let i=0;i<260;i++){
-      if(i>=count||base===0){
-        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);continue;
-      }
-      const a=rr()*Math.PI*2,r=Math.sqrt(rr())*spread;
-      const x=position.x+Math.cos(a)*r,z=position.z+Math.sin(a)*r;
-      const h=base*(.68+rr()*.72);
-      dummy.position.set(x,terrainHeight(x,z)+.012,z);
-      dummy.rotation.set(0,rr()*Math.PI,0);
-      dummy.scale.set(.72+rr()*.55,h/.20,.72+rr()*.55);
-      dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);
-    }
-    detailGrass.instanceMatrix.needsUpdate=true;
-  }
+  // Prototype 011: broken billboard grass is intentionally retired.
+  // Surface identity now comes from real terrain shape, turf albedo/bump and
+  // authored vegetation masses. A future GPU grass pass can be added without
+  // compromising the playable surface.
+  const dummy=new THREE.Object3D();
+  function setDetailFocus(){ /* stable no-op; kept for gameplay API compatibility */ }
 
   const shrubGeo=new THREE.IcosahedronGeometry(.48,1);
   const shrubMat=mat(0x506342,.995);
@@ -504,9 +468,9 @@ export function buildWorld(scene,pin){
   const flag=new THREE.Mesh(new THREE.ShapeGeometry(fs),flagMat);flag.position.set(pin.x,pin.y+3.88,pin.z);flag.rotation.y=Math.PI/2;world.add(flag);
 
   function setPin(next){
-    updateGreenGeometry(fringe,next,{offset:.014});
-    updateGreenGeometry(green,next,{offset:.027});
-    holeDisc.position.set(next.x,next.y+.038,next.z);
+    updateGreenGeometry(fringe,next,{offset:.010});
+    updateGreenGeometry(green,next,{offset:.018});
+    holeDisc.position.set(next.x,next.y+.026,next.z);
     pole.position.set(next.x,next.y+2.25,next.z);
     flag.position.set(next.x,next.y+3.88,next.z);
   }
