@@ -166,6 +166,36 @@ function applyTexture(material,map,bump,repeatX,repeatY,bumpScale=.035){
   return material;
 }
 
+function terrainReadShade(heightFn,x,z,strength=.72){
+  const e=.62;
+  const h=heightFn(x,z);
+  const dx=(heightFn(x+e,z)-heightFn(x-e,z))/(2*e);
+  const dz=(heightFn(x,z+e)-heightFn(x,z-e))/(2*e);
+  const inv=1/Math.max(.0001,Math.hypot(dx,1,dz));
+  const nx=-dx*inv,ny=inv,nz=-dz*inv;
+
+  // Matches the game key light direction. We intentionally exaggerate only
+  // the slope-dependent delta, not the base colour, so a player can SEE the
+  // same grade the physics solver sees without contour-line UI.
+  const lx=-.34,ly=.85,lz=.40;
+  const flatDot=ly;
+  const dot=nx*lx+ny*ly+nz*lz;
+  const directional=(dot-flatDot)*strength;
+  const altitude=clamp((h-2.5)/8,-1,1)*.018;
+  return clamp(1+directional+altitude,.80,1.12);
+}
+
+function applySlopeColors(geometry,heightFn,{offsetX=0,offsetZ=0,strength=.72}={}){
+  const p=geometry.attributes.position;
+  const colors=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i)+offsetX,z=p.getZ(i)+offsetZ;
+    const s=terrainReadShade(heightFn,x,z,strength);
+    colors[i*3]=s;colors[i*3+1]=s;colors[i*3+2]=s;
+  }
+  geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
+}
+
 function deformedPlane(width,depth,segX,segZ,zOffset=0){
   const g=new THREE.PlaneGeometry(width,depth,segX,segZ);g.rotateX(-Math.PI/2);
   const p=g.attributes.position;
@@ -173,7 +203,9 @@ function deformedPlane(width,depth,segX,segZ,zOffset=0){
     const x=p.getX(i),z=p.getZ(i)+zOffset;
     p.setZ(i,z);p.setY(i,terrainHeight(x,z));
   }
-  p.needsUpdate=true;g.computeVertexNormals();return g;
+  p.needsUpdate=true;g.computeVertexNormals();
+  applySlopeColors(g,terrainHeight,{strength:.78});
+  return g;
 }
 
 function buildRibbon({z0=8,z1=-242,segments=160,crossSegments=12,widthScale=1,yOffset=.001}={}){
@@ -195,7 +227,9 @@ function buildRibbon({z0=8,z1=-242,segments=160,crossSegments=12,widthScale=1,yO
     if(i<segments){
       for(let j=0;j<crossSegments;j++){
         const a=i*stride+j,b=a+1,c=a+stride,d=c+1;
-        idx.push(a,c,b,b,c,d);
+        // Up-facing winding. The previous order produced downward normals,
+        // flattening light response and creating dark strip artifacts on iOS.
+        idx.push(a,b,c,b,d,c);
       }
     }
   }
@@ -203,7 +237,9 @@ function buildRibbon({z0=8,z1=-242,segments=160,crossSegments=12,widthScale=1,yO
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-  g.setIndex(idx);g.computeVertexNormals();return g;
+  g.setIndex(idx);g.computeVertexNormals();
+  applySlopeColors(g,terrainHeight,{strength:.82});
+  return g;
 }
 
 function buildGreenGeometry(rx=22,rz=17,rings=13,segments=72){
@@ -217,12 +253,15 @@ function buildGreenGeometry(rx=22,rz=17,rings=13,segments=72){
       uv.push(.5+.5*Math.cos(a)*q,.5+.5*Math.sin(a)*q);
     }
   }
-  for(let i=0;i<segments;i++)idx.push(0,1+i,1+((i+1)%segments));
+  for(let i=0;i<segments;i++){
+    const n=(i+1)%segments;
+    idx.push(0,1+n,1+i);
+  }
   for(let r=1;r<rings;r++){
     const a0=1+(r-1)*segments,b0=1+r*segments;
     for(let i=0;i<segments;i++){
       const n=(i+1)%segments;
-      idx.push(a0+i,b0+i,a0+n,a0+n,b0+i,b0+n);
+      idx.push(a0+i,a0+n,b0+i,a0+n,b0+n,b0+i);
     }
   }
   const g=new THREE.BufferGeometry();
@@ -239,6 +278,11 @@ function updateGreenGeometry(mesh,center,{offset=.018}={}){
     p.setY(i,worldY-center.y+offset);
   }
   p.needsUpdate=true;mesh.geometry.computeVertexNormals();
+  applySlopeColors(
+    mesh.geometry,
+    (x,z)=>greenSurfaceHeight(center,x,z),
+    {offsetX:center.x,offsetZ:center.z,strength:.92}
+  );
   mesh.position.set(center.x,center.y,center.z);
 }
 
@@ -271,18 +315,23 @@ function buildBunkerFloorGeometry(b,rings=9,segments=48){
       uv.push(.5+.5*Math.cos(a)*q,.5+.5*Math.sin(a)*q);
     }
   }
-  for(let i=0;i<segments;i++)idx.push(0,1+i,1+((i+1)%segments));
+  for(let i=0;i<segments;i++){
+    const n=(i+1)%segments;
+    idx.push(0,1+n,1+i);
+  }
   for(let r=1;r<rings;r++){
     const a0=1+(r-1)*segments,b0=1+r*segments;
     for(let i=0;i<segments;i++){
       const n=(i+1)%segments;
-      idx.push(a0+i,b0+i,a0+n,a0+n,b0+i,b0+n);
+      idx.push(a0+i,a0+n,b0+i,a0+n,b0+n,b0+i);
     }
   }
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-  g.setIndex(idx);g.computeVertexNormals();return g;
+  g.setIndex(idx);g.computeVertexNormals();
+  applySlopeColors(g,(x,z)=>terrainHeight(b.x+x,b.z+z),{strength:.62});
+  return g;
 }
 
 function makeRockGeometry(seed=1){
@@ -343,7 +392,7 @@ export function buildWorld(scene,pin){
   // --- LAND ---------------------------------------------------------------
   const terrainGeo=deformedPlane(170,320,108,196,-116);
   const roughMat=applyTexture(mat(COLORS.rough,.96),roughMap,bump,18,34,.028);
-  roughMat.vertexColors=false;
+  roughMat.vertexColors=true;
   const terrain=new THREE.Mesh(terrainGeo,roughMat);
   terrain.receiveShadow=true;world.add(terrain);
 
@@ -351,12 +400,12 @@ export function buildWorld(scene,pin){
   // looking like one flat green rectangle.
   const firstCutGeo=buildRibbon({z0:8,z1:-242,segments:170,widthScale:1.18,yOffset:.001});
   const firstCutMat=applyTexture(mat(COLORS.roughLight,.95),roughMap,bump,4,24,.021);
-  firstCutMat.polygonOffset=true;firstCutMat.polygonOffsetFactor=-1;firstCutMat.polygonOffsetUnits=-1;
+  firstCutMat.vertexColors=true;firstCutMat.polygonOffset=true;firstCutMat.polygonOffsetFactor=-1;firstCutMat.polygonOffsetUnits=-1;
   const firstCut=new THREE.Mesh(firstCutGeo,firstCutMat);firstCut.receiveShadow=true;world.add(firstCut);
 
   const fairGeo=buildRibbon({z0:8,z1:-242,segments:180,widthScale:1,yOffset:.0015});
   const fairMat=applyTexture(mat(COLORS.fair,.91),fairMap,bump,3.2,8,.014);
-  fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
+  fairMat.vertexColors=true;fairMat.polygonOffset=true;fairMat.polygonOffsetFactor=-2;fairMat.polygonOffsetUnits=-2;
   const fairway=new THREE.Mesh(fairGeo,fairMat);fairway.receiveShadow=true;world.add(fairway);
 
   // Tee shelves — small authored cuts, not giant rectangles.
@@ -376,9 +425,9 @@ export function buildWorld(scene,pin){
   const greenGeo=buildGreenGeometry(18.5,14.5,14,72);
   const fringeGeo=buildGreenGeometry(21.0,16.5,14,72);
   const greenMat=applyTexture(mat(COLORS.green,.88),greenMap,bump,8,8,.008);
-  greenMat.polygonOffset=true;greenMat.polygonOffsetFactor=-4;greenMat.polygonOffsetUnits=-4;
+  greenMat.vertexColors=true;greenMat.polygonOffset=true;greenMat.polygonOffsetFactor=-4;greenMat.polygonOffsetUnits=-4;
   const fringeMat=applyTexture(mat(COLORS.fringe,.94),fringeMap,bump,7,7,.015);
-  fringeMat.polygonOffset=true;fringeMat.polygonOffsetFactor=-3;fringeMat.polygonOffsetUnits=-3;
+  fringeMat.vertexColors=true;fringeMat.polygonOffset=true;fringeMat.polygonOffsetFactor=-3;fringeMat.polygonOffsetUnits=-3;
   const fringe=new THREE.Mesh(fringeGeo,fringeMat);fringe.receiveShadow=true;world.add(fringe);
   const green=new THREE.Mesh(greenGeo,greenMat);green.receiveShadow=true;world.add(green);
   updateGreenGeometry(fringe,pin,{offset:.0015});
@@ -397,7 +446,7 @@ export function buildWorld(scene,pin){
     // an invisible depression.
     const floorGeo=buildBunkerFloorGeometry(b,9,48);
     const floorMat=applyTexture(mat(COLORS.sand,.995),sandMap,bump,4.5,4.5,.050);
-    floorMat.polygonOffset=true;floorMat.polygonOffsetFactor=-2;floorMat.polygonOffsetUnits=-2;
+    floorMat.vertexColors=true;floorMat.polygonOffset=true;floorMat.polygonOffsetFactor=-2;floorMat.polygonOffsetUnits=-2;
     const floor=new THREE.Mesh(floorGeo,floorMat);floor.position.set(b.x,0,b.z);floor.receiveShadow=true;world.add(floor);
 
     const pos=[],uv=[],idx=[];
