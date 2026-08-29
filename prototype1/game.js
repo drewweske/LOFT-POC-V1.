@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB} from './equipment.js';
-import {COLORS,SURFACE_LIFT,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,validateTerrain,buildWorld} from './world.js';
+import {COLORS,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js';
 import {LoftGolferRig} from './characterRig.js';
 import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
 import {LoftCamera} from './camera.js';
@@ -13,10 +13,10 @@ const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const YARD=.9144;
-const BALL_VISUAL_R=.034;
+const BALL_VISUAL_R=.026;
 let holeIndex=0;
 let holeDef=ROUND_HOLES[holeIndex];
-let pin=new THREE.Vector3(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
+let pin=new THREE.Vector3(holeDef.pin[0],playingHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
 let wind=new THREE.Vector3(holeDef.wind[0],0,holeDef.wind[1]);
 let TEE=new THREE.Vector3(holeDef.tee[0],playingHeight(holeDef.tee[0],holeDef.tee[1])+BALL_CONTACT_HEIGHT,holeDef.tee[1]);
 let COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
@@ -368,34 +368,12 @@ function updateLine(){
 updateLine();
 
 function surfaceAt(x,z){
-  // Physics footprints match the visible authored geometry exactly.
-  const gx=(x-pin.x)/18.5,gz=(z-pin.z)/14.5;
-  if(gx*gx+gz*gz<=1)return'green';
-
-  const fx=(x-pin.x)/21.0,fz=(z-pin.z)/16.5;
-  if(fx*fx+fz*fz<=1)return'fringe';
-
-  for(const b of BUNKERS){
-    const dx=(x-b.x)/(b.sx*.96),dz=(z-b.z)/(b.sz*.96);
-    if(dx*dx+dz*dz<=1)return'sand';
-  }
-
-  if(x>38&&z<-18)return'water';
-
-  // Physics now uses the exact same authored fairway ribbon as the renderer.
-  // If it looks like fairway, it IS fairway.
-  const profile=fairwayProfile(z);
-  if(profile.insideRange&&Math.abs(x-profile.center)<=profile.width)return'fairway';
-
-  return'rough';
+  // Integration 014: one authored field owns both material identity and physics.
+  return courseSurfaceAt(x,z);
 }
 function playingHeight(x,z){
-  const surface=surfaceAt(x,z);
-  if(surface==='green')return greenSurfaceHeight(pin,x,z)+SURFACE_LIFT.green;
-  if(surface==='fringe')return greenSurfaceHeight(pin,x,z)+SURFACE_LIFT.fringe;
-  if(surface==='sand')return terrainHeight(x,z)+SURFACE_LIFT.sand;
-  if(surface==='fairway')return terrainHeight(x,z)+SURFACE_LIFT.fairway;
-  return terrainHeight(x,z)+SURFACE_LIFT.rough;
+  // Exact Y of the unified visible terrain mesh.
+  return terrainHeight(x,z);
 }
 
 function cupDistanceFeet(){
@@ -712,7 +690,7 @@ function startHole(index,{intro=true}={}){
   state.swingPhase=0;state.landingFX=false;state.ballCompression=0;state.hitStop=0;
   physics.active=false;physics.state=null;
 
-  pin.set(holeDef.pin[0],terrainHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
+  pin.set(holeDef.pin[0],playingHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
   wind.set(holeDef.wind[0],0,holeDef.wind[1]);
   physics.wind.copy(wind);physics.setCup(pin);
   world.setPin(pin);
@@ -1084,7 +1062,15 @@ function frame(now){
         const visualGround=playingHeight(ballGroup.position.x,ballGroup.position.z)+BALL_CONTACT_HEIGHT;
         if(Number.isFinite(visualGround)&&ballGroup.position.y<visualGround)ballGroup.position.y=visualGround;
       }
-      ballGroup.rotation.x+=ps.vel.z*dt*.05;ballGroup.rotation.z-=ps.vel.x*dt*.05;
+      if(ps.surface==='air'&&ps.spinAxis&&ps.spinOmega>0){
+        ballGroup.rotateOnWorldAxis(ps.spinAxis,ps.spinOmega*dt);
+      }else{
+        const hs=Math.hypot(ps.vel.x,ps.vel.z);
+        if(hs>.001){
+          const rollAxis=new THREE.Vector3(-ps.vel.z,0,ps.vel.x).normalize();
+          ballGroup.rotateOnWorldAxis(rollAxis,(hs/BALL_VISUAL_R)*dt);
+        }
+      }
       if(!state.shot?.putting)feedback.flight(ballGroup.position,state.shot?.quality||.8);
       if(ps.surfaceChanged){
         feedback.surfaceTransition(ps.surfaceChanged.to,Math.hypot(ps.vel.x,ps.vel.z));
@@ -1115,6 +1101,7 @@ function frame(now){
   }
 
   feedback.update(dt);
+  world.updateWorld?.(dt);
 
   if(state.cupSink>0){
     state.cupSink=Math.max(0,state.cupSink-dt*2.35);
