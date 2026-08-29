@@ -1,135 +1,210 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 009
+Current build: Prototype 1 / Integration 010
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: camera / precision aiming / topographic map
-Iteration: integration_009
+Active subsystem: visual world / terrain / character / brand typography
+Iteration: integration_010
 
 ## Current provisional score
-96 / 100 — REAL-DEVICE VALIDATION REQUIRED
+96.5 / 100 — REAL-DEVICE VISUAL VALIDATION REQUIRED
 
-Integration 009 was triggered by successful completion of all three demo holes plus a final control/readability issue:
+Integration 010 begins the first major visual-graphics overhaul after the user completed the full three-hole demo.
 
 User evidence:
-- the three-hole demo is now fully playable end-to-end
-- THE SIGNAL / putting loop is materially improved
-- putting camera still returns to an angled composition that makes precise aiming harder
-- camera should remain straightforward, fluid and easy to trust
-- topographic map is useful but too small
-- map should expand for deliberate precision aiming on both long drives and short putts
+- core gameplay is now a credible foundation
+- THE SIGNAL / putting / round loop are good enough to move forward
+- character still reads low-poly, separated and goofy
+- swing exposes gaps between body parts
+- course terrain reads too flat and synthetic
+- cliffs / rocks / trees / rough / bunkers lack authored depth
+- visual geometry overlaps remain distracting
+- prototype typography still reads like an engineering fallback instead of LOFT
 
-## Camera rebuild
+## World Art Rebuild
 
-### Putting camera rule
-Putting now obeys one hard rule:
+Coastal Ridge is no longer built as a flat green plane with box cliffs.
 
-CAMERA AXIS = INTENDED ROLL AXIS.
+The terrain system now includes:
+- broad authored elevation architecture
+- climbing coastal shelf
+- middle saddle / valley
+- lighthouse rise
+- long-wave contouring
+- coastal falloff
+- bunker depressions integrated into terrain height
+- higher-resolution terrain tessellation
+- textured rough / first cut / fairway / green / fringe surfaces
+- mowing-direction variation on fairway
+- near-field bump detail
+- tee shelves
+- sculpted dynamic green geometry
+- green visual surface and golf physics now share the same height function
 
-At address:
-- camera sits almost directly behind the ball
-- lateral cinematic offset is nearly removed
-- look direction follows The Line
-- camera is lower and quieter than the full-swing camera
+## Bunker Rebuild
 
-During the putting stroke:
-- entering swing-lock does NOT rotate to a new side angle
-- camera remains on the same ball-to-target axis
-- motion damping is slightly slower / smoother than full swing
+Bunkers now have:
+- irregular authored outlines
+- actual depressed sand floors
+- grass/sand transition lips
+- coarse sand material variation
+- visual depth that matches terrain height
 
-During roll:
-- lateral tracking offset is reduced almost to zero
-- camera follows the ball down its roll axis
+The previous flat beige shape-on-top-of-grass approach is retired.
+
+## Coastal Geology Rebuild
+
+Box cliffs have been removed.
+
+Coast now uses:
+- layered irregular rock shelves
+- clustered boulders
+- broad faceted planes
+- dark secondary stone variation
+- an actual falling coastal edge into water
+
+## Vegetation Rebuild
+
+Course vegetation now contains:
+- multi-layer coastal pines
+- native rough blades
+- shrubs / low bushes
+- denser edge ecology
+- restrained play corridor so gameplay remains readable
+
+Near the current ball lie, a dynamic grass-detail field communicates actual grass length:
+- GREEN = extremely tight
+- TEE / FAIRWAY = short
+- FRINGE = intermediate
+- ROUGH = visibly taller
+- SAND / WATER = none
+
+This gives close camera shots real surface identity without rendering millions of blades on mobile.
+
+## Architecture / Landmark Rebuild
+
+The lighthouse and lodge were upgraded with:
+- more segments
+- better silhouette
+- material hierarchy
+- windows / balcony details
+- more deliberate proportion
+
+Coastal Ridge retains the lighthouse as its hero visual landmark.
+
+## Lighting Rebuild
+
+The previous over-bright dual-light setup flattened form.
+
+New lighting:
+- warm directional coastal key
+- cool sky hemisphere fill
+- restrained secondary cool fill
+- lower exposure
+- farther atmospheric fog
+- physically readable surface shadows
 
 Goal:
-Straight on screen must mean straight in simulation.
+warm, dimensional, editorial coastal light rather than flat mobile-game illumination.
 
-### Precision orbit
-When putting:
-- horizontal camera/aim sensitivity is reduced
-- vertical pitch sensitivity is reduced
-- allowed aim arc is slightly widened but remains bounded
+## Character Rebuild
 
-The result should be finer thumb control without twitching.
+The current procedural golfer remains a prototype asset, but the primitive mannequin system has been materially rebuilt.
 
-## Precision Topographic Map
+Changes:
+- overlapping anatomical joints prevent visible limb separation
+- shoulder seals
+- hip seals
+- wrist seals
+- ankle seals
+- broader authored shirt volume
+- dynamically oriented ribcage
+- dynamically oriented pelvis
+- torso rotation now follows shoulder / hip motion
+- neck now physically overlaps torso and head
+- quieter head proportions
+- refined cap
+- quieter face
+- smaller / more believable driver, woods and putter heads
+- left-hand golf glove
+- polo placket and collar wings
+- belt buckle
+- garment details move with the body rather than floating
 
-The compact topographic map is now slightly larger by default.
+The goal is a connected stylized human silhouette at every swing phase.
 
-The entire map card is tappable.
+## Brand Typography
 
-Tap:
-- expands into a focused large-format course instrument
-- dims the rest of the interface
-- preserves official LOFT Cream / Ink / Stone / Orange visual language
+Canonical family architecture is now represented directly in the prototype:
 
-Expanded map:
-- can be dragged directly to aim
-- map coordinates are reversibly projected back into the actual 3D world
-- dragging changes BOTH shot direction and target distance
-- putting reports target distance in FT
-- normal shots report target distance in YD
-- the map target and The Line remain synchronized
+LOFT Display
+LOFT Text
 
-This is not a decorative minimap anymore.
+The custom font files do not yet exist in the repository, so the browser currently falls back to Avenir Next / neutral humanist system faces.
 
-It is a second precision aiming surface.
+However, hierarchy, tracking, casing and weight now follow the LOFT type system:
+- Display for hero numerals, club data, result states and primary actions
+- Text for body copy and utility language
+- uppercase tracked micro-labels
+- tight, confident display numerals
+- Inter removed as the visual default
 
-### Interaction model
+When official LOFT font files are authored later, the existing CSS family names can receive them without redesigning the interface.
 
-COMPACT MAP
-tap → expand
+## Official Brand Assets
 
-EXPANDED MAP
-drag anywhere on course → move target / aim
-× → close
+The locked official LOFT wordmark and LOFT Ball assets remain the boot / round-result source of truth.
 
-After closing:
-- camera smoothly resolves to the newly selected target
-- golfer / The Line rotate to the same shot intention
+Core UI colors remain:
+- Clubhouse Ink #0B0D0D
+- Scorecard Cream #F2EFE8
+- Fairway Stone #B8B1A6
+- Flag Orange #FF6A2A
 
-The player can therefore:
-- roughly aim by moving the 3D camera
-- precisely aim by expanding the topographic map
-- return immediately to THE SIGNAL for the stroke
+Flag Orange remains a signal, not decoration.
+
+## Performance Discipline
+
+The new world remains mobile-first:
+- one higher-resolution terrain mesh
+- instanced native rough
+- instanced shrubs
+- dynamic near-ball grass detail only
+- no external runtime 3D assets
+- no backend
+- no generated imagery
+- no fragile CDN asset dependency added
 
 ## Technical validation
 
 PASS:
 - game.js
+- world.js
+- characterRig.js
 - camera.js
 - topoMap.js
 - physics.js
 - feedback.js
-- world.js
-- surfaces.js
 
 PASS:
 - DOM ID contract
 - CSS brace integrity
-- map reverse projection path
+- authored green physics/render height lock
 
 ## Largest meaningful gap
 
-Real iPhone feel validation of:
-1. straight putting camera at 1–3 FT
-2. straight putting camera at 10–20 FT
-3. camera transition from aim → stroke
-4. roll-follow camera
-5. compact map readability
-6. map tap-to-expand
-7. map drag-to-aim
-8. long-drive map precision
-9. short-putt map precision
-10. close map → camera settles cleanly on chosen line
+Real iPhone visual validation.
 
-## Critical failures
+Required screenshots:
+1. tee address wide
+2. fairway address
+3. rough address
+4. bunker lie
+5. green / putting
+6. Level 1 top-of-backswing
+7. Level 50 top-of-backswing
+8. impact
+9. finish
+10. coastline / lighthouse no-UI view
 
-Any of these fail Integration 009:
-- putting view still reads diagonally relative to The Line
-- entering stroke rotates camera unexpectedly
-- expanded map cannot move the shot target
-- map drag and world target disagree
-- compact map overlaps major HUD elements
-- map becomes visually dominant during normal play
-- expanded map traps the player or cannot close
+The next visual gap should be chosen from actual device evidence, not guessed from code.
