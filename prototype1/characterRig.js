@@ -42,6 +42,18 @@ export class LoftGolferRig{
         idx.push(a,c,b,b,c,d);
       }
     }
+
+    const bottomCenter=pos.length/3;
+    pos.push(0,sections[0][0],0);
+    const topCenter=pos.length/3;
+    pos.push(0,sections[sections.length-1][0],0);
+    const topRing=(sections.length-1)*radial;
+    for(let i=0;i<radial;i++){
+      const n=(i+1)%radial;
+      idx.push(bottomCenter,n,i);
+      idx.push(topCenter,topRing+i,topRing+n);
+    }
+
     const g=new THREE.BufferGeometry();
     g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     g.setIndex(idx);g.computeVertexNormals();
@@ -98,8 +110,8 @@ export class LoftGolferRig{
     // continuity through the full golf motion.
     this.hipSealL=this._shape(new THREE.SphereGeometry(.098,20,14),this.ink,[0,0,0],[.92,.78,1.02]);
     this.hipSealR=this._shape(new THREE.SphereGeometry(.098,20,14),this.ink,[0,0,0],[.92,.78,1.02]);
-    this.shoulderSealL=this._shape(new THREE.SphereGeometry(.092,20,14),this.cream,[0,0,0],[1.10,.92,1.02]);
-    this.shoulderSealR=this._shape(new THREE.SphereGeometry(.092,20,14),this.cream,[0,0,0],[1.10,.92,1.02]);
+    this.shoulderSealL=this._shape(new THREE.SphereGeometry(.064,20,14),this.cream,[0,0,0],[1.12,.78,.90]);
+    this.shoulderSealR=this._shape(new THREE.SphereGeometry(.064,20,14),this.cream,[0,0,0],[1.12,.78,.90]);
     this.wristSealL=this._shape(new THREE.SphereGeometry(.040,16,12),this.cream,[0,0,0],[.90,.86,.90]);
     this.wristSealR=this._shape(new THREE.SphereGeometry(.040,16,12),this.skin,[0,0,0],[.90,.86,.90]);
     this.ankleSealL=this._shape(new THREE.SphereGeometry(.062,16,12),this.ink,[0,0,0],[.86,.72,.90]);
@@ -319,7 +331,8 @@ export class LoftGolferRig{
     this.belt.quaternion.copy(this.pelvis.quaternion);
 
     this.hipSealL.position.copy(hipL);this.hipSealR.position.copy(hipR);
-    this.shoulderSealL.position.copy(shoulderL);this.shoulderSealR.position.copy(shoulderR);
+    this.shoulderSealL.position.copy(shoulderL).lerp(V('sleeveL'),.18);
+    this.shoulderSealR.position.copy(shoulderR).lerp(V('sleeveR'),.18);
 
     this._between(this.thighL,V('hipL'),V('kneeL'),.086);this._between(this.thighR,V('hipR'),V('kneeR'),.086);
     this._between(this.calfL,V('kneeL'),V('ankleL'),.071);this._between(this.calfR,V('kneeR'),V('ankleR'),.071);
