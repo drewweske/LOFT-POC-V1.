@@ -675,16 +675,34 @@ export function buildWorld(scene,pin){
   }
 
   // --- VEGETATION ----------------------------------------------------------
+  // LOFT wind-sculpted pines: soft clustered masses instead of stacked cones.
+  // The silhouette stays stylized and ownable, but surfaces read as foliage.
+  const pineLobeGeo=new THREE.IcosahedronGeometry(1,2);
+  const pineMats=[
+    mat(0x263f31,1),mat(0x31513a,1),mat(0x3d5f43,1)
+  ];
   function pine(x,z,s=1){
     const g=new THREE.Group();
-    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12*s,.20*s,2.2*s,10),mat(0x4f3828,.99));
-    trunk.position.y=1.10*s;trunk.castShadow=true;g.add(trunk);
-    const greens=[0x294834,0x31553b,0x3b6242];
-    [[1.65,3.0,2.6,0],[1.30,2.7,3.55,.2],[.98,2.35,4.45,-.12]].forEach(([r,h,y,rr],i)=>{
-      const c=new THREE.Mesh(new THREE.ConeGeometry(r*s,h*s,12),mat(greens[i],.99));
-      c.position.y=y*s;c.rotation.y=rr;c.castShadow=true;g.add(c);
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.105*s,.19*s,2.55*s,12),mat(0x503928,.99));
+    trunk.position.y=1.28*s;trunk.castShadow=true;g.add(trunk);
+
+    const lobes=[
+      {y:2.45,sc:[1.42,.72,1.28],off:[-.10,0,.04],m:2},
+      {y:3.20,sc:[1.18,.70,1.12],off:[.12,0,-.05],m:1},
+      {y:3.88,sc:[.94,.66,.90],off:[-.06,0,.02],m:0},
+      {y:4.46,sc:[.60,.72,.58],off:[.04,0,0],m:1}
+    ];
+    lobes.forEach((l,i)=>{
+      const crown=new THREE.Mesh(pineLobeGeo,pineMats[l.m]);
+      crown.position.set(l.off[0]*s,l.y*s,l.off[2]*s);
+      crown.scale.set(l.sc[0]*s,l.sc[1]*s,l.sc[2]*s);
+      crown.rotation.set((rnd()-.5)*.08,rnd()*Math.PI,(rnd()-.5)*.06);
+      crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
     });
-    g.position.set(x,terrainHeight(x,z),z);g.rotation.y=rnd()*Math.PI*2;world.add(g);
+
+    g.position.set(x,courseSurfaceHeight(x,z,pin),z);
+    g.rotation.y=rnd()*Math.PI*2;
+    world.add(g);
   }
 
   const trees=[
@@ -698,7 +716,7 @@ export function buildWorld(scene,pin){
   // rectangular cards on iPhone. These tapered 3-sided blades are actual 3D
   // geometry and only exist in a small radius around the current ball.
   const dummy=new THREE.Object3D();
-  const detailBladeGeo=new THREE.ConeGeometry(.010,.10,3,1,false);
+  const detailBladeGeo=new THREE.ConeGeometry(.010,.10,5,1,false);
   detailBladeGeo.translate(0,.05,0);
   const detailBladeMat=new THREE.MeshStandardMaterial({color:0x78906a,roughness:1});
   const detailGrass=new THREE.InstancedMesh(detailBladeGeo,detailBladeMat,360);
@@ -734,7 +752,33 @@ export function buildWorld(scene,pin){
     detailGrass.instanceMatrix.needsUpdate=true;
   }
 
-  const shrubGeo=new THREE.IcosahedronGeometry(.48,1);
+
+  // Native rough field: sparse permanent 3D blades placed only outside the
+  // playable fairway. This gives the course a living edge without filling the
+  // green with visual noise or adding any collision geometry.
+  const nativeBladeGeo=new THREE.ConeGeometry(.016,.16,5,1,false);
+  nativeBladeGeo.translate(0,.08,0);
+  const nativeBladeMat=new THREE.MeshStandardMaterial({color:0x64794f,roughness:1});
+  const nativeGrass=new THREE.InstancedMesh(nativeBladeGeo,nativeBladeMat,760);
+  let nativeCount=0;
+  for(let i=0;i<1500&&nativeCount<760;i++){
+    const z=-8-rnd()*246;
+    const p=fairwayProfile(z);
+    const side=rnd()<.5?-1:1;
+    const x=p.center+side*(p.width+3.2+rnd()*25);
+    if(Math.abs(x)>53||x>30)continue;
+    if(courseSurfaceAt(x,z,pin)==='sand'||courseSurfaceAt(x,z,pin)==='water')continue;
+    const h=.70+rnd()*1.75;
+    dummy.position.set(x,courseSurfaceHeight(x,z,pin)+.004,z);
+    dummy.rotation.set((rnd()-.5)*.13,rnd()*Math.PI*2,(rnd()-.5)*.11);
+    dummy.scale.set(.65+rnd()*.85,h,.65+rnd()*.85);
+    dummy.updateMatrix();nativeGrass.setMatrixAt(nativeCount++,dummy.matrix);
+  }
+  nativeGrass.count=nativeCount;
+  nativeGrass.castShadow=false;nativeGrass.receiveShadow=true;
+  world.add(nativeGrass);
+
+  const shrubGeo=new THREE.IcosahedronGeometry(.48,2);
   const shrubMat=mat(0x506342,.995);
   const shrubs=new THREE.InstancedMesh(shrubGeo,shrubMat,180);let shrubCount=0;
   for(let i=0;i<260&&shrubCount<180;i++){
