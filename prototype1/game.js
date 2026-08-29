@@ -349,13 +349,15 @@ function updateLine(){
 updateLine();
 
 function surfaceAt(x,z){
-  const gx=(x-pin.x)/(18*1.36),gz=(z-pin.z)/18;
-  const greenR=gx*gx+gz*gz;
-  if(greenR<=1)return'green';
-  if(greenR<=1.24)return'fringe';
+  // Physics footprints match the visible authored geometry exactly.
+  const gx=(x-pin.x)/24.4,gz=(z-pin.z)/18.0;
+  if(gx*gx+gz*gz<=1)return'green';
+
+  const fx=(x-pin.x)/27.0,fz=(z-pin.z)/20.4;
+  if(fx*fx+fz*fz<=1)return'fringe';
 
   for(const b of BUNKERS){
-    const dx=(x-b.x)/b.sx,dz=(z-b.z)/b.sz;
+    const dx=(x-b.x)/(b.sx*.96),dz=(z-b.z)/(b.sz*.96);
     if(dx*dx+dz*dz<=1)return'sand';
   }
 
@@ -369,7 +371,8 @@ function surfaceAt(x,z){
   return'rough';
 }
 function playingHeight(x,z){
-  if(surfaceAt(x,z)==='green'){
+  const surface=surfaceAt(x,z);
+  if(surface==='green'||surface==='fringe'){
     return greenSurfaceHeight(pin,x,z);
   }
   return terrainHeight(x,z);
