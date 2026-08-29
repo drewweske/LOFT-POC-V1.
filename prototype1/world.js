@@ -273,6 +273,24 @@ function cloudTexture(){
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
 }
 
+export function validateTerrain(){
+  let min=Infinity,max=-Infinity,maxGrade=0,samples=0;
+  const e=.45;
+  for(let z=24;z>=-268;z-=8){
+    for(let x=-64;x<=64;x+=8){
+      const h=terrainHeight(x,z);
+      if(!Number.isFinite(h))return {ok:false,reason:'NON_FINITE_HEIGHT',x,z};
+      min=Math.min(min,h);max=Math.max(max,h);samples++;
+      const dx=(terrainHeight(x+e,z)-terrainHeight(x-e,z))/(2*e);
+      const dz=(terrainHeight(x,z+e)-terrainHeight(x,z-e))/(2*e);
+      const grade=Math.hypot(dx,dz);
+      if(!Number.isFinite(grade))return {ok:false,reason:'NON_FINITE_GRADE',x,z};
+      maxGrade=Math.max(maxGrade,grade);
+    }
+  }
+  return {ok:true,min,max,maxGrade,samples};
+}
+
 export function buildWorld(scene,pin){
   const world=new THREE.Group();world.name='COASTAL_RIDGE_WORLD';scene.add(world);
   const rnd=seeded(2045);
@@ -412,12 +430,47 @@ export function buildWorld(scene,pin){
   ];
   trees.forEach(v=>pine(...v));
 
-  // Prototype 011: broken billboard grass is intentionally retired.
-  // Surface identity now comes from real terrain shape, turf albedo/bump and
-  // authored vegetation masses. A future GPU grass pass can be added without
-  // compromising the playable surface.
+  // Volumetric near-lie turf. The previous billboard planes read as giant
+  // rectangular cards on iPhone. These tapered 3-sided blades are actual 3D
+  // geometry and only exist in a small radius around the current ball.
   const dummy=new THREE.Object3D();
-  function setDetailFocus(){ /* stable no-op; kept for gameplay API compatibility */ }
+  const detailBladeGeo=new THREE.ConeGeometry(.010,.10,3,1,false);
+  detailBladeGeo.translate(0,.05,0);
+  const detailBladeMat=new THREE.MeshStandardMaterial({color:0x78906a,roughness:1});
+  const detailGrass=new THREE.InstancedMesh(detailBladeGeo,detailBladeMat,360);
+  detailGrass.castShadow=false;detailGrass.receiveShadow=true;
+  detailGrass.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  world.add(detailGrass);
+
+  function setDetailFocus(position,surface='fairway'){
+    const seed=Math.floor((position.x+96)*31+(position.z+330)*19);
+    const rr=seeded(seed>>>0);
+    let height=.030,radius=3.1,count=150,color=0x7f976f;
+    if(surface==='rough'){height=.115;radius=3.8;count=330;color=0x657b55;}
+    else if(surface==='fringe'){height=.052;radius=3.2;count=210;color=0x789268;}
+    else if(surface==='green'){height=.010;radius=2.6;count=70;color=0x93aa7e;}
+    else if(surface==='tee'){height=.026;radius=3.0;count=140;color=0x819a70;}
+    else if(surface==='sand'||surface==='water'){height=0;count=0;}
+    detailGrass.material.color.setHex(color);
+
+    for(let i=0;i<360;i++){
+      if(i>=count||height===0){
+        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);
+        dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);continue;
+      }
+      const a=rr()*Math.PI*2,r=Math.sqrt(rr())*radius;
+      const x=position.x+Math.cos(a)*r,z=position.z+Math.sin(a)*r;
+      const y=(surface==='green'||surface==='fringe')
+        ? greenSurfaceHeight(pin,x,z)
+        : terrainHeight(x,z);
+      const h=height*(.72+rr()*.62);
+      dummy.position.set(x,y+.004,z);
+      dummy.rotation.set((rr()-.5)*.12,rr()*Math.PI*2,(rr()-.5)*.12);
+      dummy.scale.set(.78+rr()*.50,h/.10,.78+rr()*.50);
+      dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);
+    }
+    detailGrass.instanceMatrix.needsUpdate=true;
+  }
 
   const shrubGeo=new THREE.IcosahedronGeometry(.48,1);
   const shrubMat=mat(0x506342,.995);
