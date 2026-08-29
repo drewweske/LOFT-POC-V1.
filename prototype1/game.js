@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB} from './equipment.js';
-import {COLORS,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,buildWorld} from './world.js';
+import {COLORS,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,validateTerrain,buildWorld} from './world.js';
 import {LoftGolferRig} from './characterRig.js';
 import {GolfPhysics} from './physics.js';
 import {LoftCamera} from './camera.js';
@@ -52,6 +52,9 @@ sun.shadow.camera.left=-120;sun.shadow.camera.right=120;sun.shadow.camera.top=10
 scene.add(sun);
 const fill=new THREE.DirectionalLight(0xbfd6d7,.38);fill.position.set(48,32,-65);scene.add(fill);
 
+const terrainHealth=validateTerrain();
+if(!terrainHealth.ok)throw new Error('Terrain validation failed: '+terrainHealth.reason);
+window.__LOFT_TERRAIN_HEALTH__=terrainHealth;
 const world=buildWorld(scene,pin);
 
 const state={
