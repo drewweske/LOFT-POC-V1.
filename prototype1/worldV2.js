@@ -11,12 +11,12 @@ export const COLORS={
   cream:0xF2EFE8,
   stone:0xB8B1A6,
   orange:0xFF6A2A,
-  rough:0x536f4c,
-  roughLight:0x657e57,
-  fair:0x789568,
-  fairLight:0x8aa776,
-  green:0x91aa79,
-  fringe:0x7f986b,
+  rough:0x4f6847,
+  roughLight:0x607956,
+  fair:0x748e62,
+  fairLight:0x86a070,
+  green:0x8fa675,
+  fringe:0x7d9568,
   sand:0xd7c6a1,
   sandShade:0xbca47c,
   water:0x56777b,
@@ -677,8 +677,9 @@ export function buildWorld(scene,pin){
   const albedo=makeCourseAlbedo(),roughnessMap=makeCourseRoughness(),bump=makeMicroBump();
   const terrainMat=new THREE.MeshStandardMaterial({
     color:0xffffff,map:albedo,bumpMap:bump,bumpScale:.014,
-    roughness:1.0,roughnessMap,metalness:0
+    roughness:1.0,roughnessMap,metalness:0,dithering:true
   });
+  terrainMat.bumpScale=.018;
   const terrain=new THREE.Mesh(terrainGeo,terrainMat);
   terrain.receiveShadow=true;terrain.castShadow=false;world.add(terrain);
 
@@ -781,37 +782,48 @@ export function buildWorld(scene,pin){
   bunkerEdgeGrass.count=bunkerEdgeCount;bunkerEdgeGrass.castShadow=false;bunkerEdgeGrass.receiveShadow=true;
   world.add(bunkerEdgeGrass);
 
-  // High-density near-ball grass, regenerated per lie.
-  const detailMat=new THREE.MeshStandardMaterial({color:0x78906a,roughness:1,side:THREE.DoubleSide});
+  // High-density near-ball turf, regenerated per lie. Each sampled blade
+  // reads the LOCAL cut, so a fairway/rough or fringe/green boundary has actual
+  // grass-length continuity instead of one blanket height.
+  const detailMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,side:THREE.DoubleSide});
   const detailGrass=new THREE.InstancedMesh(bladeGeo,detailMat,900);
   detailGrass.instanceMatrix.setUsage(THREE.DynamicDrawUsage);world.add(detailGrass);
+  const grassProfile={
+    rough:{h:.78,c:0x5e744e},
+    fairway:{h:.12,c:0x718a60},
+    fringe:{h:.26,c:0x758d62},
+    green:{h:.035,c:0x8ba173},
+    tee:{h:.10,c:0x7d956a}
+  };
   function setDetailFocus(position,surface='fairway'){
     const rr=seeded((Math.floor((position.x+110)*37+(position.z+350)*29))>>>0);
-    let height=.20,radius=3.5,count=190,color=0x78906a;
-    if(surface==='rough'){height=.72;radius=4.4;count=760;color=0x617750;}
-    else if(surface==='fringe'){height=.34;radius=3.4;count=330;color=0x768f65;}
-    else if(surface==='green'){height=.07;radius=3.0;count=80;color=0x8da576;}
-    else if(surface==='tee'){height=.15;radius=3.2;count=150;color=0x80996e;}
-    else if(surface==='sand'||surface==='water'){height=0;count=0;}
-    detailGrass.material.color.setHex(color);
+    const radius=surface==='rough'?4.7:surface==='green'?3.2:3.8;
+    const count=surface==='rough'?900:surface==='green'?290:surface==='fringe'?520:430;
+    const tmpColor=new THREE.Color();
 
     for(let i=0;i<900;i++){
-      if(i>=count||height===0){
-        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);continue;
+      if(i>=count){
+        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);dummy.updateMatrix();
+        detailGrass.setMatrixAt(i,dummy.matrix);continue;
       }
       const a=rr()*Math.PI*2,r=Math.sqrt(rr())*radius;
       const x=position.x+Math.cos(a)*r,z=position.z+Math.sin(a)*r;
       const localSurface=courseSurfaceAt(x,z);
-      if(localSurface==='sand'||localSurface==='water'){
-        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);continue;
+      const profile=grassProfile[localSurface];
+      if(!profile){
+        dummy.position.set(0,-1000,0);dummy.scale.setScalar(0);dummy.updateMatrix();
+        detailGrass.setMatrixAt(i,dummy.matrix);continue;
       }
-      const h=height*(.68+rr()*.62);
-      dummy.position.set(x,terrainHeight(x,z)+.004,z);
-      dummy.rotation.set((rr()-.5)*.08,rr()*Math.PI*2,(rr()-.5)*.08);
-      dummy.scale.set(.58+rr()*.58,h,.58+rr()*.58);
+      const h=profile.h*(.72+rr()*.58);
+      dummy.position.set(x,terrainHeight(x,z)+.003,z);
+      dummy.rotation.set((rr()-.5)*.07,rr()*Math.PI*2,(rr()-.5)*.07);
+      dummy.scale.set(.52+rr()*.52,h,.52+rr()*.52);
       dummy.updateMatrix();detailGrass.setMatrixAt(i,dummy.matrix);
+      tmpColor.setHex(profile.c).multiplyScalar(.94+rr()*.10);
+      detailGrass.setColorAt(i,tmpColor);
     }
     detailGrass.instanceMatrix.needsUpdate=true;
+    if(detailGrass.instanceColor)detailGrass.instanceColor.needsUpdate=true;
   }
 
   // --- CLUBHOUSE / LIGHTHOUSE ---------------------------------------------
