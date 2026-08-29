@@ -145,13 +145,13 @@ export class LoftGolferRig{
     if(this.clubType===type)return;this.clubType=type;
     this.clubHead.geometry.dispose();
     if(type==='driver'){
-      this.clubHead.geometry=new THREE.SphereGeometry(.068,24,18);this.clubHead.scale.set(1.28,.66,1.42);this.clubHead.material=this.ink;
+      this.clubHead.geometry=new THREE.SphereGeometry(.054,28,20);this.clubHead.scale.set(1.18,.58,1.34);this.clubHead.material=this.ink;
     }else if(type==='wood'){
-      this.clubHead.geometry=new THREE.SphereGeometry(.061,22,16);this.clubHead.scale.set(1.20,.64,1.34);this.clubHead.material=this.ink;
+      this.clubHead.geometry=new THREE.SphereGeometry(.049,26,18);this.clubHead.scale.set(1.14,.58,1.26);this.clubHead.material=this.ink;
     }else if(type==='hybrid'){
       this.clubHead.geometry=new THREE.SphereGeometry(.055,20,14);this.clubHead.scale.set(1.10,.61,1.24);this.clubHead.material=this.ink;
     }else if(type==='putter'){
-      this.clubHead.geometry=new THREE.BoxGeometry(.13,.045,.22);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.ink;
+      this.clubHead.geometry=new THREE.BoxGeometry(.118,.032,.168);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.ink;
     }else{
       this.clubHead.geometry=new THREE.BoxGeometry(.098,.045,.146);this.clubHead.scale.set(1,1,1);this.clubHead.material=this.steel;
     }
