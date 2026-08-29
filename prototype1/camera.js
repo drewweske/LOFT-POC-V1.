@@ -129,7 +129,7 @@ export class LoftCamera{
     if(this.mode!==CAMERA_MODE.AIM)this._enter(CAMERA_MODE.AIM);
     this.aimPitch=smooth(this.aimPitch,this.aimPitchT,10,dt);
     this.aimDist=smooth(this.aimDist,this.aimDistT,11,dt);
-    this._setFov(putting ? 36.6 : 38.5,dt);
+    this._setFov(putting ? 38.4 : 40.0,dt);
 
     const forward=new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
@@ -140,14 +140,17 @@ export class LoftCamera{
     const viewDist=putting ? clamp(5.9+(this.aimDist-8.7)*.30,5.15,6.45) : this.aimDist;
     const desiredPos=ball.clone()
       .addScaledVector(forward,-viewDist*(putting ? .985 : .93))
-      .addScaledVector(right,putting ? .06 : viewDist*.024)
-      .add(new THREE.Vector3(0,(putting ? 1.24 : 1.70)+this.aimPitch*(putting ? 1.72 : 3.45),0));
+      // Shift toward the golfer enough to keep the full body in frame while
+      // preserving a visually trustworthy ball-to-target axis.
+      .addScaledVector(right,putting ? .27 : .54)
+      .add(new THREE.Vector3(0,(putting ? 1.30 : 1.76)+this.aimPitch*(putting ? 1.70 : 3.25),0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,putting ? 2.45 : 2.85)
-      .add(new THREE.Vector3(0,putting ? .16 : .58,0));
+      .addScaledVector(forward,putting ? 2.55 : 2.95)
+      .addScaledVector(right,putting ? .04 : .10)
+      .add(new THREE.Vector3(0,putting ? .17 : .60,0));
 
-    this._safeY(desiredPos,1.12);
+    this._safeY(desiredPos,1.20);
     this._commit(desiredPos,desiredLook,putting ? 8.8 : 11.5,putting ? 10.4 : 12.5,dt);
   }
 
