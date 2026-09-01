@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB} from './equipment.js';
-import {COLORS,BUNKERS,fairwayProfile,terrainHeight,greenSurfaceHeight,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js';
+import {COLORS,WATER_LEVEL,terrainHeight,terrainContactY,sampleTerrain,sweepTerrainSegment,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js';
 import {LoftGolferRig} from './characterRig.js';
 import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
 import {LoftCamera} from './camera.js';
@@ -18,7 +18,7 @@ let holeIndex=0;
 let holeDef=ROUND_HOLES[holeIndex];
 let pin=new THREE.Vector3(holeDef.pin[0],playingHeight(holeDef.pin[0],holeDef.pin[1]),holeDef.pin[1]);
 let wind=new THREE.Vector3(holeDef.wind[0],0,holeDef.wind[1]);
-let TEE=new THREE.Vector3(holeDef.tee[0],playingHeight(holeDef.tee[0],holeDef.tee[1])+BALL_CONTACT_HEIGHT,holeDef.tee[1]);
+let TEE=new THREE.Vector3(holeDef.tee[0],playingContactY(holeDef.tee[0],holeDef.tee[1]),holeDef.tee[1]);
 let COURSE_YAW=Math.atan2(pin.x-TEE.x,-(pin.z-TEE.z));
 
 window.addEventListener('error',e=>{
@@ -32,7 +32,7 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.02;
+renderer.toneMappingExposure=1.10;
 renderer.setClearColor(COLORS.sky);
 $('stage').appendChild(renderer.domElement);
 const canvas=renderer.domElement;
@@ -44,18 +44,18 @@ const camera=new THREE.PerspectiveCamera(43,1,.1,750);
 
 // Coastal Ridge lighting: warm low-angle key, cool sky fill, soft bounce.
 // The previous high-intensity pair flattened every surface into the same value.
-const hemi=new THREE.HemisphereLight(0xf7efe1,0x31483a,1.12);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffe2bf,2.38);
+const hemi=new THREE.HemisphereLight(0xf5efe4,0x405344,.64);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe2bf,2.30);
 // Lower coastal key light reveals the exact grade instead of flattening it.
-sun.position.set(-82,58,40);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+sun.position.set(-82,46,40);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
 sun.shadow.bias=-0.00030;sun.shadow.normalBias=.045;
 sun.shadow.camera.left=-112;sun.shadow.camera.right=112;
 sun.shadow.camera.top=126;sun.shadow.camera.bottom=-126;
 sun.shadow.camera.near=1;sun.shadow.camera.far=290;
 sun.target.position.set(0,0,-122);
 scene.add(sun);scene.add(sun.target);
-const fill=new THREE.DirectionalLight(0xc4d9d8,.34);fill.position.set(52,30,-72);scene.add(fill);
-const groundBounce=new THREE.DirectionalLight(0xe7dfcf,.12);groundBounce.position.set(-18,12,64);scene.add(groundBounce);
+const fill=new THREE.DirectionalLight(0xc4d9d8,.15);fill.position.set(52,30,-72);scene.add(fill);
+const groundBounce=new THREE.DirectionalLight(0xe7dfcf,.07);groundBounce.position.set(-18,12,64);scene.add(groundBounce);
 
 const terrainHealth=validateTerrain();
 if(!terrainHealth.ok)throw new Error('Terrain validation failed: '+terrainHealth.reason);
@@ -377,6 +377,9 @@ function playingHeight(x,z){
   // Exact Y of the unified visible terrain mesh.
   return terrainHeight(x,z);
 }
+function playingContactY(x,z){
+  return terrainContactY(x,z,BALL_CONTACT_HEIGHT);
+}
 
 function cupDistanceFeet(){
   return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)*3.28084;
@@ -397,7 +400,7 @@ function updatePuttPaceGhost(feet){
   const d=Math.max(.15,feet*.3048);
   const forward=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
   const x=TEE.x+forward.x*d,z=TEE.z+forward.z*d;
-  puttPaceGhost.position.set(x,playingHeight(x,z)+BALL_CONTACT_HEIGHT,z);
+  puttPaceGhost.position.set(x,playingContactY(x,z),z);
   const intended=intendedPuttFeet();
   const err=Math.abs(feet-intended);
   const close=err<=Math.max(.50,intended*.05);
@@ -412,7 +415,15 @@ function updatePuttPaceGhost(feet){
 function hidePuttPace(){puttPaceGhost.visible=false;}
 
 
-const physics=new GolfPhysics({terrainHeight:playingHeight,surfaceAt,wind});
+const physics=new GolfPhysics({
+  terrainHeight:playingHeight,
+  terrainSample:sampleTerrain,
+  terrainContactY,
+  terrainSweep:sweepTerrainSegment,
+  surfaceAt,
+  wind,
+  waterLevel:WATER_LEVEL
+});
 physics.setCup(pin);
 const cam=new LoftCamera(camera,{terrainHeight:playingHeight});
 const topo=new LoftTopoMap($('course-map'));
@@ -665,7 +676,7 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
   if(penalty)state.strokes++;
 
   TEE.copy(position);
-  TEE.y=playingHeight(TEE.x,TEE.z)+BALL_CONTACT_HEIGHT;
+  TEE.y=playingContactY(TEE.x,TEE.z);
   state.currentLie=lieOverride||surfaceAt(TEE.x,TEE.z);
   world.setDetailFocus?.(TEE,state.currentLie);
   ballGroup.visible=true;ballGroup.position.copy(TEE);ballGroup.rotation.set(0,0,0);ballGroup.scale.set(1,1,1);
@@ -697,7 +708,7 @@ function startHole(index,{intro=true}={}){
   physics.wind.copy(wind);physics.setCup(pin);
   world.setPin(pin);
 
-  const originalTee=new THREE.Vector3(holeDef.tee[0],playingHeight(holeDef.tee[0],holeDef.tee[1])+BALL_CONTACT_HEIGHT,holeDef.tee[1]);
+  const originalTee=new THREE.Vector3(holeDef.tee[0],playingContactY(holeDef.tee[0],holeDef.tee[1]),holeDef.tee[1]);
   topo.setHole(originalTee,pin);
   TEE.copy(originalTee);
   state.currentLie='tee';
@@ -739,6 +750,7 @@ function finishShot(){
 
   const feet=Math.hypot(ballGroup.position.x-pin.x,ballGroup.position.z-pin.z)*3.28084;
   const surface=holed?'cup':surfaceAt(ballGroup.position.x,ballGroup.position.z);
+  if(surface!=='water')world.setDetailFocus?.(ballGroup.position,holed?'green':surface);
   $('result-kicker').textContent=state.shot.label+' · '+state.shot.club;
 
   if(holed){
@@ -1061,7 +1073,7 @@ function frame(now){
     if(ps){
       ballGroup.position.copy(ps.pos);
       if(ps.surface!=='air'&&ps.surface!=='cup'&&!ps.holed){
-        const visualGround=playingHeight(ballGroup.position.x,ballGroup.position.z)+BALL_CONTACT_HEIGHT;
+        const visualGround=playingContactY(ballGroup.position.x,ballGroup.position.z);
         if(Number.isFinite(visualGround)&&ballGroup.position.y<visualGround)ballGroup.position.y=visualGround;
       }
       if(ps.surface==='air'&&ps.spinAxis&&ps.spinOmega>0){

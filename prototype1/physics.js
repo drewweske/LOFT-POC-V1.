@@ -13,20 +13,44 @@ const ROLLING_GRAVITY_FACTOR=5/7;
 // Regulation geometry. The visual ball is very slightly enlarged for mobile
 // readability, but cup/ball physics stay anchored to real golf dimensions.
 const CUP_RADIUS=.053975;
-const CUP_CAPTURE=.0495;
+const CUP_THROAT=CUP_RADIUS-BALL_RADIUS;
+// A few millimetres of mobile forgiveness around the regulation throat keeps
+// putting welcoming without snapping a visibly rim-straddling ball into cup.
+const CUP_CAPTURE=CUP_THROAT+.0035;
+const CUP_LIP_CONTACT=CUP_RADIUS+BALL_RADIUS;
 export const BALL_CONTACT_HEIGHT=.0265;
 const CONTACT_HEIGHT=BALL_CONTACT_HEIGHT;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class GolfPhysics{
-  constructor({terrainHeight,surfaceAt,wind}){
+  constructor({terrainHeight,terrainSample=null,terrainContactY=null,terrainSweep=null,surfaceAt,wind,waterLevel=-.22}){
     this.terrainHeight=terrainHeight;
+    this.terrainSample=terrainSample;
+    this.terrainContactY=terrainContactY;
+    this.terrainSweep=terrainSweep;
     this.surfaceAt=surfaceAt;
     this.wind=wind.clone();
+    this.waterLevel=waterLevel;
     this.active=false;
     this.state=null;
     this.accum=0;
     this.cup=null;
+    this._frame={height:0,dx:0,dz:0,grade:0,normal:{x:0,y:1,z:0}};
+  }
+
+  _groundFrame(x,z){
+    if(this.terrainSample)return this.terrainSample(x,z,this._frame);
+    const e=.35,height=this.terrainHeight(x,z);
+    const dx=(this.terrainHeight(x+e,z)-this.terrainHeight(x-e,z))/(2*e);
+    const dz=(this.terrainHeight(x,z+e)-this.terrainHeight(x,z-e))/(2*e);
+    const inv=1/Math.hypot(dx,1,dz),out=this._frame;
+    out.height=height;out.dx=dx;out.dz=dz;out.grade=Math.hypot(dx,dz);
+    out.normal.x=-dx*inv;out.normal.y=inv;out.normal.z=-dz*inv;
+    return out;
+  }
+
+  _groundY(x,z){
+    return this.terrainContactY?this.terrainContactY(x,z,CONTACT_HEIGHT):this.terrainHeight(x,z)+CONTACT_HEIGHT;
   }
 
   setCup(position){this.cup=position?position.clone():null;}
@@ -72,6 +96,7 @@ export class GolfPhysics{
       bounced:false,
       holed:false,
       lipTouched:false,
+      captureRejected:false,
       lastSurface:null,
       surfaceChanged:null,
       simTime:0,
@@ -103,6 +128,7 @@ export class GolfPhysics{
       bounced:false,
       holed:false,
       lipTouched:false,
+      captureRejected:false,
       lastSurface:this.surfaceAt(position.x,position.z),
       surfaceChanged:null,
       simTime:0,
@@ -136,7 +162,7 @@ export class GolfPhysics{
 
     const dx=closestX-this.cup.x,dz=closestZ-this.cup.z;
     const d=Math.hypot(dx,dz);
-    if(d>CUP_RADIUS)return false;
+    if(d>CUP_LIP_CONTACT)return false;
 
     const speed=Math.hypot(s.vel.x,s.vel.z);
     const direct=d<CUP_CAPTURE;
@@ -145,23 +171,37 @@ export class GolfPhysics{
     // The continuous segment test prevents a perfectly aimed putt tunneling
     // across the cup between 120 Hz fixed steps.
     const edge=clamp(d/CUP_CAPTURE,0,1);
-    const captureSpeed=1.95-(1.95-.58)*Math.pow(edge,1.62);
-    const normalCapture=direct&&speed<captureSpeed;
+    const captureSpeed=1.95-(1.95-.50)*Math.pow(edge,1.62);
+    const normalCapture=direct&&speed<captureSpeed&&!s.captureRejected;
 
     if(normalCapture){
       s.holed=true;s.stopped=true;s.surface='cup';s.vel.set(0,0,0);
-      s.pos.set(this.cup.x,this.terrainHeight(this.cup.x,this.cup.z)+CONTACT_HEIGHT,this.cup.z);
+      s.pos.set(this.cup.x,this._groundY(this.cup.x,this.cup.z),this.cup.z);
       this.active=false;
       return true;
     }
 
-    // A genuine hot lip-out should still be readable rather than an invisible wall.
-    if(!s.lipTouched&&speed>.18){
+    if(direct&&speed>=captureSpeed){
+      // Once pace has exceeded the acceptance window it cannot be slowed by
+      // the rim and then accepted on the next fixed step.
+      s.captureRejected=true;
+    }
+
+    const ballDx=s.pos.x-this.cup.x,ballDz=s.pos.z-this.cup.z;
+    const radialMotion=ballDx*s.vel.x+ballDz*s.vel.z;
+    // Resolve the rim only after the ball reaches and begins leaving its
+    // closest approach. Resolving on the inbound outer-overlap radius creates
+    // an invisible wall in front of an otherwise centred putt.
+    if(!s.lipTouched&&speed>.12&&radialMotion>=0){
       s.lipTouched=true;
-      const n=new THREE.Vector3(dx||.001,0,dz||.001).normalize();
+      if(d<CUP_CAPTURE){s.vel.multiplyScalar(.82);return false;}
+      const n=new THREE.Vector3(ballDx||dx||.001,0,ballDz||dz||.001).normalize();
       const tangent=new THREE.Vector3(-n.z,0,n.x);
-      const sign=Math.sign(s.vel.dot(tangent))||1;
-      s.vel.multiplyScalar(.54).addScaledVector(tangent,sign*.28);
+      const tangential=s.vel.dot(tangent);
+      const radial=s.vel.dot(n);
+      const bite=1-clamp((d-CUP_CAPTURE)/(CUP_LIP_CONTACT-CUP_CAPTURE),0,1);
+      s.vel.copy(tangent).multiplyScalar(tangential*(.78-.16*bite));
+      s.vel.addScaledVector(n,radial<0?(-radial*(.13+.08*bite)):radial*.55);
     }
     return false;
   }
@@ -170,8 +210,8 @@ export class GolfPhysics{
     const s=this.state;if(!s)return;
     const p=s.lastSafePos&&Number.isFinite(s.lastSafePos.x)?s.lastSafePos:new THREE.Vector3(0,0,0);
     const x=clamp(p.x,-78,78),z=clamp(p.z,-272,38);
-    const ground=this.terrainHeight(x,z);
-    s.pos.set(x,Number.isFinite(ground)?ground+CONTACT_HEIGHT:CONTACT_HEIGHT,z);
+    const ground=this._groundY(x,z);
+    s.pos.set(x,Number.isFinite(ground)?ground:CONTACT_HEIGHT,z);
     s.vel.set(0,0,0);
     s.surface=this.surfaceAt(x,z);
     s.lastSurface=s.surface;
@@ -184,12 +224,20 @@ export class GolfPhysics{
     // The rendered LOFT field is a triangle heightfield. A fast shot can cross
     // more than one triangle in a fixed step, so endpoint-only collision is not
     // sufficient. Sample the path, then bisect the first clearance crossing.
+    if(this.terrainSweep){
+      const hit=this.terrainSweep(a,b,CONTACT_HEIGHT);
+      return hit?{t:hit.t,point:new THREE.Vector3(hit.x,hit.y,hit.z)}:null;
+    }
     const clearance=(p)=>{
-      const h=this.terrainHeight(p.x,p.z);
-      return Number.isFinite(h)?p.y-(h+CONTACT_HEIGHT):Infinity;
+      const y=this._groundY(p.x,p.z);
+      return Number.isFinite(y)?p.y-y:Infinity;
     };
     let prevT=0,prevC=clearance(a);
-    if(prevC<=0)return {t:0,point:a.clone()};
+    const endC=clearance(b);
+    if(prevC<=1e-7&&endC>prevC+1e-7)return null;
+    if(prevC< -1e-6||(endC<prevC-1e-6&&prevC<=1e-7)){
+      const p=a.clone();p.y=this._groundY(p.x,p.z);return {t:0,point:p};
+    }
     const probe=new THREE.Vector3();
     const samples=5;
     for(let i=1;i<=samples;i++){
@@ -204,7 +252,7 @@ export class GolfPhysics{
           if(clearance(probe)>0)lo=m;else hi=m;
         }
         const hit=a.clone().lerp(b,hi);
-        hit.y=this.terrainHeight(hit.x,hit.z)+CONTACT_HEIGHT;
+        hit.y=this._groundY(hit.x,hit.z);
         return {t:hi,point:hit};
       }
       prevT=t;prevC=cc;
@@ -255,7 +303,7 @@ export class GolfPhysics{
       let surface=this.surfaceAt(s.pos.x,s.pos.z);
       let sampled=this.terrainHeight(s.pos.x,s.pos.z);
       if(!Number.isFinite(sampled)){this._recover('HEIGHTFIELD');return;}
-      let ground=surface==='water'?-0.16:sampled+CONTACT_HEIGHT;
+      let ground=surface==='water'?this.waterLevel+CONTACT_HEIGHT:this._groundY(s.pos.x,s.pos.z);
       let sweptContact=false;
 
       if(surface!=='water'){
@@ -264,7 +312,7 @@ export class GolfPhysics{
           s.pos.copy(hit.point);
           surface=this.surfaceAt(s.pos.x,s.pos.z);
           sampled=this.terrainHeight(s.pos.x,s.pos.z);
-          ground=sampled+CONTACT_HEIGHT;
+          ground=this._groundY(s.pos.x,s.pos.z);
           s.pos.y=ground;
           sweptContact=true;
         }else if(s.pos.y<ground-.018){
@@ -293,10 +341,8 @@ export class GolfPhysics{
         if(Math.abs(s.vel.y)>1.45){
           // Resolve against the actual terrain normal. Surface identity now
           // determines bounce, skid, and spin grab instead of one global slide.
-          const e=.30;
-          const hx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
-          const hz=(this.terrainHeight(s.pos.x,s.pos.z+e)-this.terrainHeight(s.pos.x,s.pos.z-e))/(2*e);
-          const n=new THREE.Vector3(-hx,1,-hz).normalize();
+          const frame=this._groundFrame(s.pos.x,s.pos.z);
+          const n=new THREE.Vector3(frame.normal.x,frame.normal.y,frame.normal.z);
           const vn=s.vel.dot(n);
           const normal=n.clone().multiplyScalar(vn);
           const tangent=s.vel.clone().sub(normal).multiplyScalar(material.tangentRetain);
@@ -341,10 +387,8 @@ export class GolfPhysics{
       }
       s.lastSurface=surface;
 
-      const e=.35;
-      const dx=(this.terrainHeight(s.pos.x+e,s.pos.z)-this.terrainHeight(s.pos.x-e,s.pos.z))/(2*e);
-      const dz=(this.terrainHeight(s.pos.x,s.pos.z+e)-this.terrainHeight(s.pos.x,s.pos.z-e))/(2*e);
-      const grade=Math.hypot(dx,dz);
+      const frame=this._groundFrame(s.pos.x,s.pos.z);
+      const dx=frame.dx,dz=frame.dz,grade=frame.grade;
       const hs0=Math.hypot(s.vel.x,s.vel.z);
 
       // Static friction / turf indentation matters. A nearly stopped golf ball
@@ -368,7 +412,7 @@ export class GolfPhysics{
       // release, and the transition converges toward pure rolling instead of
       // discarding aerodynamic spin the instant the ball touches grass.
       if(s.spinOmega>1&&s.spinAxis.lengthSq()>.001){
-        const n=new THREE.Vector3(-dx,1,-dz).normalize();
+        const n=new THREE.Vector3(frame.normal.x,frame.normal.y,frame.normal.z);
         const omega=s.spinAxis.clone().multiplyScalar(s.spinOmega);
         const arm=n.clone().multiplyScalar(-BALL_RADIUS);
         const contactVel=s.vel.clone().add(new THREE.Vector3().crossVectors(omega,arm));
@@ -397,13 +441,28 @@ export class GolfPhysics{
 
       const fromX=s.pos.x,fromZ=s.pos.z;
       s.pos.addScaledVector(s.vel,FIXED);
-      const nextGround=this.terrainHeight(s.pos.x,s.pos.z);
+      const nextSurface=this.surfaceAt(s.pos.x,s.pos.z);
+      if(nextSurface==='water'){
+        s.surface='water';s.lastSurface='water';s.pos.y=this.waterLevel+CONTACT_HEIGHT;
+        s.vel.set(0,0,0);s.stopped=true;this.active=false;return;
+      }
+      const nextGround=this._groundY(s.pos.x,s.pos.z);
       if(!Number.isFinite(nextGround)){this._recover('HEIGHTFIELD');return;}
-      s.pos.y=nextGround+CONTACT_HEIGHT;
+      s.pos.y=nextGround;
 
-      if(this._tryCup(s,surface,fromX,fromZ))return;
+      if(this._tryCup(s,nextSurface,fromX,fromZ))return;
 
-      if(Math.hypot(s.vel.x,s.vel.z)<material.settleSpeed*1.35&&(grade<material.staticGrade||canPhysicallyHold)){
+      let nextMaterial=material;
+      if(nextSurface!==surface){
+        nextMaterial=surfacePhysics(nextSurface);
+        s.vel.x*=nextMaterial.transitionRetain;s.vel.z*=nextMaterial.transitionRetain;
+        s.surfaceChanged={from:surface,to:nextSurface};
+      }
+      s.surface=nextSurface;s.lastSurface=nextSurface;
+      const nextFrame=this._groundFrame(s.pos.x,s.pos.z);
+      const nextSlopeAccel=G*ROLLING_GRAVITY_FACTOR*nextFrame.grade/Math.sqrt(1+nextFrame.grade*nextFrame.grade);
+      const nextCanHold=nextSlopeAccel<nextMaterial.rollingDecel*.94;
+      if(Math.hypot(s.vel.x,s.vel.z)<nextMaterial.settleSpeed*1.35&&(nextFrame.grade<nextMaterial.staticGrade||nextCanHold)){
         s.vel.set(0,0,0);
         s.stopped=true;
         this.active=false;

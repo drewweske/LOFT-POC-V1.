@@ -315,6 +315,8 @@ export class LoftFeedback{
     const s=clamp(speed/8,0,1);
     if(to==='rough'){
       this._noise({freq:820,q:.55,dur:.060,gain:.010+.016*s});
+    }else if(to==='firstCut'){
+      this._noise({freq:920,q:.58,dur:.044,gain:.007+.011*s});
     }else if(to==='sand'){
       this._noise({freq:560,q:.48,dur:.085,gain:.018+.022*s});
       this._vibrate(3);
@@ -340,10 +342,10 @@ export class LoftFeedback{
       this._noise({freq:1350,q:.40,dur:.110,gain:.028,delay:.010});
       this._tone(120,52,.120,.018,'sine');
       this._vibrate([5,10,5]);
-    }else if(surface==='rough'){
+    }else if(surface==='rough'||surface==='firstCut'){
       this._noise({freq:520,q:.38,dur:.105,gain:.034});
       this._tone(94,52,.070,.012,'sine');
-      this._vibrate(5);
+      this._vibrate(surface==='rough'?5:4);
     }else{
       const green=surface==='green'||surface==='fringe';
       this._tone(green?108:96,52,.070,.016,'sine');
@@ -357,6 +359,7 @@ export class LoftFeedback{
     const v=clamp(speed,0,8);
     const green=surface==='green'||surface==='fringe';
     const rough=surface==='rough';
+    const firstCut=surface==='firstCut';
     const sand=surface==='sand';
 
     // Sparse grains imply the ball's dimples interacting with the cut without
@@ -365,6 +368,8 @@ export class LoftFeedback{
       this._noise({freq:360,q:.32,dur:.028,gain:.004+.004*clamp(v/2,0,1)});
     }else if(rough){
       this._noise({freq:520,q:.40,dur:.020,gain:.003+.004*clamp(v/3,0,1)});
+    }else if(firstCut){
+      this._noise({freq:700,q:.46,dur:.017,gain:.0028+.0038*clamp(v/3.5,0,1)});
     }else if(green){
       this._noise({freq:1500,q:.80,dur:.010,gain:.0025+.0035*clamp(v/2.2,0,1)});
     }else{

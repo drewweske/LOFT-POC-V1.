@@ -1,10 +1,96 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Prototype 1 / Integration 015
+Current build: Prototype 1 / Integration 016
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: LOFT Field V3 — triangle-exact terrain, course skin, terrain physics
-Iteration: integration_015
+Active subsystem: LOFT Terrain System V1 — shared render/contact field, course cuts, coastal world
+Iteration: integration_016
+
+## Integration 016 verdict
+
+Integration 016 is the first complete LOFT Terrain System candidate.
+
+The structural contract is now:
+
+- one authored land field
+- one triangle-interpolated rendered height
+- one shared rendered / physical normal frame
+- one golf-ball sphere contact height
+- one exact swept terrain crossing
+- one shared coastline / water threshold
+- one physical and visible surface identity at every playable point
+
+System identifier:
+LOFT_FIELD_V4_CONTACT
+
+Render / physics contract:
+TRIANGLE_HEIGHT_SHARED_NORMAL
+
+### Decisive visual delta
+
+The prior build double-encoded course albedo through the color pipeline, crushing intended turf values into a near-black olive field. Integration 016 authors the course canvas directly in sRGB and separates the maintained cuts with deliberately restrained value and chroma spacing.
+
+Coastal Ridge now has:
+
+- a crisp, physical first cut between fairway and rough
+- readable fairway mowing direction
+- distinct green / fringe / fairway / first-cut / rough / sand identities
+- a broad landing crest and shallow hollow on the opening climb
+- stronger crossfall, shoulder, swale, approach ramp and collection landforms
+- authored putting-green tilt, crown and collection shoulders
+- bunker bowls, lips, rake and recessed sand tone on the same collider
+- denser native rough and local lie-aware turf
+- smoother windswept pines and organic color-varied shrubs
+- coastline-aligned rock strata, shared shoreline foam and a deeper ocean treatment
+- a lower coastal key with reduced ambient wash so physical grade reads on a phone
+
+### Contact / physics delta
+
+The rendered mesh, ball contact and roll solver now share height and normal data. Sphere contact lifts the ball along the visible smoothed normal, preventing side-slope burial without inventing a second surface.
+
+Terrain sweep now:
+
+- ignores a grounded ball that is genuinely separating on launch or after bounce
+- resolves every grounded non-departing uphill entry at the segment origin
+- enumerates height-grid and triangle-diagonal crossings for airborne entry
+- refines the first positive-to-negative contact interval
+- returns the exact visible contact height
+
+The lazy height cache returns the same Float32 value on first and later access, removing order-dependent sub-micron contact drift.
+
+Cup capture is regulation-led and pace-sensitive. Hot or edge entries reject to the lip instead of being magnetized into the hole. Water crossing resolves on the same fixed step as the visible shoreline.
+
+### Automated terrain Gauntlet
+
+13 / 13 checks pass, including:
+
+- verified LOFT-only repository boundary and remote
+- 4,000 random shared height / normal / contact samples
+- course cut and hazard identity fixtures
+- surface personality ordering
+- 12,000 deterministic grounded uphill sweep probes
+- clean grounded launch and first-bounce separation
+- immediate, height-safe fairway to first-cut transition
+- identical fixed-step shot result under 30 / 60 / 120 Hz frame delivery
+- same-step visible water crossing
+- controlled centre cup acceptance and hot / edge rejection
+- critical golf, map, bag, result and round DOM contracts
+
+The independent final regression gate added 25,000 randomized terrain sweeps, 12,000 terrain-seam probes and 160 randomized full shots. It found zero missed / late / invalid contacts, seam continuity held to approximately 1.5e-7 m, and 30 / 120 Hz shot outcomes were identical with zero penetration, recovery, non-finite or unfinished states.
+
+### Stable mobile verdict
+
+The settled 390 × 844 and 430 × 932 builds render with no fatal overlay or console warnings / errors. Bag selection, precision map expand / close, a full iron stroke, flight, bounce, roll, result and next-shot flow remain working. Sampled iron landings remain visibly tangent to the physical terrain.
+
+Rapid reload captures can briefly show a partially composited browser frame. Eight stable 430 × 932 reloads confirmed the inline map, camera orientation, WebGL world and HUD are correct after the document settles; this is not a LOFT runtime state defect.
+
+### Preserved systems
+
+No scoring, hole progression, round, equipment, target-map, gesture, camera-mode or one-more-round contract was replaced. Changes are isolated to terrain/world presentation, shared contact, surface response and surface feedback.
+
+### Remaining hardware gate
+
+The code and in-app mobile Gauntlet pass. A physical iPhone remains the final authority for sustained GPU frame pacing, speaker mix and haptics.
 
 ## Device verdict entering 015
 

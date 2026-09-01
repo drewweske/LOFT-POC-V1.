@@ -42,6 +42,19 @@ export const SURFACE_PHYSICS=freeze({
     launchSpin:1,
     launchBias:0
   }),
+  firstCut:freeze({
+    restitution:.12,
+    tangentRetain:.42,
+    rollingDecel:2.28,
+    speedDrag:.065,
+    staticGrade:.28,
+    settleSpeed:.086,
+    spinGrip:.080,
+    transitionRetain:.76,
+    launchSpeed:.96,
+    launchSpin:.86,
+    launchBias:.55
+  }),
   green:freeze({
     restitution:.11,
     tangentRetain:.47,
@@ -130,6 +143,7 @@ export function surfaceDisplay(name){
   return ({
     tee:'TEE',
     fairway:'FAIRWAY',
+    firstCut:'FIRST CUT',
     rough:'ROUGH',
     sand:'BUNKER',
     green:'GREEN',
