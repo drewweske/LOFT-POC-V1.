@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0B0D0D">
-<title>LOFT Prototype 1 — Coastal Ridge</title>
-<link rel="stylesheet" href="./styles.css">
+<title>LOFT v1 — Coastal Ridge</title>
+<link rel="stylesheet" href="./styles.css?v=035-final">
 </head>
 <body>
 <div id="app">
@@ -19,114 +19,203 @@
   </div>
 
   <div id="hole-intro">
+    <i aria-hidden="true"></i>
     <span id="intro-series">COASTAL SERIES · 01</span>
     <strong id="intro-name">THE RIDGE</strong>
     <small id="intro-meta">PAR 3 · 171 YD</small>
   </div>
 
-  <header class="hud">
-    <section class="hole">
-      <span id="hole-number">01 · STROKE 1</span>
-      <strong id="hole-par">PAR 3</strong>
+  <header class="hud" aria-label="Current hole and conditions">
+    <section class="hole field-instrument">
+      <button id="chronicle-open" class="chronicle-trigger" type="button" aria-label="Open round scorecard" aria-haspopup="dialog" aria-controls="round-end" aria-expanded="false"><span>SCORECARD</span><i aria-hidden="true">↗</i></button>
+      <span class="hud-live"><i aria-hidden="true"></i>ROUND LIVE</span>
+      <div class="hud-scoreline">
+        <div><span id="hole-number">01 · STROKE 1</span><strong id="hole-par">PAR 3</strong></div>
+        <em id="hud-score">E</em>
+      </div>
     </section>
-    <section class="wind">
-      <span>WIND</span>
+    <section class="wind field-instrument">
+      <span>WIND / COASTAL</span>
       <strong id="wind-value">7 MPH ↠</strong>
+      <i aria-hidden="true"></i>
     </section>
   </header>
 
-  <section id="course-map" class="course-map" aria-label="Coastal Ridge topographic course map" aria-expanded="false">
+  <section id="course-map" class="course-map field-instrument" aria-label="Coastal Ridge topographic course map" aria-expanded="false">
     <div class="map-head">
-      <span>THE RIDGE · 01</span>
+      <div><span id="map-course-name">THE RIDGE · 01</span><small>COASTAL SERIES</small></div>
       <b id="map-distance">160 YD</b>
       <button id="map-expand" type="button" aria-label="Expand course map">↗</button>
     </div>
-    <svg viewBox="0 0 94 120" role="img" aria-label="Bird's-eye map of the hole">
-      <defs>
-        <clipPath id="mapClip"><rect x="2" y="2" width="90" height="116" rx="17"/></clipPath>
-      </defs>
-      <g clip-path="url(#mapClip)">
-        <rect x="2" y="2" width="90" height="116" rx="17" class="map-ground"/>
-        <path class="map-water" d="M72 0 C76 18 74 33 80 49 C86 68 83 87 94 104 L94 0 Z"/>
-        <path class="map-fair" d="M44 111 C35 97 35 87 39 74 C43 61 36 50 40 38 C44 27 43 18 48 9 C55 12 58 20 56 31 C54 43 60 52 58 65 C56 78 62 92 54 111 Z"/>
-        <path class="map-green" d="M39 12 C42 6 51 5 57 9 C62 13 61 20 55 23 C49 27 39 24 37 18 C36 16 37 14 39 12 Z"/>
-        <path class="map-bunker" d="M31 30 C35 27 43 28 45 32 C42 36 34 36 30 33 Z"/>
-        <path class="map-bunker" d="M57 20 C60 17 66 18 67 22 C64 25 59 25 56 23 Z"/>
-        <path class="map-bunker" d="M47 55 C51 52 57 53 58 56 C55 59 50 59 47 57 Z"/>
-        <g class="contours">
-          <path d="M8 103 C26 95 28 101 43 95 C58 89 67 93 86 84"/>
-          <path d="M7 90 C23 83 32 87 46 82 C61 76 69 80 87 72"/>
-          <path d="M8 76 C23 70 31 72 45 68 C61 63 69 65 86 59"/>
-          <path d="M7 62 C24 56 32 59 45 54 C59 49 69 52 87 45"/>
-          <path d="M9 48 C22 43 31 46 44 41 C57 36 69 38 86 31"/>
-          <path d="M11 34 C25 29 33 31 45 27 C57 23 69 24 84 18"/>
+    <div class="map-plot">
+      <svg viewBox="0 0 94 120" role="img" aria-label="Bird's-eye map of the hole">
+        <defs><clipPath id="mapClip"><rect x="2" y="2" width="90" height="116" rx="12"/></clipPath></defs>
+        <g clip-path="url(#mapClip)">
+          <rect x="2" y="2" width="90" height="116" rx="12" class="map-ground"/>
+          <path class="map-water" d="M72 0 C76 18 74 33 80 49 C86 68 83 87 94 104 L94 0 Z"/>
+          <path class="map-fair" d="M44 111 C35 97 35 87 39 74 C43 61 36 50 40 38 C44 27 43 18 48 9 C55 12 58 20 56 31 C54 43 60 52 58 65 C56 78 62 92 54 111 Z"/>
+          <path class="map-green" d="M39 12 C42 6 51 5 57 9 C62 13 61 20 55 23 C49 27 39 24 37 18 C36 16 37 14 39 12 Z"/>
+          <path class="map-bunker" d="M31 30 C35 27 43 28 45 32 C42 36 34 36 30 33 Z"/>
+          <path class="map-bunker" d="M57 20 C60 17 66 18 67 22 C64 25 59 25 56 23 Z"/>
+          <path class="map-bunker" d="M47 55 C51 52 57 53 58 56 C55 59 50 59 47 57 Z"/>
+          <g class="contours">
+            <path d="M8 103 C26 95 28 101 43 95 C58 89 67 93 86 84"/>
+            <path d="M7 90 C23 83 32 87 46 82 C61 76 69 80 87 72"/>
+            <path d="M8 76 C23 70 31 72 45 68 C61 63 69 65 86 59"/>
+            <path d="M7 62 C24 56 32 59 45 54 C59 49 69 52 87 45"/>
+            <path d="M9 48 C22 43 31 46 44 41 C57 36 69 38 86 31"/>
+            <path d="M11 34 C25 29 33 31 45 27 C57 23 69 24 84 18"/>
+          </g>
+          <line id="map-aim" x1="47" y1="108" x2="47" y2="28"/>
+          <g id="map-target" transform="translate(47 28)"><circle r="3.6" class="map-target-ring"/><circle r="1.6" class="map-target-dot"/></g>
+          <g id="map-player" transform="translate(47 108)"><circle r="3.2" class="map-player"/><circle r="1" class="map-player-core"/></g>
+          <g transform="translate(49 15)" class="map-pin"><line x1="0" y1="5" x2="0" y2="-5"/><path d="M0 -5 L5 -3 L0 -1 Z"/></g>
         </g>
-        <line id="map-aim" x1="47" y1="108" x2="47" y2="28"/>
-        <g id="map-target" transform="translate(47 28)"><circle r="3.6" class="map-target-ring"/><circle r="1.6" class="map-target-dot"/></g>
-        <g id="map-player" transform="translate(47 108)"><circle r="3.2" class="map-player"/><circle r="1" class="map-player-core"/></g>
-        <g transform="translate(49 15)" class="map-pin"><line x1="0" y1="5" x2="0" y2="-5"/><path d="M0 -5 L5 -3 L0 -1 Z"/></g>
-      </g>
-    </svg>
+      </svg>
+    </div>
     <div class="map-foot"><span id="map-lie">TEE</span><span id="map-foot-right">YOU E · ROWAN E</span></div>
-    <div class="map-hint">DRAG MAP TO AIM · TAP × TO CLOSE</div>
+    <div class="map-hint">DRAG TO SET LANDING POSITION · TAP × TO CLOSE</div>
   </section>
 
-  <button id="club-chip" class="club-chip" type="button" aria-label="Open bag">
-    <b id="club-short">7I</b>
-    <span id="club-carry" data-unit="YD">160</span>
+  <div id="target-steward" class="target-steward" role="status" aria-live="off" aria-hidden="true" data-placement="above">
+    <span id="target-steward-kicker">LANDING</span>
+    <span class="target-steward-primary"><strong id="target-steward-value">160</strong><small id="target-steward-unit">YD</small></span>
+    <span id="target-steward-detail">LEVEL · FAIRWAY</span>
+  </div>
+
+  <button id="club-chip" class="club-chip workshop-object" type="button" aria-label="Open bag">
+    <span class="club-chip-eyebrow"><i aria-hidden="true"></i>SELECTED OBJECT</span>
+    <span id="club-chip-art" class="club-chip-art" data-head="iron" aria-hidden="true"></span>
+    <span class="club-chip-copy"><b id="club-short">7I</b><small id="club-model">FIELD 7</small></span>
+    <span class="club-chip-distance"><small id="club-range-label">CARRY</small><strong id="club-carry" data-unit="YD">160</strong></span>
+    <span class="club-chip-footer"><span id="club-tier">FOUNDATION · COMMON</span><em>THE BAG ↗</em></span>
   </button>
 
-  <div class="right-tools">
-    <button id="level-chip" type="button">LV 1</button>
-    <button id="camera-reset" type="button" aria-label="Reset camera">⌖</button>
+  <div class="right-tools field-instrument">
+    <button id="level-chip" type="button" aria-haspopup="listbox" aria-expanded="false">LV 1</button>
+    <button id="camera-reset" type="button" aria-label="Reset camera"><span aria-hidden="true">⌖</span><small>RESET VIEW</small></button>
   </div>
 
-  <div id="level-menu">
-    <button data-level="1" class="active">LV 1 <span>ROOKIE</span></button>
-    <button data-level="10">LV 10 <span>LEARNING</span></button>
-    <button data-level="25">LV 25 <span>PLAYER</span></button>
-    <button data-level="50">LV 50 <span>MASTERED</span></button>
+  <div id="level-menu" role="listbox" aria-label="Swing form and equipment grade">
+    <div class="level-head"><span>ABILITY / OBJECT GRADE</span><strong>SWING FORM.</strong></div>
+    <button data-level="1" class="active" role="option" aria-selected="true"><b>01</b><span><strong>FOUNDATION</strong><small>DEVELOPING · COMMON</small></span></button>
+    <button data-level="10" role="option" aria-selected="false"><b>10</b><span><strong>FIELD</strong><small>GROOVED · COMMON+</small></span></button>
+    <button data-level="25" role="option" aria-selected="false"><b>25</b><span><strong>TOUR</strong><small>TOUR READY · RARE</small></span></button>
+    <button data-level="50" role="option" aria-selected="false"><b>50</b><span><strong>SIGNATURE</strong><small>MASTERED · EPIC</small></span></button>
+    <button data-level="75" role="option" aria-selected="false"><b>75</b><span><strong>ICON</strong><small>ICONIC · LEGENDARY</small></span></button>
   </div>
 
-  <div id="context"><span id="context-text">THE LINE</span></div>
-  <div id="tip"><span id="tip-text">Drag to aim · pinch to zoom</span></div>
-
+  <div id="context" role="status" aria-live="polite"><span id="context-text">THE LINE</span></div>
+  <div id="tip"><span id="tip-text">Drag to aim · pinch or scroll to zoom</span></div>
   <div id="swing-meter"><i id="swing-fill"></i></div>
 
-  <div id="bag" aria-hidden="true">
+  <div id="bag" aria-hidden="true" role="dialog" aria-modal="true" aria-label="LOFT Workshop equipment collection">
     <div class="bag-panel">
       <div class="bag-head">
-        <div><span>YOUR BAG</span><strong>Choose the object.</strong></div>
-        <button id="bag-close" type="button">×</button>
+        <div class="bag-brand"><img src="./assets/loft-wordmark-official.webp" alt="LOFT"><span>WORKSHOP · COASTAL SET / 01</span></div>
+        <div class="bag-title"><span>8 OBJECTS · ONE BAG</span><strong>THE BAG.</strong><small id="bag-grade">FOUNDATION · COMMON · BRUSHED STONE</small></div>
+        <button id="bag-close" type="button" aria-label="Close bag">×</button>
       </div>
-      <div id="club-grid"></div>
+      <div class="bag-tabs" role="tablist" aria-label="Equipment category">
+        <button id="bag-tab-clubs" type="button" role="tab" aria-selected="true" aria-controls="bag-clubs-panel">CLUBS <small>08</small></button>
+        <button id="bag-tab-ball" type="button" role="tab" aria-selected="false" aria-controls="bag-ball-panel" tabindex="-1">BALL <small>01</small></button>
+      </div>
+      <div id="bag-clubs-panel" role="tabpanel" aria-labelledby="bag-tab-clubs">
+      <div id="bag-workbench" class="bag-workbench">
+        <section id="bag-hero-stage" class="bag-hero tier-foundation" aria-label="Selected club object view">
+          <div class="bag-stage-meta"><span id="bag-hero-series">COASTAL OBJECT / 04</span><span id="bag-hero-finish">BRUSHED STONE</span></div>
+          <div id="bag-hero-art" class="bag-hero-art" tabindex="0" role="group" aria-label="Rotate the selected club. Drag or use arrow keys. Home resets." aria-describedby="club-atelier-hint"></div>
+          <div class="club-atelier-views" role="group" aria-label="Club inspection views">
+            <button type="button" data-club-view="craft">CRAFT</button><button type="button" data-club-view="face">FACE</button><button type="button" data-club-view="sole">SOLE</button><button type="button" data-club-view="full">FULL CLUB</button>
+          </div>
+          <div class="club-atelier-controls"><span id="club-atelier-hint">ACTUAL CLUB · DRAG TO TURN</span><div><button id="club-zoom-out" type="button" aria-label="Zoom club out">−</button><button id="club-zoom-in" type="button" aria-label="Zoom club in">+</button><button id="club-reset" type="button" aria-label="Reset club inspection">↺</button></div></div>
+          <span id="bag-hero-process" hidden>BROAD SOLE · EXPOSED SEAM</span>
+        </section>
+        <section class="bag-spec" aria-label="Selected club specifications">
+          <div class="bag-spec-kicker"><span id="bag-hero-tier">FOUNDATION · COMMON</span><span id="bag-equipped-state">IN BAG</span></div>
+          <div class="bag-spec-title">
+            <div><strong id="bag-hero-model">FIELD 7</strong><span id="bag-hero-name">7 IRON · CONTROL</span></div>
+            <div class="bag-spec-distance"><b id="bag-hero-carry">160</b><small id="bag-hero-unit">YD</small></div>
+          </div>
+          <p id="bag-hero-story">A confident mid-iron with a readable topline, grounded sole and honest cavity structure.</p>
+          <dl class="bag-build">
+            <div><dt>LOFT / LAUNCH</dt><dd id="bag-hero-loft">32° / 21°</dd></div>
+            <div><dt>SPIN / RELEASE</dt><dd id="bag-hero-flight">6200 RPM / 7 YD</dd></div>
+            <div><dt>MATERIAL</dt><dd id="bag-hero-material">UTILITY STEEL</dd></div>
+            <div><dt>CONSTRUCTION</dt><dd id="bag-hero-construction">ONE-PIECE CAST</dd></div>
+          </dl>
+          <div id="bag-hero-stats" class="bag-profile" aria-label="Club object profile">
+            <span class="bag-profile-label">OBJECT PROFILE</span>
+            <div><span>POWER</span><i><b id="bag-stat-power"></b></i><em id="bag-stat-power-value">70</em></div>
+            <div><span>CONTROL</span><i><b id="bag-stat-control"></b></i><em id="bag-stat-control-value">88</em></div>
+            <div><span>SPIN</span><i><b id="bag-stat-spin"></b></i><em id="bag-stat-spin-value">80</em></div>
+            <div><span>FORGIVENESS</span><i><b id="bag-stat-forgiveness"></b></i><em id="bag-stat-forgiveness-value">82</em></div>
+          </div>
+          <button id="bag-equip" type="button"><span id="bag-equip-copy">EQUIPPED</span><em aria-hidden="true">→</em></button>
+        </section>
+      </div>
+      <div class="bag-rail-head"><span>OBJECT FAMILY / COASTAL 01</span><span>PREVIEW · THEN EQUIP</span></div>
+      <div id="club-grid" role="listbox" aria-label="Club object family"></div>
+      </div>
+      <section id="bag-ball-panel" class="ball-atelier" role="tabpanel" aria-labelledby="bag-tab-ball" hidden>
+        <div class="ball-atelier-object">
+          <div class="ball-atelier-caption"><span>ORIGINAL OBJECT / 01</span><span>MATTE IVORY</span></div>
+          <div id="ball-atelier-view" tabindex="0" role="group" aria-label="Rotate the LOFT ball. Drag or use arrow keys. Home resets the view." aria-describedby="ball-atelier-hint"></div>
+          <div class="ball-atelier-scale" aria-hidden="true"><i></i><span>42.67 MM</span><i></i></div>
+          <div class="ball-atelier-controls"><span id="ball-atelier-hint">DRAG TO TURN · SCROLL TO INSPECT</span><div><button id="ball-zoom-out" type="button" aria-label="Zoom ball out">−</button><button id="ball-zoom-in" type="button" aria-label="Zoom ball in">+</button><button id="ball-reset" type="button" aria-label="Reset ball inspection">↺</button></div></div>
+        </div>
+        <div class="ball-atelier-spec">
+          <div class="ball-atelier-status"><span>LOFT / 338</span><span><i aria-hidden="true"></i>IN PLAY</span></div>
+          <h2>THE <br>ORIGINAL.</h2>
+          <p class="ball-atelier-deck">One surface. Every shot.</p>
+          <p class="ball-atelier-story">A seamless field of sculpted dimples. A warm, matte cover. One orange signature, set into the surface.</p>
+          <dl class="ball-atelier-facts">
+            <div><dt>TOPOLOGY</dt><dd>338 sculpted dimples</dd></div>
+            <div><dt>DIAMETER</dt><dd>42.67 <small>MM</small></dd></div>
+            <div><dt>DIMPLE DEPTH</dt><dd>0.145 <small>MM</small></dd></div>
+            <div><dt>SIGNATURE</dt><dd>One. Always.</dd></div>
+          </dl>
+          <p class="ball-atelier-truth">The ball on the course. The same geometry and material, shown here at inspection scale.</p>
+          <button id="ball-return" type="button">RETURN TO COURSE <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+      <footer class="bag-footer"><span>BUILT FOR THE SHOT IN FRONT OF YOU.</span><span id="bag-level">ABILITY LV 1</span></footer>
     </div>
   </div>
 
-  <div id="result">
+  <div id="result" role="status" aria-live="polite">
     <div class="result-card">
-      <div class="result-copy">
-        <span id="result-kicker">PURE · 7I</span>
-        <strong id="result-head">8 FT</strong>
-        <small id="result-sub">ON GREEN · PIN HIGH</small>
-      </div>
+      <i class="result-signal" aria-hidden="true"></i>
+      <div class="result-copy"><span id="result-kicker">PURE · 7I</span><strong id="result-head">8 FT</strong><small id="result-sub">ON GREEN · PIN HIGH</small></div>
       <button id="again" type="button">NEXT SHOT</button>
     </div>
   </div>
 
-  <div id="round-end">
-    <div class="round-end-card">
-      <img src="./assets/loft-wordmark-official.webp" alt="LOFT" class="round-wordmark">
-      <span>COASTAL RIDGE · 3 HOLES</span>
-      <strong id="round-score">E</strong>
-      <small id="round-total">10 STROKES · PAR 10</small>
-      <div id="scorecard"></div>
-      <button id="run-it-back" type="button">ONE MORE ROUND</button>
+  <div id="round-end" class="round-chronicle" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="chronicle-title" data-mode="live">
+    <div class="chronicle-sheet">
+      <aside class="chronicle-summary">
+        <div class="chronicle-brand"><img src="./assets/loft-wordmark-official.webp" alt="LOFT"><span>ROUND CHRONICLE / COASTAL 01</span></div>
+        <span id="chronicle-state" class="chronicle-state">ROUND LIVE</span>
+        <h2 id="chronicle-title">COASTAL RIDGE</h2>
+        <p id="chronicle-progress">HOLE 01 / 03</p>
+        <div class="chronicle-score"><strong id="round-score">E</strong><div><span>TO PAR</span><small id="round-total">NO SCORES POSTED</small></div></div>
+        <div class="chronicle-match"><span>MATCH / ROWAN</span><strong id="chronicle-match">ALL SQUARE</strong><small id="chronicle-match-detail">MATCH BEGINS</small></div>
+        <footer>ONE MORE ROUND. <i aria-hidden="true"></i> EVERY SHOT, LIVE.</footer>
+      </aside>
+      <section class="chronicle-ledger" aria-label="Round score ledger">
+        <header><div><span id="chronicle-active-hole">THE RIDGE</span><strong>THE ROUND.</strong></div><button id="chronicle-close" type="button" aria-label="Close scorecard">×</button></header>
+        <table id="scorecard" aria-label="Coastal Ridge scorecard">
+          <thead><tr><th scope="col">HOLE</th><th scope="col">PAR</th><th scope="col">YOU</th><th scope="col">ROWAN</th></tr></thead>
+          <tbody id="scorecard-body"></tbody>
+          <tfoot><tr><th scope="row"><span id="chronicle-total-label">THRU</span><small id="chronicle-posted">0 / 3 POSTED</small></th><td id="chronicle-total-par">10</td><td id="chronicle-total-you">—</td><td id="chronicle-total-rowan">—</td></tr></tfoot>
+        </table>
+        <div class="chronicle-actions"><span>QUIET SCORECARD · LIVE COURSE STATE</span><button id="run-it-back" type="button" hidden>ONE MORE ROUND</button></div>
+      </section>
     </div>
   </div>
 
   <div id="fatal"><strong>LOFT could not start.</strong><p id="fatal-text"></p><button onclick="location.reload()">RELOAD</button></div>
 </div>
-<script type="module" src="./game.js"></script>
+<script type="module" src="./game.js?v=035-final"></script>
 </body>
 </html>

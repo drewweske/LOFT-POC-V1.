@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import * as THREE from '../vendor/three.module.js';
 import {
   BUNKERS,
+  SURFACE_LIFT,
   WATER_LEVEL,
   courseSurfaceAt,
   fairwayProfile,
@@ -23,6 +25,7 @@ const check=(name,fn)=>{
 };
 const near=(a,b,eps=1e-6)=>Math.abs(a-b)<=eps;
 const wind=new THREE.Vector3(0,0,0);
+const TERRAIN_CONTACT_SHA256='1c16597140c7e18dfe0c6a6d3b87573f1c276d8e83d4b3d53f83a21eb8d03c41';
 
 function makePhysics(){
   return new GolfPhysics({
@@ -74,6 +77,48 @@ check('LOFT Field V4 validates',()=>{
   assert.equal(health.renderPhysicsContract,'TRIANGLE_HEIGHT_SHARED_NORMAL');
   assert.equal(health.grid.dx,.8);assert.equal(health.grid.dz,.8);
   assert.ok(health.minNormalY>.80);
+});
+
+check('literal terrain contact field matches the protected baseline',()=>{
+  const g=health.grid;
+  const hash=createHash('sha256');
+  hash.update(JSON.stringify({
+    system:health.system,
+    contract:health.renderPhysicsContract,
+    grid:g,
+    lift:SURFACE_LIFT
+  }));
+
+  let probes=0;
+  const addProbe=(tag,x,z)=>{
+    const frame=sampleTerrain(x,z);
+    hash.update(
+      `${tag}|${x.toFixed(7)}|${z.toFixed(7)}|${terrainHeight(x,z).toFixed(7)}|`+
+      `${frame.normal.x.toFixed(7)}|${frame.normal.y.toFixed(7)}|${frame.normal.z.toFixed(7)}|`+
+      `${courseSurfaceAt(x,z)};`
+    );
+    probes++;
+  };
+
+  // Every visible grid vertex, in the same z-major order used by the field.
+  for(let iz=0;iz<=g.nz;iz++){
+    const z=g.zMin+iz*g.dz;
+    for(let ix=0;ix<=g.nx;ix++)addProbe('v',g.xMin+ix*g.dx,z);
+  }
+
+  // One centroid in each of the two rendered triangles in every grid cell.
+  // The mesh diagonal is B-C, so these points lock both interpolation planes.
+  for(let iz=0;iz<g.nz;iz++){
+    const z=g.zMin+iz*g.dz;
+    for(let ix=0;ix<g.nx;ix++){
+      const x=g.xMin+ix*g.dx;
+      addProbe('a',x+g.dx/3,z+g.dz/3);
+      addProbe('b',x+g.dx*2/3,z+g.dz*2/3);
+    }
+  }
+
+  assert.equal(probes,297361);
+  assert.equal(hash.digest('hex'),TERRAIN_CONTACT_SHA256);
 });
 
 check('terrain samples share height and a unit readable normal',()=>{

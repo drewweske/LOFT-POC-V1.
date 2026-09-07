@@ -1,10 +1,12 @@
 import * as THREE from '../vendor/three.module.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=(a,b,r,dt)=>a+(b-a)*(1-Math.exp(-r*dt));
 const TAU=Math.PI*2;
 const wrap=a=>{while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a;};
 const smoothAngle=(a,b,r,dt)=>a+wrap(b-a)*(1-Math.exp(-r*dt));
+const AIM_REBASE_DISTANCE=32;
 
 export const CAMERA_MODE=Object.freeze({
   AIM:'aim',
@@ -12,6 +14,43 @@ export const CAMERA_MODE=Object.freeze({
   FLIGHT:'flight',
   RESULT:'result'
 });
+
+export const CAMERA_COMPOSITION_SPEC=Object.freeze({
+  system:'LOFT_MOBILE_COMPOSITION_V1',
+  portraitFull:0.50,
+  portraitRelease:0.82,
+  wideStart:1.72,
+  wideFull:2.10,
+  puttingDistance:5.0,
+  puttingLateralShift:0.31,
+  puttingWideShift:-0.12,
+  puttingLookLift:0.42
+});
+
+// Portrait putting needs a deliberately off-centre frame: ball and cup remain
+// decision-scale on the right while the complete golfer stays clear of the HUD.
+// Landscape and desktop naturally release back to the neutral optical axis.
+export function cameraCompositionProfile(aspect,putting=false){
+  const safeAspect=clamp(Number.isFinite(aspect)?aspect:1,0.42,2.40);
+  const portrait=clamp(
+    (CAMERA_COMPOSITION_SPEC.portraitRelease-safeAspect)/
+    (CAMERA_COMPOSITION_SPEC.portraitRelease-CAMERA_COMPOSITION_SPEC.portraitFull),
+    0,1
+  );
+  const wide=clamp(
+    (safeAspect-CAMERA_COMPOSITION_SPEC.wideStart)/
+    (CAMERA_COMPOSITION_SPEC.wideFull-CAMERA_COMPOSITION_SPEC.wideStart),
+    0,1
+  );
+  return Object.freeze({
+    portrait,
+    wide,
+    lateralShift:putting?
+      CAMERA_COMPOSITION_SPEC.puttingLateralShift*portrait+CAMERA_COMPOSITION_SPEC.puttingWideShift*wide:
+      0,
+    lookLift:putting?CAMERA_COMPOSITION_SPEC.puttingLookLift:0
+  });
+}
 
 export class LoftCamera{
   constructor(camera,{terrainHeight=()=>0}={}){
@@ -24,20 +63,23 @@ export class LoftCamera{
     this.look=new THREE.Vector3();
     this.initialized=false;
 
-    this.aimPitch=.12;this.aimPitchT=.12;
-    this.aimDist=8.7;this.aimDistT=8.7;
+    this.aimPitch=.10;this.aimPitchT=.10;
+    this.aimDist=8.4;this.aimDistT=8.4;
+    this.puttDist=CAMERA_COMPOSITION_SPEC.puttingDistance;this.puttDistT=CAMERA_COMPOSITION_SPEC.puttingDistance;
+    this.puttingActive=false;this.swingDist=8.4;
 
     this.flightHeading=0;
     this.flightDist=9.7;
 
     this.resultOrbit=0;this.resultOrbitT=0;
     this.resultPitch=.18;this.resultPitchT=.18;
-    this.resultDist=5.9;this.resultDistT=5.9;
+    this.resultDist=5.4;this.resultDistT=5.4;
 
     this.lockedAimYaw=0;
     this.impactKick=0;
     this.resultCup=false;
     this.resultNear=false;
+    this.aimRebasePending=false;
   }
 
   get isSwingLocked(){return this.mode===CAMERA_MODE.SWING;}
@@ -47,14 +89,20 @@ export class LoftCamera{
 
   resetAim(){
     this._enter(CAMERA_MODE.AIM);
-    this.aimPitchT=.12;
-    this.aimDistT=8.7;
+    this.aimPitchT=.10;
+    this.aimDistT=8.4;
+    this.puttDistT=CAMERA_COMPOSITION_SPEC.puttingDistance;
     this.resultOrbit=this.resultOrbitT=0;
     this.impactKick=0;
+    // A reset can mean either a local framing adjustment or a true world cut
+    // (next hole, replay, long drop, deterministic fixture). Defer that choice
+    // until the next authored aim pose is known so local resets stay fluid.
+    this.aimRebasePending=true;
   }
 
   beginSwing(aimYaw){
     this.lockedAimYaw=aimYaw;
+    this.swingDist=this.puttingActive?this.puttDist:this.aimDist;
     this._enter(CAMERA_MODE.SWING);
   }
 
@@ -73,8 +121,8 @@ export class LoftCamera{
     this.resultCup=cup;
     this.resultNear=dist<2.2;
     this.resultOrbit=this.resultOrbitT=0;
-    this.resultPitch=this.resultPitchT=cup?.24:(this.resultNear?.31:.18);
-    this.resultDist=this.resultDistT=cup?6.4:(this.resultNear?6.8:5.9);
+    this.resultPitch=this.resultPitchT=cup?.18:(this.resultNear?.22:.16);
+    this.resultDist=this.resultDistT=cup?4.0:(this.resultNear?4.4:5.4);
     this._enter(CAMERA_MODE.RESULT);
   }
 
@@ -84,12 +132,13 @@ export class LoftCamera{
 
   aimPitchBy(dy){
     if(this.mode!==CAMERA_MODE.AIM)return;
-    this.aimPitchT=clamp(this.aimPitchT+dy*.00215,-.02,.30);
+    this.aimPitchT=clamp(this.aimPitchT+dy*.0020,-.08,.34);
   }
 
   aimZoom(delta){
     if(this.mode!==CAMERA_MODE.AIM)return;
-    this.aimDistT=clamp(this.aimDistT*Math.exp(-delta*.0018),7.2,10.8);
+    if(this.puttingActive)this.puttDistT=clamp(this.puttDistT*Math.exp(-delta*.0019),3.0,7.2);
+    else this.aimDistT=clamp(this.aimDistT*Math.exp(-delta*.0018),4.8,12.0);
   }
 
   resultOrbitBy(dx,dy){
@@ -100,7 +149,7 @@ export class LoftCamera{
 
   resultZoom(delta){
     if(this.mode!==CAMERA_MODE.RESULT)return;
-    this.resultDistT=clamp(this.resultDistT*Math.exp(-delta*.0017),4.8,8.0);
+    this.resultDistT=clamp(this.resultDistT*Math.exp(-delta*.0017),3.2,9.0);
   }
 
   _setFov(target,dt){
@@ -117,8 +166,25 @@ export class LoftCamera{
     return v;
   }
 
+  _clearSight(pos,look,clearance=.38){
+    let lift=0;
+    for(let i=1;i<=6;i++){
+      const t=i/7;
+      const x=lerp(pos.x,look.x,t),z=lerp(pos.z,look.z,t),rayY=lerp(pos.y,look.y,t);
+      lift=Math.max(lift,this.terrainHeight(x,z)+clearance-rayY);
+    }
+    if(lift>0)pos.y+=Math.min(1.35,lift);
+    return pos;
+  }
+
   _commit(desiredPos,desiredLook,posRate,lookRate,dt){
-    if(!this.initialized){
+    const rebaseDistanceSq=AIM_REBASE_DISTANCE*AIM_REBASE_DISTANCE;
+    const rebase=this.aimRebasePending&&this.initialized&&(
+      this.pos.distanceToSquared(desiredPos)>rebaseDistanceSq||
+      this.look.distanceToSquared(desiredLook)>rebaseDistanceSq
+    );
+    this.aimRebasePending=false;
+    if(!this.initialized||rebase){
       this.pos.copy(desiredPos);this.look.copy(desiredLook);this.initialized=true;
     }else{
       this.pos.lerp(desiredPos,1-Math.exp(-posRate*dt));
@@ -130,36 +196,35 @@ export class LoftCamera{
 
   updateAim(dt,{ball,pin=null,aimYaw,putting=false}){
     if(this.mode!==CAMERA_MODE.AIM)this._enter(CAMERA_MODE.AIM);
-    this.aimPitch=smooth(this.aimPitch,this.aimPitchT,10,dt);
-    this.aimDist=smooth(this.aimDist,this.aimDistT,11,dt);
-    this._setFov(putting ? 39.2 : 40.0,dt);
+    this.puttingActive=putting;
+    this.aimPitch=smooth(this.aimPitch,this.aimPitchT,6.6,dt);
+    this.aimDist=smooth(this.aimDist,this.aimDistT,6.0,dt);
+    this.puttDist=smooth(this.puttDist,this.puttDistT,6.0,dt);
+    this._setFov(putting ? 37.8 : 40.0,dt);
 
     const forward=new THREE.Vector3(Math.sin(aimYaw),0,-Math.cos(aimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
+    const composition=cameraCompositionProfile(this.camera.aspect,putting);
 
     // PUTT READ: camera axis is the intended roll axis.
     // No cinematic side angle here — the player must visually trust that
     // straight on screen means straight in the simulation.
     const pinDistance=pin?Math.hypot(pin.x-ball.x,pin.z-ball.z):999;
-    const tapIn=putting&&pinDistance<2.2;
-    const viewDist=putting
-      ? (tapIn?8.25:clamp(6.15+(this.aimDist-8.7)*.28,5.45,6.70))
-      : this.aimDist;
+    const viewDist=putting?this.puttDist:this.aimDist;
+    const lookAhead=putting?clamp(Math.min(pinDistance,viewDist*.55),.55,2.4):2.95;
     const desiredPos=ball.clone()
-      .addScaledVector(forward,-viewDist*(putting ? .99 : .93))
-      // Positive right points toward the golfer for the authored address rig.
-      // Near the cup we deliberately move to the opposite side so arms / club
-      // cannot cross the lens while the cup remains on-axis.
-      .addScaledVector(right,putting ? (tapIn?-1.28:.06) : .54)
-      .add(new THREE.Vector3(0,(putting ? (tapIn?2.48:1.42) : 1.76)+this.aimPitch*(putting ? 1.70 : 3.25),0));
+      .addScaledVector(forward,-viewDist*(putting ? 1.0 : .93))
+      .addScaledVector(right,putting ? (.035+composition.lateralShift) : clamp(viewDist*.058,.32,.62))
+      .add(new THREE.Vector3(0,(putting ? (.68+viewDist*.105) : 1.68)+this.aimPitch*(putting ? 1.55 : 3.15),0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,putting ? (tapIn?1.05:2.55) : 2.95)
-      .addScaledVector(right,putting ? (tapIn?-.06:.00) : .10)
-      .add(new THREE.Vector3(0,putting ? (tapIn?.10:.17) : .60,0));
+      .addScaledVector(forward,lookAhead)
+      .addScaledVector(right,putting ? composition.lateralShift : .08)
+      .add(new THREE.Vector3(0,putting ? (.07+composition.lookLift) : .57,0));
 
-    this._safeY(desiredPos,1.20);
-    this._commit(desiredPos,desiredLook,putting ? 8.8 : 11.5,putting ? 10.4 : 12.5,dt);
+    this._clearSight(desiredPos,desiredLook,putting ? .30 : .44);
+    this._safeY(desiredPos,putting ? .84 : 1.12);
+    this._commit(desiredPos,desiredLook,putting ? 6.1 : 6.4,putting ? 7.6 : 7.8,dt);
   }
 
   updateSwing(dt,{ball,pin=null,swingProgress=0,putting=false}){
@@ -168,22 +233,24 @@ export class LoftCamera{
 
     const forward=new THREE.Vector3(Math.sin(this.lockedAimYaw),0,-Math.cos(this.lockedAimYaw)).normalize();
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
+    const composition=cameraCompositionProfile(this.camera.aspect,putting);
 
     const turn=Math.sin(clamp(swingProgress,0,1)*Math.PI);
     const impactPulse=Math.exp(-Math.pow((swingProgress-.58)/.12,2));
-    const pinDistance=pin?Math.hypot(pin.x-ball.x,pin.z-ball.z):999;
-    const tapIn=putting&&pinDistance<2.2;
+    const framing=putting?clamp(this.swingDist,3.0,7.2):clamp(this.swingDist,5.45,10.5);
     const desiredPos=ball.clone()
-      .addScaledVector(forward,putting ? ((tapIn?-8.05:-5.95)+impactPulse*.04) : (-6.55+impactPulse*.16))
-      .addScaledVector(right,putting ? (tapIn?-1.20:.02) : (1.12+turn*.14))
-      .add(new THREE.Vector3(0,putting ? ((tapIn?2.38:1.36)-impactPulse*.015) : (2.28-impactPulse*.04),0));
+      .addScaledVector(forward,-framing+impactPulse*(putting ? .035 : .14))
+      .addScaledVector(right,putting ? (.035+composition.lateralShift) : (clamp(framing*.12,.62,1.05)+turn*.10))
+      .add(new THREE.Vector3(0,putting ? (.68+framing*.105-impactPulse*.012) : (2.12-impactPulse*.035),0));
 
     const desiredLook=ball.clone()
-      .addScaledVector(forward,putting ? (2.20+impactPulse*.08) : (1.55+impactPulse*.22))
-      .add(new THREE.Vector3(0,putting ? .16 : .58,0));
+      .addScaledVector(forward,putting ? clamp(framing*.45,.75,2.35) : (1.55+impactPulse*.22))
+      .addScaledVector(right,putting ? composition.lateralShift : 0)
+      .add(new THREE.Vector3(0,putting ? (.07+composition.lookLift) : .56,0));
 
-    this._safeY(desiredPos,1.18);
-    this._commit(desiredPos,desiredLook,putting ? 12.5 : 17,putting ? 14 : 18,dt);
+    this._clearSight(desiredPos,desiredLook,putting ? .30 : .42);
+    this._safeY(desiredPos,putting ? .84 : 1.12);
+    this._commit(desiredPos,desiredLook,putting ? 7.2 : 10.5,putting ? 8.4 : 11.5,dt);
   }
 
   updateFlight(dt,{ball,velocity,pin,putting=false}){
@@ -195,7 +262,7 @@ export class LoftCamera{
     const horizontal=velocity.clone();horizontal.y=0;
     let desiredHeading=this.flightHeading;
     if(horizontal.lengthSq()>.035)desiredHeading=Math.atan2(horizontal.x,-horizontal.z);
-    this.flightHeading=smoothAngle(this.flightHeading,desiredHeading,4.0,dt);
+    this.flightHeading=smoothAngle(this.flightHeading,desiredHeading,3.4,dt);
 
     const speed=horizontal.length();
     const height=Math.max(0,ball.y-this.terrainHeight(ball.x,ball.z));
@@ -229,7 +296,10 @@ export class LoftCamera{
     this.resultDist=smooth(this.resultDist,this.resultDistT,9,dt);
     this._setFov(this.resultCup?40.0:(this.resultNear?40.5:38.0),dt);
 
-    const toPin=pin.clone().sub(ball);toPin.y=0;
+    // A holed ball drops below the green. Keep the result composition anchored
+    // to the cup mouth instead of following the presentation animation underground.
+    const anchor=this.resultCup?pin:ball;
+    const toPin=pin.clone().sub(anchor);toPin.y=0;
     const base=toPin.lengthSq()>.01?Math.atan2(toPin.x,-toPin.z):this.flightHeading;
     const yaw=base+this.resultOrbit;
 
@@ -237,16 +307,17 @@ export class LoftCamera{
     const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
     const pinDir=toPin.lengthSq()>.01?toPin.normalize():new THREE.Vector3(Math.sin(base),0,-Math.cos(base));
 
-    const desiredPos=ball.clone()
+    const desiredPos=anchor.clone()
       .addScaledVector(forward,-this.resultDist)
-      .addScaledVector(right,this.resultNear?-1.34:0)
-      .add(new THREE.Vector3(0,(this.resultNear?2.38:1.65)+this.resultPitch*2.45,0));
+      .addScaledVector(right,this.resultNear?-.34:0)
+      .add(new THREE.Vector3(0,(this.resultNear?1.12:1.58)+this.resultPitch*2.20,0));
 
-    const desiredLook=ball.clone()
+    const desiredLook=anchor.clone()
       .addScaledVector(pinDir,this.resultCup?.32:.95)
       .add(new THREE.Vector3(0,this.resultCup?.06:.10,0));
 
-    this._safeY(desiredPos,1.08);
-    this._commit(desiredPos,desiredLook,7.4,8.6,dt);
+    this._clearSight(desiredPos,desiredLook,.28);
+    this._safeY(desiredPos,.88);
+    this._commit(desiredPos,desiredLook,6.2,7.3,dt);
   }
 }
