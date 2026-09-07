@@ -90,3 +90,17 @@ Move only the native hosel/ferrule attachment toward the heel and connect to the
 grip endpoint in both shared inspection assembly and golfer pose. Judge Foundation/Icon
 7 Iron and wedges live, with face clearance, continuous joints, unchanged head/grip
 motion, contact/sole checks and the complete preserved Gauntlets.
+
+## Publication evidence
+
+The entire accumulated source was committed as `da53550`; document whitespace cleanup
+is `568c9348995e27686e7466a466a701289973eac3`. A normal fast-forward push moved the verified
+LOFT remote main from `52e048f` to `568c934`. The actual existing repository name has a
+trailing dot: `drewweske/LOFT-POC-V1.`; its authenticated metadata matches the local
+origin `https://github.com/drewweske/LOFT-POC-V1..git`.
+
+GitHub Actions run 34128693974 failed at Configure Pages: the Pages site does not exist
+and the workflow token cannot create one. An attempt to authorize enabling Pages was
+rejected by the approval reviewer as a persistent hosting change beyond the main-push
+request. No hosting setting changed. Explicit user approval is required; do not retry
+through an alternative tool. Local play and the requested code publication succeeded.

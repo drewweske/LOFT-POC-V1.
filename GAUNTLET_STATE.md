@@ -22,8 +22,10 @@ Round Chronicle and repairs cross-hole camera rebasing. Integration 034 makes th
 338-dimple ball inspectable in the Workshop with shared geometry/material, curved normals,
 one circular signature and lazy close-detail realization. Integration 035 replaces the
 Workshop hero drawing with the actual held club assembly and a shared single-context
-inspection lifecycle. The root homepage now opens this build, not P0.7. The user has
-requested publication of the entire current checkpoint to LOFT main for assessment.
+inspection lifecycle. The root homepage now opens this build, not P0.7. The entire
+checkpoint was published to LOFT main for assessment at `568c9348995e27686e7466a466a701289973eac3`
+(implementation commit `da53550` plus document formatting), with a clean working tree.
+Remote main was verified. No force push or history rewrite was used.
 Production-grade 3D assets and
 the remaining end-to-end product surfaces remain visible ceilings.
 
@@ -121,6 +123,14 @@ assessment, not evidence that this iteration changed or damaged those assets.
 - No Supabase, AEZRIO, unrelated repository, or new dependency was introduced.
 
 ## Current regressions
+
+Publication status: code push to LOFT main succeeded. Existing GitHub Pages workflow
+34128693974 failed at Configure Pages: no Pages site exists, and its workflow token
+cannot create one. The repository is already public. Enabling a new public Pages site
+was rejected by the approval reviewer because the user authorized a main-branch push,
+not that persistent hosting change. No Pages setting was changed and no workaround was
+attempted. Ask for explicit approval before enabling public GitHub Pages or retrying it.
+The normal local playable route remains available; this is not a runtime regression.
 
 No confirmed regression is open. Integration 033's world-cut camera defect was repaired,
 not dismissed as a browser artifact. Integration 034's clipped landscape controls and
@@ -354,8 +364,9 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 ## Next action
 
-Finish the user-requested publication of Integration 035 to LOFT main and verify the
-remote SHA / Pages deployment. Then inspect the iron/wedge hosel in
+The requested source publication is complete and remote SHA verified. Public Pages
+hosting is pending explicit user approval; do not infer it from the earlier main push.
+For the next Gauntlet iteration, inspect the iron/wedge hosel in
 `prototype1/clubAssembly.js` and shaft placement in `prototype1/characterRig.js`.
 Keep the face centered on its existing analytic landmark, relocate only the heel neck
 attachment, and connect it to the fixed grip endpoint in both the inspector and rig.

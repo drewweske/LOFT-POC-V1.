@@ -19,7 +19,9 @@ instance-owned groove matrices. Portrait and short-landscape controls remain usa
 - Complete held geometry/material/profile and seven-pose fingerprints unchanged.
 - Live desktop/portrait/landscape inspection and Club/Ball/Club/course return checked.
 - Root homepage now opens current v1, not P0.7. Entire accumulated Gauntlet checkpoint
-  is being published to LOFT main at the user's explicit request.
+  was pushed to LOFT main at `568c934`; remote SHA verified. No force push.
+- Existing Pages workflow failed because Pages is not enabled. Explicit approval is
+  required before that persistent public-hosting change; no setting was changed.
 - Existing center-face iron/wedge shaft attachment is now exposed, not accepted as
   production craft. That shared neck is the ONE next target; no repair is included yet.
 - Full manual three-hole round and physical-device performance were not repeated.
