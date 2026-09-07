@@ -27,12 +27,15 @@ node gauntlet/run-terrain-gauntlet.mjs
 node gauntlet/run-ball-gauntlet.mjs
 node gauntlet/run-club-assembly-gauntlet.mjs
 node gauntlet/run-atelier-gauntlet.mjs
+node gauntlet/run-club-neck-gauntlet.mjs
+node gauntlet/run-club-forging-gauntlet.mjs
 ```
 
-The v1 checkpoint passes 63 executable gates. It remains a prototype, not a claim of
-production fidelity. Physical-device performance and a new complete manual three-hole
-round were not validated in Integration 035. The real club inspector now exposes the
-next modeling target: iron/wedge heel attachment and shaft/hosel construction.
+The published v1 checkpoint passes 63 executable gates. Local development through
+Integration 037 passes 70, with heel-attached shafts and genuinely recessed forged
+backs. It remains a prototype, not a claim of production fidelity. Physical-device
+performance and a new complete manual three-hole round were not validated in these
+passes. The next modeling target is purposeful pitching/sand-wedge differentiation.
 
 Development rules: `AGENTS.md`. Visual constitution: `LOFT_VISUAL_STANDARD.md`.
 Resume the loop from `GAUNTLET_STATE.md`; iteration evidence lives in `gauntlet/history/`.

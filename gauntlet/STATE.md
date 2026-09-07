@@ -1,12 +1,24 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Local Integration 036 / official v1 assessment remains Integration 035
+Current build: Local Integration 037 / official v1 assessment remains Integration 035
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Heel attachment complete; actual forged-back construction selected next
-Iteration: integration_036
+Active subsystem: Heel attachment and forged backs complete; purpose-built wedge soles next
+Iteration: integration_037
 
 Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-07.
+
+## Integration 037 verdict
+
+Real closed forged-back shells replace dark plates and raised box badges. Tier sections
+progress from ordinary solid cast to recessed perimeter mass, shaped muscle and readable
+body-only metal/pearl finishes. A soft-looking Foundation cap was rejected and corrected
+with planar normals. Existing face, sole, neck, grip, motion and gameplay are unchanged.
+
+All 70 gates pass, including actual manifold/depth/material checks and 036 rigid joints.
+Live Foundation/Icon iron and Signature wedge inspection verified the gain. Next: give
+PW and SW genuinely different purpose-built soles. Details: `history/integration_037.md`.
+Official main remains 035 and no Pages authorization was granted.
 
 ## Integration 036 verdict
 

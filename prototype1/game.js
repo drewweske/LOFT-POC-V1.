@@ -1,7 +1,7 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB,equipmentTier,clubPresentationProfile} from './equipment.js';
 import {COLORS,COASTAL_AIR_SPEC,COASTAL_TURF_LIGHT_SPEC,WATER_LEVEL,terrainHeight,terrainContactY,sampleTerrain,sweepTerrainSegment,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js?v=031-final';
-import {GOLFER_GROUND_CLEARANCE,LoftGolferRig} from './characterRig.js?v=036-final';
+import {GOLFER_GROUND_CLEARANCE,LoftGolferRig} from './characterRig.js?v=037-final';
 import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';

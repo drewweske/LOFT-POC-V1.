@@ -479,7 +479,7 @@ export class LoftGolferRig{
     const data=typeof club==='string'?{id:club,head:club,name:club}:club;
     const type=data?.head||'iron',id=data?.id||type;
     if(this.clubType===type&&this.clubId===id&&this.clubLevel===level)return;
-    const {head,materials:M,profile,visualSettle}=createClubHead(data,level);
+    const {head,profile,visualSettle}=createClubHead(data,level);
     this.clubType=type;this.clubId=id;this.clubLevel=level;
     // Factory buffers are shared with the Workshop. Detach only the old
     // transform nodes: disposing a geometry here would invalidate inspection.

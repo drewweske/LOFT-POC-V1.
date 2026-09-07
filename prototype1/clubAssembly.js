@@ -40,11 +40,15 @@ class ClubHeadBuilder{
       icon:{body:0x101414,face:0xebe4d6,dark:0x050707,accent:0xff6a2a,rough:.15,metal:.84}
     }[key];
     const physical=(color,roughness,metalness,clearcoat=0)=>new THREE.MeshPhysicalMaterial({color,roughness,metalness,clearcoat,clearcoatRoughness:.18});
+    // Forging has its own body finish; do not recolor shafts, striking faces,
+    // repaired necks or unrelated families to make the inspection scene brighter.
+    const forging={foundation:[0x969b94,.64,.45],field:[0xaeb8b3,.47,.72],tour:[0xc8c5bb,.34,.80],signature:[0x82918e,.34,.78],icon:[0xcac5b9,.30,.62]}[key];
     const mats={
       body:physical(palette.body,palette.rough,palette.metal,key==='signature'?.48:key==='icon'?.72:.10),
       face:physical(palette.face,Math.max(.18,palette.rough-.08),Math.min(.92,palette.metal+.08),.25),
       dark:physical(palette.dark,.34,.44,.18),
       accent:physical(palette.accent,.38,.36,.20),
+      forged:physical(...forging,key==='icon'?.16:.06),
       tier
     };
     materialCache.set(key,mats);return mats;
@@ -81,10 +85,7 @@ class ClubHeadBuilder{
     const geo=new THREE.ExtrudeGeometry(shape,{depth:height,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.004,bevelThickness:.0035});
     geo.translate(0,0,-height*.5);geo.computeVertexNormals();return geo;
   }
-  _ironPlateGeometry(width=.108,height=.082,thickness=.018,highToe=0,bevel=.004){
-    // Shape is authored in heel/toe × sole/top, then permuted so extrusion
-    // becomes physical face depth. This is the explicit local club contract:
-    // X face/back, Y heel/toe, Z sole/up.
+  _ironOutline(width,height,highToe=0){
     const half=width*.5,shape=new THREE.Shape();
     shape.moveTo(-half*.76,-height*.46);
     shape.quadraticCurveTo(-half,-height*.42,-half*.92,-height*.22);
@@ -95,6 +96,12 @@ class ClubHeadBuilder{
     shape.lineTo(half*.88,-height*.35);
     shape.quadraticCurveTo(half*.66,-height*.48,half*.32,-height*.49);
     shape.closePath();
+    return shape;
+  }
+  _ironPlateGeometry(width=.108,height=.082,thickness=.018,highToe=0,bevel=.004){
+    // Shape is authored in heel/toe × sole/top, then permuted so extrusion
+    // becomes physical face depth. The striking face is unchanged by back work.
+    const shape=this._ironOutline(width,height,highToe);
     const geo=new THREE.ExtrudeGeometry(shape,{depth:thickness,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:bevel,bevelThickness:Math.min(bevel,thickness*.24)});
     const p=geo.attributes.position;
     for(let i=0;i<p.count;i++){
@@ -102,6 +109,67 @@ class ClubHeadBuilder{
       p.setXYZ(i,depth,u,v);
     }
     p.needsUpdate=true;geo.deleteAttribute('normal');geo.computeVertexNormals();geo.computeBoundingBox();return geo;
+  }
+  _forgedBackGeometry(width,height,thickness,highToe,design){
+    // A closed, continuously shaped metal shell: front, bevel, perimeter mass,
+    // rolled shoulder, cavity wall and recessed floor. The cavity is actual
+    // geometry, not a black box glued to a flat back. A cheap solid-back casting
+    // and a refined recessed forging have different sections even without color.
+    const outline=this._ironOutline(width,height,highToe).getSpacedPoints(64).slice(0,-1);
+    const floor=thickness*[.50,.18,.06,-.06,-.10][design-1];
+    const front=-thickness*.5-Math.min(.0048,thickness*.24);
+    const rim=thickness*.50+.0045,weight=design>=3?.0025:.001;
+    const rings=[
+      {y:.98,z:.98,x:front},{y:1.015,z:1.015,x:front+.004},
+      {y:1.015,z:1.015,x:thickness*.25},
+      {y:.94,z:.91,x:rim},
+      ...(design===1?[{y:.62,z:.58,x:floor}]:[
+        {y:.76,z:.66,x:rim-.0008},{y:.64,z:.50,x:floor+.0015},{y:.60,z:.46,x:floor}
+      ])
+    ];
+    const positions=[],indices=[],n=outline.length;
+    for(let r=0;r<rings.length;r++){
+      const ring=rings[r];
+      for(const p of outline){
+        // Deliberate sole/toe weighting; broad mass, not ornamental micro-noise.
+        const mass=(r===2||r===3)?weight*Math.max(0,-p.y/height+.22)*(1+.2*p.x/width):0;
+        positions.push(ring.x+mass,p.x*ring.y,p.y*ring.z);
+      }
+    }
+    for(let r=0;r<rings.length-1;r++)for(let i=0;i<n;i++){
+      const a=r*n+i,b=r*n+(i+1)%n,c=(r+1)*n+(i+1)%n,d=(r+1)*n+i;
+      indices.push(a,d,b,b,d,c);
+    }
+    const frontCenter=positions.length/3;positions.push(front,0,0);
+    const backCenter=positions.length/3;positions.push(floor,0,0);
+    for(let i=0;i<n;i++){
+      indices.push(frontCenter,i,(i+1)%n);
+      const a=(rings.length-1)*n+i,b=(rings.length-1)*n+(i+1)%n;
+      indices.push(backCenter,b,a);
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);
+    geo.computeVertexNormals();
+    // Broad cast planes must shade as planes, not a fan-shaped soft cushion.
+    // The final shoulder blends into that plane; its ring shares the plane's
+    // normal while retaining the closed indexed topology and real recess depth.
+    const normals=geo.attributes.normal;
+    for(let i=0;i<n;i++){normals.setXYZ(i,-1,0,0);normals.setXYZ((rings.length-1)*n+i,1,0,0);}
+    normals.setXYZ(frontCenter,-1,0,0);normals.setXYZ(backCenter,1,0,0);normals.needsUpdate=true;
+    geo.computeBoundingBox();
+    geo.userData={system:'LOFT_FORGED_BACK_V1',floor,rim,design};return geo;
+  }
+  _forgedMuscleGeometry(width,height){
+    // A broad rising sole-to-toe muscle, not a vertical rectangular badge.
+    const shape=new THREE.Shape();
+    shape.moveTo(-width*.30,-height*.22);
+    shape.quadraticCurveTo(-width*.02,-height*.24,width*.33,-height*.015);
+    shape.quadraticCurveTo(width*.36,height*.06,width*.30,height*.09);
+    shape.quadraticCurveTo(width*.08,-height*.075,-width*.29,-height*.10);
+    shape.quadraticCurveTo(-width*.34,-height*.15,-width*.30,-height*.22);shape.closePath();
+    const geo=new THREE.ExtrudeGeometry(shape,{depth:.004,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.0012,bevelThickness:.0007});
+    const p=geo.attributes.position;
+    for(let i=0;i<p.count;i++){const y=p.getX(i),z=p.getY(i),x=p.getZ(i)-.002;p.setXYZ(i,x,y,z);}
+    geo.deleteAttribute('normal');geo.computeVertexNormals();geo.computeBoundingBox();return geo;
   }
   _clubBridge(name,a,b,r,mat,role='hosel'){
     const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b);
@@ -209,13 +277,14 @@ class ClubHeadBuilder{
       const width=(wedge?.120:nine?.111:.106)*gradeBulk;
       const height=wedge?.090:nine?.085:.082;
       const highToe=wedge?.11:nine?.045:0;
-      this._clubNamedPart(wedge?'LOFT_WEDGE_FORGED_BODY':'LOFT_IRON_FORGED_BODY',this._ironPlateGeometry(width,height,.022*gradeBulk,highToe,.0048),M.body,[.014,0,.007],[1,1,1],[0,0,0],'forged-body');
+      const forged=this._forgedBackGeometry(width,height,.022*gradeBulk,highToe,design);
+      this._clubNamedPart(wedge?'LOFT_WEDGE_FORGED_BODY':'LOFT_IRON_FORGED_BODY',forged,M.forged,[.014,0,.007],[1,1,1],[0,0,0],'forged-body');
       this._clubNamedPart(wedge?'LOFT_WEDGE_FACE':'LOFT_IRON_FACE',this._ironPlateGeometry(width*.96,height*.94,.004,highToe,.0024),M.face,[-.002,0,.007],[1,1,1],[0,0,0],'face');
       this._clubNamedPart(wedge?'LOFT_WEDGE_RELIEF_SOLE':'LOFT_IRON_SOLE',new THREE.CapsuleGeometry(.0075,width*.72,4,16),M.dark,[.018,0,-.032],[1,1,wedge?1.45:1],[0,0,0],'sole');
       this._clubGrooves(wedge?'LOFT_WEDGE_FACE_GROOVES':'LOFT_IRON_FACE_GROOVES',width*.70,-.021,6,.009,-.005,M.dark);
-      if(design>=2)this._clubNamedPart(wedge?'LOFT_WEDGE_BACK_CHANNEL':'LOFT_IRON_CAVITY',new THREE.BoxGeometry(.008,width*.58,height*.40),M.dark,[.030,0,.007],[1,1,1],[0,0,0],'cavity');
-      if(design>=3)this._clubNamedPart(wedge?'LOFT_WEDGE_TOP_RAIL':'LOFT_IRON_TOPLINE',new THREE.CapsuleGeometry(.005,width*.56,4,14),M.face,[.023,0,.043],[1,1,.68],[0,0,0],'topline');
-      if(design>=4)this._clubNamedPart(wedge?'LOFT_WEDGE_CAVITY_BRIDGE':'LOFT_IRON_CAVITY_BRIDGE',new THREE.BoxGeometry(.008,.012,height*.52),M.face,[.038,0,.008],[1,1,1],[0,0,0],'cavity-bridge');
+      if(design>=2)this._clubNamedPart(wedge?'LOFT_WEDGE_BACK_CHANNEL':'LOFT_IRON_CAVITY',this._ironPlateGeometry(width*.55,height*.40,.0015,highToe,.0005),M.dark,[.014+forged.userData.floor+.001,0,.007],[1,1,1],[0,0,0],'cavity');
+      if(design>=3)this._clubNamedPart(wedge?'LOFT_WEDGE_TOP_RAIL':'LOFT_IRON_TOPLINE',new THREE.CapsuleGeometry(.003,width*.62,4,14),M.face,[.022,0,.043],[1,1,.68],[0,0,0],'topline');
+      if(design>=4)this._clubNamedPart(wedge?'LOFT_WEDGE_CAVITY_BRIDGE':'LOFT_IRON_CAVITY_BRIDGE',this._forgedMuscleGeometry(width,height),M.face,[.014+forged.userData.rim-.0025,0,.007],[1,1,1],[0,0,0],'cavity-bridge');
       this._clubSignal(M,[.041,width*.28,-.014]);
       // The shaft belongs at the heel, outside the scoring face. Keep the face
       // center and analytic strike landmark fixed; only the neck changes.

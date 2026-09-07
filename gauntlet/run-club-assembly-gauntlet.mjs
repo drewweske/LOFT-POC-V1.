@@ -22,7 +22,7 @@ const meshRecord=object=>({
 });
 const fingerprint=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const rig=new LoftGolferRig(COLORS);
-const records={},protectedRecords={};
+const records={},protectedRecords={},forgingProtectedRecords={};
 for(const club of CLUBS)for(const level of [1,10,25,50,75]){
   rig.setClub(club,level);
   const head=meshRecord(rig.clubHead);head.position=[0,0,0];head.quaternion=[0,0,0,1];head.scale=[1,1,1];
@@ -33,7 +33,11 @@ for(const club of CLUBS)for(const level of [1,10,25,50,75]){
   records[club.id+':'+level]={head:fingerprint(head),motion:fingerprint(poses),profile:[rig.clubLength,...rig.addressBallLocal.toArray(),rig.clubAddressX,rig.clubAddressHeight,rig.clubVisualSettle]};
   const core={...head,children:head.children.filter(child=>!child.name.endsWith('_HOSEL'))};
   protectedRecords[club.id+':'+level]={head:fingerprint(core),motion:fingerprint(poses.map(p=>p.slice(0,2))),profile:records[club.id+':'+level].profile};
+  const backPart=/_FORGED_BODY$|_CAVITY$|_BACK_CHANNEL$|_TOP_RAIL$|_TOPLINE$|_CAVITY_BRIDGE$/;
+  const protectedHead={...head,children:head.children.filter(child=>!(['iron','wedge'].includes(club.head)&&backPart.test(child.name)))};
+  forgingProtectedRecords[club.id+':'+level]={head:fingerprint(protectedHead),motion:fingerprint(poses.map(p=>p.slice(0,2))),profile:records[club.id+':'+level].profile};
 }
+if(process.argv.includes('--record-forging-protected')){console.log(fingerprint(forgingProtectedRecords));process.exit(0);}
 if(process.argv.includes('--record-protected')){console.log(fingerprint(protectedRecords));process.exit(0);}
 if(process.argv.includes('--record')){
   console.log(JSON.stringify(records,null,2));
@@ -51,7 +55,9 @@ for(const item of CLUBS)for(const level of [1,10,25,50,75]){
   if(!['iron','wedge'].includes(item.head))assert.deepEqual(records[key],BASELINE[key],key+' complete 035 baseline');
   else assert.deepEqual(records[key].profile,BASELINE[key].profile,key+' protected golf profile');
 }
-// Captured before the proposed heel/hosel repair. Future visual-neck work must
-// retain every non-hosel head buffer/material and all head/grip pose landmarks.
-assert.equal(fingerprint(protectedRecords),'83e42a6d2cce062ff26711c42c6fd7c0cba9c4e6e71ea361c5ce22d443548987');
-console.log('PASS  20 unchanged full assemblies and all 40 non-hosel heads, grips, profiles and seven swing poses preserve the 035 baseline');
+// 036 verified all non-hosel geometry with 83e42a6d2cce062ff26711c42c6fd7c0cba9c4e6e71ea361c5ce22d443548987.
+// 037 deliberately supersedes only forged back body/cavity/topline/bridge, not
+// faces, soles, scoring grooves, heel necks, signals, grips or motion. Captured
+// BEFORE that back edit against the retained local 036 checkpoint 8a29150.
+assert.equal(fingerprint(forgingProtectedRecords),'de624583ed3b2c2f43c3b3906fc6165a0db5570efe059cc2379226d39776e483');
+console.log('PASS  20 unchanged full assemblies plus protected faces, soles, necks, grooves, grips, profiles and seven swing poses across all 40 objects');

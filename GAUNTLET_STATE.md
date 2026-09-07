@@ -2,7 +2,7 @@
 
 Updated: 2026-09-07
 
-Build: Local Integration 036 / official v1 assessment remains Integration 035
+Build: Local Integration 037 / official v1 assessment remains Integration 035
 
 Branch: `prototype-1-gauntlet`
 
@@ -10,11 +10,12 @@ Playable artifact: `/prototype1/`
 
 ## Current build assessment
 
-Integration 036 repairs actual iron/wedge heel attachment, slim shaft/ferrule geometry
-and joint continuity. All 67 gates pass; the real face is unobstructed and the held grip,
-head landmark and golf numbers are unchanged. The published v1 checkpoint on main is
+Integrations 036–037 repair actual iron/wedge heel attachment, slim shaft/ferrule
+geometry, joint continuity and genuinely recessed forged backs with readable tier
+materials. All 70 gates pass; the real face, sole, held grip, head landmark and golf
+numbers are unchanged. The published v1 checkpoint on main is
 still 035 (`55350bd` including publication notes); no new remote push is implied by
-continuing local development. The next target is actual forged-back construction.
+continuing local development. The next target is purposeful pitching/sand-wedge geometry.
 
 The prototype is functionally healthy and materially closer to one LOFT world, but it
 does not yet meet the Good Work production bar. Integrations 016–030 now provide a
@@ -41,18 +42,22 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 | Category | Honest score | Assessment |
 | --- | ---: | --- |
-| Technical integrity | 9.0/10 | 67 executable gates, shared terrain/contact and object buffers, geometry-measured rigid joints; physical-device performance is not yet validated. |
+| Technical integrity | 9.0/10 | 70 executable gates, closed forged geometry, shared object buffers and geometry-measured rigid joints; physical-device performance is not yet validated. |
 | UI / UX clarity | 7.2/10 | World-linked shot facts, preview/Equip separation and one live/final ledger; primary navigation, progression and settings remain. |
 | LOFT identity | 6.2/10 | Restrained direction is established, but raw course and character screenshots still expose prototype construction. |
 | Terrain / environment | 4.8/10 | Physical field and surface identity agree; composition, vegetation and rock/material detail remain far below the destination references. |
 | Character / animation | 4.8/10 | Connected anatomy, grip and swing are improved; face, garment deformation and silhouette still need production-level craft. |
-| Equipment desirability | 5.4/10 | Heel attachment and clear face now read correctly; flat backs and dark premium materials remain below the reference. |
+| Equipment desirability | 6.1/10 | Heel attachment, real recesses and restrained readable metal now hold together; wedges still need purpose-specific soles and production face detail. |
 | Ball identity | 7.4/10 | Same 338-dimple ball is inspectable with dense bowls, curved normals and one fixed signature; exact quad-symmetric production topology remains unproven. |
 | Cup / hole integrity | 7.2/10 | Spatial aperture, liner, depth and pace-sensitive capture agree; cut-turf and lip shading can mature. |
 | Camera / game feel | 7.7/10 | Close putting remains accessible; cross-hole rebasing prevents backward/underground interpolation while local resets stay smooth. |
 
 ## Completed improvements
 
+- Integration 037: closed forged-back shells, physical tier-section progression,
+  recessed outline-following inserts, rising sole-to-toe muscle, body-only material
+  hierarchy and corrected planar-cap shading. Three new geometry-derived gates;
+  faces, soles, heel joints, motion and gameplay remain protected. See history 037.
 - Integration 036: heel-attached iron/wedge neck, slim shared shaft/ferrule and one
   rigid station solver; unchanged striking faces, soles, hands, head motion, golf
   profiles and all other families. Actual triangle/endpoint/corridor and 101-pose
@@ -127,9 +132,9 @@ assessment, not evidence that this iteration changed or damaged those assets.
 - Deterministic address/top/impact/finish visual fixtures now make character review
   repeatable without changing real gameplay motion.
 - Current gates: terrain 14/14; visual 37/37; ball 6/6; assembly preservation 1/1;
-  atelier 5/5; neck 4/4: PASS. Latest live checks cover desktop/portrait/short landscape,
+  atelier 5/5; neck 4/4; forging 3/3: PASS. Latest live checks cover desktop/portrait/short landscape,
   actual club inspection and Club/Ball/Club/course return. Full manual three-hole
-  and physical-device tests were not repeated in 036.
+  and physical-device tests were not repeated in 037.
 - No Supabase, AEZRIO, unrelated repository, or new dependency was introduced.
 
 ## Current regressions
@@ -154,9 +159,9 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **Iron/wedge forged-back construction — current target:** heel attachment is repaired,
-   but the flat body plus raised rectangular inserts does not read as forged metal
-   or a real recessed cavity. Improve actual shared back surfaces and material read.
+1. **Purpose-built wedge soles — current target:** pitching and sand wedges still share
+   the same visible head/sole despite different specifications and purposes. Author
+   meaningful sole width, bounce/camber and relief without changing shot numbers.
 2. **Production character asset pipeline:** the code-native golfer is coherent, but a
    future skinned mesh, facial blendshapes, wardrobe variants, and secondary motion
    are required to reach the character-board production ceiling.
@@ -175,12 +180,13 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**Iron/wedge forged-back construction**
+**Purpose-built pitching and sand wedge soles**
 
-Keep the official assessment checkpoint stable. Replace the shared body's flat back
-and raised box inserts with shaped shoulders, true cavity depth and purposeful tier
-construction. Preserve faces, soles, heel necks, grips, protected motion and golf numbers.
-Require actual Foundation/Icon comparisons, triangle-measured depth and contact gates.
+Keep the official assessment checkpoint stable. Make the actual two tools identifiable
+without labels or recoloring, through sole width, bounce/camber and trailing-edge relief.
+Measure existing ground and ball contact before changing geometry. Preserve scoring
+faces, heel sockets, grips, motion and every golf number. Require actual side/sole
+comparison plus all current contact, rigid-joint, framing and resource checks.
 
 ## Reference comparison
 
@@ -214,6 +220,10 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 ## Experiments attempted
 
+- Integration 037 authored a closed recessed shell instead of a raised back plaque.
+  The first Foundation cap shaded like a cushion; planar cap-ring normals won live
+  reinspection and now have a geometry-derived regression assertion. Real depth,
+  manifold winding and bright-enough restrained body materials passed all grades.
 - Integration 036 moved only the heel neck, then connected the fixed head/grip through
   one shared solver. Actual body-triangle intersection and reconstructed cylinder
   stations proved continuity, not metadata claims. Live face and craft views won.
@@ -378,14 +388,15 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 The requested source publication is complete and remote SHA verified. Public Pages
 hosting is pending explicit user approval; do not infer it from the earlier main push.
-For the next Gauntlet iteration, inspect the actual forged iron/wedge backs in
-`prototype1/clubAssembly.js`. Capture a 036 protected face/sole/neck/grip/motion baseline
-before changing the back shell or inserts. Give the real body shaped perimeter mass,
-recessed depth and readable restrained materials, not inspection-only decoration.
-Keep all previous baselines as historical evidence; explicitly identify any superseded
-back-body contract and add actual geometry tests rather than silently replacing hashes.
+For the next Gauntlet iteration, compare PW and SW in the live inspector, then inspect
+their shared wedge/sole branch in `prototype1/clubAssembly.js`. Measure address/impact
+clearance before proposing sole geometry. Create purposeful width, camber and relief
+differences while keeping faces, sockets, motion and shot numbers intact. Preserve
+previous baselines as history, explicitly identify any intended sole-contract change,
+and add actual geometric purpose/contact tests rather than silently replacing hashes.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`. The local server was restored with
 hidden Node `gauntlet/serve.mjs 43117`; if absent next session, restart only this LOFT-local
-server. Local retained entry: `game.js?v=036-final`. Official main stays at 035.
-Detailed evidence is in integrations 033–036. No Pages authorization was granted.
+server. Local retained entry: `game.js?v=037-final`. Official main stays at 035.
+Detailed evidence is in integrations 033–037. Local 036 checkpoint is `8a29150`.
+No Pages authorization was granted. Do not attempt a hosting workaround.
