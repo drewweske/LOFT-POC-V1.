@@ -1,12 +1,23 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Official v1 assessment / Integration 035
+Current build: Local Integration 036 / official v1 assessment remains Integration 035
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Live Club Atelier V1 complete; iron/wedge heel attachment selected next
-Iteration: integration_035
+Active subsystem: Heel attachment complete; actual forged-back construction selected next
+Iteration: integration_036
 
 Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-07.
+
+## Integration 036 verdict
+
+Iron/wedge shafts now join the heel rather than the face center. Shared construction
+has a 6.25 mm shaft radius, 8 mm ferrule radius and 35 mm ferrule length; head, face,
+sole, grip, swing landmarks and golf numbers are protected. All 67 checks pass,
+including actual triangle/cylinder/corridor tests and 101 samples for all 40 objects.
+Live face/craft inspection and Equip return materially improve the previous silhouette.
+
+One next target: actual forged-back depth and readable premium material treatment.
+Details: `history/integration_036.md`. Published main remains 035; Pages needs approval.
 
 ## Integration 035 verdict
 

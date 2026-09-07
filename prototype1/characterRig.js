@@ -1,5 +1,5 @@
 import * as THREE from '../vendor/three.module.js';
-import {createClubHead,createClubShaftParts,releaseClubInstance} from './clubAssembly.js';
+import {createClubHead,createClubShaftParts,clubFerruleStations,releaseClubInstance} from './clubAssembly.js';
 export {IN_WORLD_CLUB_SPEC} from './clubAssembly.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -488,7 +488,11 @@ export class LoftGolferRig{
     this.clubHead.clear();
     for(const part of [...head.children])this.clubHead.add(part);
     this.clubHead.name=head.name;this.clubHead.userData={...head.userData};
-    this.grip.material=M.dark;this.shaft.material=M.face;this.ferrule.material=M.dark;
+    const parts=createClubShaftParts(level,type);
+    for(const name of ['grip','shaft','ferrule']){
+      this[name].geometry=parts[name].geometry;this[name].material=parts[name].material;
+      this[name].userData.baseRadius=parts[name].userData.baseRadius;
+    }
     this.clubLength=profile.length;
     this.addressBallLocal.set(profile.ballX,profile.ballY,0);
     this.clubAddressX=profile.headX;this.clubAddressHeight=profile.headY;
@@ -842,18 +846,19 @@ export class LoftGolferRig{
     const gripEnd=gripCenter.clone().addScaledVector(dir,.155);
     const gripButt=gripCenter.clone().addScaledVector(dir,-GOLFER_COHESION_SPEC.gripButtExtension);
     const club=gripCenter.clone().addScaledVector(dir,this.clubLength);
+    this.clubHead.position.copy(club);
+    this.clubHead.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);this.clubHead.rotateX(Math.PI/2);
     // The head origin remains the protected analytic landmark. Construction
     // settles below it by family, so the ferrule follows that same visual-only
     // offset and meets the hosel without changing clubLength or the swing path.
-    const ferruleEnd=club.clone().addScaledVector(dir,(this.clubVisualSettle||0)-.014);
-    const ferruleStart=ferruleEnd.clone().addScaledVector(dir,-.061);
+    const stations=clubFerruleStations(this.clubHead,gripEnd);
+    const ferruleEnd=stations?.end||club.clone().addScaledVector(dir,(this.clubVisualSettle||0)-.014);
+    const ferruleStart=stations?.start||ferruleEnd.clone().addScaledVector(dir,-.061);
     this._between(this.grip,gripButt,gripEnd,.027);
     this.grip.userData.visualButt=gripButt.toArray();this.grip.userData.visualEnd=gripEnd.toArray();
     this.grip.userData.contactSeparation=leadContact.distanceTo(trailContact);
     this._between(this.shaft,gripEnd,ferruleStart,.013);
     this._between(this.ferrule,ferruleStart,ferruleEnd,.016);
-    this.clubHead.position.copy(club);
-    this.clubHead.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);this.clubHead.rotateX(Math.PI/2);
   }
 
   shoeContactPoints(){

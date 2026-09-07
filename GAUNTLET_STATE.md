@@ -2,13 +2,19 @@
 
 Updated: 2026-09-07
 
-Build: Official v1 assessment / Integration 035
+Build: Local Integration 036 / official v1 assessment remains Integration 035
 
 Branch: `prototype-1-gauntlet`
 
 Playable artifact: `/prototype1/`
 
 ## Current build assessment
+
+Integration 036 repairs actual iron/wedge heel attachment, slim shaft/ferrule geometry
+and joint continuity. All 67 gates pass; the real face is unobstructed and the held grip,
+head landmark and golf numbers are unchanged. The published v1 checkpoint on main is
+still 035 (`55350bd` including publication notes); no new remote push is implied by
+continuing local development. The next target is actual forged-back construction.
 
 The prototype is functionally healthy and materially closer to one LOFT world, but it
 does not yet meet the Good Work production bar. Integrations 016–030 now provide a
@@ -35,18 +41,22 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 | Category | Honest score | Assessment |
 | --- | ---: | --- |
-| Technical integrity | 9.0/10 | 63 executable gates, shared terrain/contact and object buffers, exclusive inspector ownership; physical-device performance is not yet validated. |
+| Technical integrity | 9.0/10 | 67 executable gates, shared terrain/contact and object buffers, geometry-measured rigid joints; physical-device performance is not yet validated. |
 | UI / UX clarity | 7.2/10 | World-linked shot facts, preview/Equip separation and one live/final ledger; primary navigation, progression and settings remain. |
 | LOFT identity | 6.2/10 | Restrained direction is established, but raw course and character screenshots still expose prototype construction. |
 | Terrain / environment | 4.8/10 | Physical field and surface identity agree; composition, vegetation and rock/material detail remain far below the destination references. |
 | Character / animation | 4.8/10 | Connected anatomy, grip and swing are improved; face, garment deformation and silhouette still need production-level craft. |
-| Equipment desirability | 4.5/10 | Real inspection exposes weak iron/wedge center attachment and dark premium materials. Lower score reflects stricter evidence, not newly damaged geometry. |
+| Equipment desirability | 5.4/10 | Heel attachment and clear face now read correctly; flat backs and dark premium materials remain below the reference. |
 | Ball identity | 7.4/10 | Same 338-dimple ball is inspectable with dense bowls, curved normals and one fixed signature; exact quad-symmetric production topology remains unproven. |
 | Cup / hole integrity | 7.2/10 | Spatial aperture, liner, depth and pace-sensitive capture agree; cut-turf and lip shading can mature. |
 | Camera / game feel | 7.7/10 | Close putting remains accessible; cross-hole rebasing prevents backward/underground interpolation while local resets stay smooth. |
 
 ## Completed improvements
 
+- Integration 036: heel-attached iron/wedge neck, slim shared shaft/ferrule and one
+  rigid station solver; unchanged striking faces, soles, hands, head motion, golf
+  profiles and all other families. Actual triangle/endpoint/corridor and 101-pose
+  parity checks provide four new gates. See `gauntlet/history/integration_036.md`.
 - Integration 016: one rendered/physical LOFT Field V4 terrain, exact shared triangle
   height/normal, swept contact, deterministic roll/water/cup fixtures, readable cuts,
   organic surface boundaries, dimensional turf, coastal landform pass.
@@ -117,9 +127,9 @@ assessment, not evidence that this iteration changed or damaged those assets.
 - Deterministic address/top/impact/finish visual fixtures now make character review
   repeatable without changing real gameplay motion.
 - Current gates: terrain 14/14; visual 37/37; ball 6/6; assembly preservation 1/1;
-  atelier 5/5: PASS. Latest live checks cover desktop/portrait/short landscape,
+  atelier 5/5; neck 4/4: PASS. Latest live checks cover desktop/portrait/short landscape,
   actual club inspection and Club/Ball/Club/course return. Full manual three-hole
-  and physical-device tests were not repeated in 035.
+  and physical-device tests were not repeated in 036.
 - No Supabase, AEZRIO, unrelated repository, or new dependency was introduced.
 
 ## Current regressions
@@ -144,9 +154,9 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **Iron/wedge heel attachment — current target:** real inspection exposes the shaft
-   and oversized ferrule meeting the center of the face. Repair actual shared hosel
-   construction without moving the protected head/contact or hand/grip landmarks.
+1. **Iron/wedge forged-back construction — current target:** heel attachment is repaired,
+   but the flat body plus raised rectangular inserts does not read as forged metal
+   or a real recessed cavity. Improve actual shared back surfaces and material read.
 2. **Production character asset pipeline:** the code-native golfer is coherent, but a
    future skinned mesh, facial blendshapes, wardrobe variants, and secondary motion
    are required to reach the character-board production ceiling.
@@ -165,13 +175,12 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**Iron/wedge heel-attached shaft and hosel**
+**Iron/wedge forged-back construction**
 
-Keep the current official v1 assessment checkpoint stable. Repair the shared iron/wedge
-neck so the shaft meets the heel instead of obscuring the face. Preserve every head's
-face center, non-hosel construction, grip endpoints, analytic club landmark, timing and
-golf numbers. Require readable Foundation/Icon 7 Iron and wedge inspection plus live
-address/impact, shared assembly parity and full regression checks before acceptance.
+Keep the official assessment checkpoint stable. Replace the shared body's flat back
+and raised box inserts with shaped shoulders, true cavity depth and purposeful tier
+construction. Preserve faces, soles, heel necks, grips, protected motion and golf numbers.
+Require actual Foundation/Icon comparisons, triangle-measured depth and contact gates.
 
 ## Reference comparison
 
@@ -205,6 +214,9 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 ## Experiments attempted
 
+- Integration 036 moved only the heel neck, then connected the fixed head/grip through
+  one shared solver. Actual body-triangle intersection and reconstructed cylinder
+  stations proved continuity, not metadata claims. Live face and craft views won.
 - Integration 035 extracted and fingerprinted all 40 held assemblies unchanged, then
   replaced hero art with real shared geometry. Independent review identified nested
   renderer borrowing; explicit exclusive ownership and close-before-open repair won.
@@ -366,15 +378,14 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 The requested source publication is complete and remote SHA verified. Public Pages
 hosting is pending explicit user approval; do not infer it from the earlier main push.
-For the next Gauntlet iteration, inspect the iron/wedge hosel in
-`prototype1/clubAssembly.js` and shaft placement in `prototype1/characterRig.js`.
-Keep the face centered on its existing analytic landmark, relocate only the heel neck
-attachment, and connect it to the fixed grip endpoint in both the inspector and rig.
-The assembly Gauntlet includes a before-change protected non-hosel/head/grip fingerprint.
-Do not silently rewrite the full extraction baseline to hide intended geometry changes;
-retain its checkpoint evidence and replace only the explicitly superseded neck contract.
+For the next Gauntlet iteration, inspect the actual forged iron/wedge backs in
+`prototype1/clubAssembly.js`. Capture a 036 protected face/sole/neck/grip/motion baseline
+before changing the back shell or inserts. Give the real body shaped perimeter mass,
+recessed depth and readable restrained materials, not inspection-only decoration.
+Keep all previous baselines as historical evidence; explicitly identify any superseded
+back-body contract and add actual geometry tests rather than silently replacing hashes.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`. The local server was restored with
 hidden Node `gauntlet/serve.mjs 43117`; if absent next session, restart only this LOFT-local
-server. Retained entry: `game.js?v=035-final`. All accumulated Gauntlet work is included
-in the requested official v1 publication. Detailed evidence is in integrations 033–035.
+server. Local retained entry: `game.js?v=036-final`. Official main stays at 035.
+Detailed evidence is in integrations 033–036. No Pages authorization was granted.

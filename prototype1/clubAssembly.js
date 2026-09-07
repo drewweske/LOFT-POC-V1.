@@ -22,8 +22,8 @@ export const IN_WORLD_CLUB_SPEC=Object.freeze({
 });
 
 // The one construction source for the held object and the Workshop. These
-// builders are extracted intact from the golfer rig: no inspection-only head,
-// no hidden character, and no change to trusted local contact offsets.
+// builders retain the trusted face/contact construction. Neck refinements are
+// shared by inspection and play, never an inspection-only substitute.
 class ClubHeadBuilder{
   constructor(){
     this.clubHead=new THREE.Group();
@@ -217,7 +217,13 @@ class ClubHeadBuilder{
       if(design>=3)this._clubNamedPart(wedge?'LOFT_WEDGE_TOP_RAIL':'LOFT_IRON_TOPLINE',new THREE.CapsuleGeometry(.005,width*.56,4,14),M.face,[.023,0,.043],[1,1,.68],[0,0,0],'topline');
       if(design>=4)this._clubNamedPart(wedge?'LOFT_WEDGE_CAVITY_BRIDGE':'LOFT_IRON_CAVITY_BRIDGE',new THREE.BoxGeometry(.008,.012,height*.52),M.face,[.038,0,.008],[1,1,1],[0,0,0],'cavity-bridge');
       this._clubSignal(M,[.041,width*.28,-.014]);
-      this._clubBridge(wedge?'LOFT_WEDGE_HOSEL':'LOFT_IRON_HOSEL',[.012,-width*.44,.025],[0,-.004,.014],.0095,M.body);
+      // The shaft belongs at the heel, outside the scoring face. Keep the face
+      // center and analytic strike landmark fixed; only the neck changes.
+      const ferruleAnchor=[0,-width*.48,.075];
+      this._clubBridge(wedge?'LOFT_WEDGE_HOSEL':'LOFT_IRON_HOSEL',[.014,-width*.34,.017],ferruleAnchor,.0095,M.body);
+      this.clubHead.userData.ferruleAnchor=ferruleAnchor;
+      this.clubHead.userData.ferruleLength=.035;
+      this.clubHead.userData.neckSystem='LOFT_HEEL_ATTACHMENT_V1';
     }
 
     const contactOffset=IN_WORLD_CLUB_SPEC.addressContact.familyOffset[type]||0;
@@ -249,6 +255,7 @@ class ClubHeadBuilder{
     this.clubVisualSettle=lerp(settleRange[0],settleRange[1],(design-1)/4);
     for(const part of this.clubHead.children)part.position.z-=this.clubVisualSettle;
     this.clubHead.userData.visualSettle=this.clubVisualSettle;
+    if(this.clubHead.userData.ferruleAnchor)this.clubHead.userData.ferruleAnchor[2]-=this.clubVisualSettle;
   }
 }
 
@@ -272,17 +279,28 @@ export function createClubHead(club='iron',level=1){
   return {...cached,head:cached.head.clone(true)};
 }
 
-export function createClubShaftParts(level=1){
+export function createClubShaftParts(level=1,family='iron'){
   // Resolves the same shared material family as the head without constructing
   // an unnecessary head or a golfer in the inspection scene.
   const builder=new ClubHeadBuilder(),M=builder._clubMaterials(level);
   const part=(name,r,taper,material)=>{
-    if(!segmentGeometryCache.has(name))segmentGeometryCache.set(name,new THREE.CylinderGeometry(r*taper,r,1,12));
-    const mesh=new THREE.Mesh(segmentGeometryCache.get(name),material);
+    const key=name+':'+r+':'+taper;
+    if(!segmentGeometryCache.has(key))segmentGeometryCache.set(key,new THREE.CylinderGeometry(r*taper,r,1,12));
+    const mesh=new THREE.Mesh(segmentGeometryCache.get(key),material);
     mesh.name='LOFT_CLUB_'+name.toUpperCase();mesh.castShadow=true;
     mesh.userData.baseRadius=r;return mesh;
   };
-  return {grip:part('grip',.023,.96,M.dark),shaft:part('shaft',.0105,.98,M.face),ferrule:part('ferrule',.016,.92,M.dark)};
+  const heel=family==='iron'||family==='wedge';
+  return {grip:part('grip',.023,.96,M.dark),shaft:part('shaft',heel?.00625:.0105,.98,M.face),ferrule:part('ferrule',heel?.008:.016,.92,M.dark)};
+}
+
+// The same rigid attachment solver is used by the golfer and the inspector.
+// Head transform and grip endpoint are inputs, never moved by this construction.
+export function clubFerruleStations(head,gripEnd){
+  if(!head.userData.ferruleAnchor)return null;
+  const end=new THREE.Vector3(...head.userData.ferruleAnchor).applyQuaternion(head.quaternion).add(head.position);
+  const start=end.clone().addScaledVector(gripEnd.clone().sub(end).normalize(),head.userData.ferruleLength);
+  return {start,end};
 }
 
 // Instanced groove transforms are instance-owned GPU buffers. Releasing their
@@ -300,7 +318,7 @@ function between(mesh,a,b){
 
 export function createClubInspectionModel(club,level=1){
   const {head,materials,profile,visualSettle}=createClubHead(club,level);
-  const parts=createClubShaftParts(level),group=new THREE.Group();
+  const parts=createClubShaftParts(level,head.userData.family),group=new THREE.Group();
   group.name='LOFT_CLUB_INSPECTION_ASSEMBLY';
   group.add(head,parts.grip,parts.shaft,parts.ferrule);
   // Canonical head axes: X face/back, Y heel/toe, Z sole/grip.
@@ -308,7 +326,8 @@ export function createClubInspectionModel(club,level=1){
   // that exact frame here so the complete object has identical shaft stations.
   const point=z=>new THREE.Vector3(0,0,z);
   const gripButt=point(profile.length+.060),gripEnd=point(profile.length-.155);
-  const ferruleEnd=point(.014-visualSettle),ferruleStart=point(.075-visualSettle);
+  const stations=clubFerruleStations(head,gripEnd);
+  const ferruleEnd=stations?.end||point(.014-visualSettle),ferruleStart=stations?.start||point(.075-visualSettle);
   between(parts.grip,gripButt,gripEnd);
   between(parts.shaft,gripEnd,ferruleStart);
   between(parts.ferrule,ferruleStart,ferruleEnd);
