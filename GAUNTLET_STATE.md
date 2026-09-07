@@ -1,8 +1,11 @@
 # LOFT Gauntlet State
 
-Updated: 2026-09-07  
-Build: Official v1 assessment / Integration 035  
-Branch: `prototype-1-gauntlet`  
+Updated: 2026-09-07
+
+Build: Official v1 assessment / Integration 035
+
+Branch: `prototype-1-gauntlet`
+
 Playable artifact: `/prototype1/`
 
 ## Current build assessment

@@ -1,6 +1,7 @@
 # LOFT Visual Standard — Zero-Brand Constitution
 
-Version: 1.0  
+Version: 1.0
+
 Scope: the actual playable LOFT prototype and all future production assets
 
 The authoritative Good Work images remain the strongest visual references:
