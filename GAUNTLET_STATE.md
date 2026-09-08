@@ -1,8 +1,8 @@
 # LOFT Gauntlet State
 
-Updated: 2026-09-07
+Updated: 2026-09-08
 
-Build: Local Integration 037 / official v1 assessment remains Integration 035
+Build: Local Integration 038 / official v1 assessment remains Integration 035
 
 Branch: `prototype-1-gauntlet`
 
@@ -10,12 +10,13 @@ Playable artifact: `/prototype1/`
 
 ## Current build assessment
 
-Integrations 036–037 repair actual iron/wedge heel attachment, slim shaft/ferrule
-geometry, joint continuity and genuinely recessed forged backs with readable tier
-materials. All 70 gates pass; the real face, sole, held grip, head landmark and golf
-numbers are unchanged. The published v1 checkpoint on main is
+Integrations 036–038 repair actual iron/wedge heel attachment, slim shaft/ferrule,
+recessed forgings and purpose-built wedge soles. PW has a 20 mm working sole; SW
+has a 38 mm relieved platform. All 74 gates pass; faces, repaired necks, grips,
+head motion and every golf number remain unchanged. Only wedge sole geometry and
+its material were intentionally superseded in 038. The published v1 checkpoint on main is
 still 035 (`55350bd` including publication notes); no new remote push is implied by
-continuing local development. The next target is purposeful pitching/sand-wedge geometry.
+continuing local development. The next target is the flat inland horizon composition.
 
 The prototype is functionally healthy and materially closer to one LOFT world, but it
 does not yet meet the Good Work production bar. Integrations 016–030 now provide a
@@ -42,18 +43,23 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 | Category | Honest score | Assessment |
 | --- | ---: | --- |
-| Technical integrity | 9.0/10 | 70 executable gates, closed forged geometry, shared object buffers and geometry-measured rigid joints; physical-device performance is not yet validated. |
+| Technical integrity | 9.0/10 | 74 executable gates, closed forgings/soles, exact triangle support and shared buffers; physical-device performance is not yet validated. |
 | UI / UX clarity | 7.2/10 | World-linked shot facts, preview/Equip separation and one live/final ledger; primary navigation, progression and settings remain. |
 | LOFT identity | 6.2/10 | Restrained direction is established, but raw course and character screenshots still expose prototype construction. |
 | Terrain / environment | 4.8/10 | Physical field and surface identity agree; composition, vegetation and rock/material detail remain far below the destination references. |
 | Character / animation | 4.8/10 | Connected anatomy, grip and swing are improved; face, garment deformation and silhouette still need production-level craft. |
-| Equipment desirability | 6.1/10 | Heel attachment, real recesses and restrained readable metal now hold together; wedges still need purpose-specific soles and production face detail. |
+| Equipment desirability | 6.2/10 | Repaired heel attachment, real recesses and purpose-built wedge soles; thick face/body proportions and machining remain below the production references. |
 | Ball identity | 7.4/10 | Same 338-dimple ball is inspectable with dense bowls, curved normals and one fixed signature; exact quad-symmetric production topology remains unproven. |
 | Cup / hole integrity | 7.2/10 | Spatial aperture, liner, depth and pace-sensitive capture agree; cut-turf and lip shading can mature. |
 | Camera / game feel | 7.7/10 | Close putting remains accessible; cross-hole rebasing prevents backward/underground interpolation while local resets stay smooth. |
 
 ## Completed improvements
 
+- Integration 038: actual narrow PW / wide SW cambered soles, trailing and heel/toe
+  relief, controlled edge shoulders and analytic surface normals. Four independently
+  authored gates use actual triangles and reject deliberately broken geometry.
+  Low-tier sole penetration is removed at measured impact; full pose/face/golf data
+  remains exact. See `gauntlet/history/integration_038.md`.
 - Integration 037: closed forged-back shells, physical tier-section progression,
   recessed outline-following inserts, rising sole-to-toe muscle, body-only material
   hierarchy and corrected planar-cap shading. Three new geometry-derived gates;
@@ -132,7 +138,7 @@ assessment, not evidence that this iteration changed or damaged those assets.
 - Deterministic address/top/impact/finish visual fixtures now make character review
   repeatable without changing real gameplay motion.
 - Current gates: terrain 14/14; visual 37/37; ball 6/6; assembly preservation 1/1;
-  atelier 5/5; neck 4/4; forging 3/3: PASS. Latest live checks cover desktop/portrait/short landscape,
+  atelier 5/5; neck 4/4; forging 3/3; wedge sole 4/4: PASS. Latest live checks cover desktop/portrait/short landscape,
   actual club inspection and Club/Ball/Club/course return. Full manual three-hole
   and physical-device tests were not repeated in 037.
 - No Supabase, AEZRIO, unrelated repository, or new dependency was introduced.
@@ -159,9 +165,10 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **Purpose-built wedge soles — current target:** pitching and sand wedges still share
-   the same visible head/sole despite different specifications and purposes. Author
-   meaningful sole width, bounce/camber and relief without changing shot numbers.
+1. **World-first horizon composition — current target:** the opening course still
+   reads as a lane on a flat table. Test an authored inland ridge beyond the physical
+   recovery boundary, joined to the current field edge, without changing playable
+   terrain/contact samples, hazards, routes or landmark placement.
 2. **Production character asset pipeline:** the code-native golfer is coherent, but a
    future skinned mesh, facial blendshapes, wardrobe variants, and secondary motion
    are required to reach the character-board production ceiling.
@@ -180,13 +187,14 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**Purpose-built pitching and sand wedge soles**
+**Authored inland horizon / course setting**
 
-Keep the official assessment checkpoint stable. Make the actual two tools identifiable
-without labels or recoloring, through sole width, bounce/camber and trailing-edge relief.
-Measure existing ground and ball contact before changing geometry. Preserve scoring
-faces, heel sockets, grips, motion and every golf number. Require actual side/sole
-comparison plus all current contact, rigid-joint, framing and resource checks.
+Keep the official assessment checkpoint stable. Replace the flat inland skyline with
+broad authored hills and a saddle behind Ridge House, beyond x=-92 or z=-292 (physics
+recovers outside |x|=88 / z=-286). Join the current visual field boundary exactly;
+preserve its complete contact fingerprint. Great means a readable coastal setting
+in the normal tee/approach views, not decorative noise or a wall blocking landmarks.
+Reject if the actual gameplay frame does not materially improve.
 
 ## Reference comparison
 
@@ -220,6 +228,11 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 ## Experiments attempted
 
+- Integration 038 replaced identical capsule soles with real purpose-specific support.
+  The first smooth-edged candidate passed geometry checks but looked padded. Controlled
+  machining shoulders and analytic cap normals reduced that defect. Corrected wedge
+  ground tests use actual vertices, not impossible transformed-AABB corners. The old
+  actual Foundation hover remains documented rather than hidden by a loose box test.
 - Integration 037 authored a closed recessed shell instead of a raised back plaque.
   The first Foundation cap shaded like a cushion; planar cap-ring normals won live
   reinspection and now have a geometry-derived regression assertion. Real depth,
@@ -388,15 +401,15 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 The requested source publication is complete and remote SHA verified. Public Pages
 hosting is pending explicit user approval; do not infer it from the earlier main push.
-For the next Gauntlet iteration, compare PW and SW in the live inspector, then inspect
-their shared wedge/sole branch in `prototype1/clubAssembly.js`. Measure address/impact
-clearance before proposing sole geometry. Create purposeful width, camber and relief
-differences while keeping faces, sockets, motion and shot numbers intact. Preserve
-previous baselines as history, explicitly identify any intended sole-contract change,
-and add actual geometric purpose/contact tests rather than silently replacing hashes.
+For the next Gauntlet iteration, inspect the ordinary tee screenshot and build one
+bounded off-play inland hill/saddle experiment. `worldV2.js` owns the current field;
+`physics.js` recovers beyond |x|=88 and z=-286. Any scenery must stay beyond the
+rendered field edge x=-92 or z=-292, join sampled boundary vertices, preserve the
+literal terrain hash, and keep lighthouse/clubhouse silhouettes readable. Test and
+visually compare before accepting; no playable height or golf system changes.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`. The local server was restored with
 hidden Node `gauntlet/serve.mjs 43117`; if absent next session, restart only this LOFT-local
-server. Local retained entry: `game.js?v=037-final`. Official main stays at 035.
-Detailed evidence is in integrations 033–037. Local 036 checkpoint is `8a29150`.
+server. Local retained entry: `game.js?v=038-final`. Official main stays at 035.
+Detailed evidence is in integrations 033–038. Local 037 checkpoint is `309d09f`.
 No Pages authorization was granted. Do not attempt a hosting workaround.

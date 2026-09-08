@@ -1,12 +1,22 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Local Integration 037 / official v1 assessment remains Integration 035
+Current build: Local Integration 038 / official v1 assessment remains Integration 035
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Heel attachment and forged backs complete; purpose-built wedge soles next
-Iteration: integration_037
+Active subsystem: Purpose-built wedge soles complete; inland horizon next
+Iteration: integration_038
 
-Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-07.
+Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-08.
+
+## Integration 038 verdict
+
+Actual PW/SW soles now differ physically: 20/38 mm working width, camber, trailing
+relief and heel/toe lift. Closed 960-triangle construction, controlled shoulders and
+analytic surface normals replace identical capsule bars. Actual triangle tests remove
+the false penetration implied by transformed bounding-box corners. All 74 gates pass;
+faces, necks, motions and golf data remain exact. Live desktop/phone/short-landscape
+views and Equip return were checked. The production-level object ceiling remains.
+Next: off-play inland horizon composition. See `history/integration_038.md`.
 
 ## Integration 037 verdict
 

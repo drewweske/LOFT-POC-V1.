@@ -29,13 +29,14 @@ node gauntlet/run-club-assembly-gauntlet.mjs
 node gauntlet/run-atelier-gauntlet.mjs
 node gauntlet/run-club-neck-gauntlet.mjs
 node gauntlet/run-club-forging-gauntlet.mjs
+node gauntlet/run-wedge-sole-gauntlet.mjs
 ```
 
 The published v1 checkpoint passes 63 executable gates. Local development through
-Integration 037 passes 70, with heel-attached shafts and genuinely recessed forged
-backs. It remains a prototype, not a claim of production fidelity. Physical-device
+Integration 038 passes 74, with heel-attached shafts, recessed forgings and genuinely
+different pitching/sand-wedge support surfaces. It remains a prototype, not a claim of production fidelity. Physical-device
 performance and a new complete manual three-hole round were not validated in these
-passes. The next modeling target is purposeful pitching/sand-wedge differentiation.
+passes. The next target is an authored off-play inland skyline for Coastal Ridge.
 
 Development rules: `AGENTS.md`. Visual constitution: `LOFT_VISUAL_STANDARD.md`.
 Resume the loop from `GAUNTLET_STATE.md`; iteration evidence lives in `gauntlet/history/`.

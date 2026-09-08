@@ -171,6 +171,66 @@ class ClubHeadBuilder{
     for(let i=0;i<p.count;i++){const y=p.getX(i),z=p.getY(i),x=p.getZ(i)-.002;p.setXYZ(i,x,y,z);}
     geo.deleteAttribute('normal');geo.computeVertexNormals();geo.computeBoundingBox();return geo;
   }
+  _wedgeSoleGeometry(width,sand,design){
+    // One continuous ground-facing forging, not a rubber capsule attached to
+    // an iron. TOUCH P keeps a narrow turf-entry band. TOUCH S carries a wider
+    // sand-support platform with stronger trailing and heel/toe relief.
+    // X is face/back, Y heel/toe, Z sole/grip. The modest X slope compensates
+    // the existing address frame; it is not a claim of measured bounce degrees.
+    const front=.007,back=sand?.045:.027,halfSpan=width*.425;
+    const camber=sand?.004:.0025,relief=sand?.0035:.0018;
+    const finish=(design-1)/4,heelLift=(sand?.005:.003)+finish*.001;
+    const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+    const bottom=(x,y)=>{
+      const v=(x-front)/(back-front),u=Math.abs(y/halfSpan);
+      return -.0425+.34*(x-.018)+camber*((v-.40)/.60)**2
+        +relief*smooth((v-.68)/.32)+heelLift*u**4;
+    };
+    const top=(x,y)=>-.027+.15*(x-.018)+.0015*(y/halfSpan)**4;
+    const positions=[],indices=[],segments=48,rings=4,center=(front+back)*.5;
+    const point=(i,r)=>{
+      const angle=i/segments*Math.PI*2,c=Math.cos(angle),s=Math.sin(angle);
+      return [center+(back-front)*.5*Math.sign(c)*Math.sqrt(Math.abs(c))*r,
+        halfSpan*Math.sign(s)*Math.sqrt(Math.abs(s))*r];
+    };
+    for(let surface=0;surface<2;surface++){
+      const z=surface===0?bottom:top;
+      positions.push(center,0,z(center,0));
+      for(let ring=1;ring<=rings;ring++)for(let i=0;i<segments;i++){
+        const [x,y]=point(i,ring/rings*.94);
+        positions.push(x,y,z(x,y));
+      }
+    }
+    const cap=1+rings*segments;
+    for(let surface=0;surface<2;surface++){
+      const base=surface*cap,tri=(a,b,c)=>indices.push(...(surface===0?[a,c,b]:[a,b,c]));
+      for(let i=0;i<segments;i++)tri(base,base+1+i,base+1+(i+1)%segments);
+      for(let ring=0;ring<rings-1;ring++)for(let i=0;i<segments;i++){
+        const a=base+1+ring*segments+i,b=base+1+ring*segments+(i+1)%segments;
+        const c=b+segments,d=a+segments;tri(a,d,b);tri(b,d,c);
+      }
+    }
+    const edge=1+(rings-1)*segments;
+    // Two close machining shoulders keep the edge treatment controlled. Broad
+    // surface normals must not average through the whole side wall like a pad.
+    const lower=positions.length/3;
+    for(let i=0;i<segments;i++){const [x,y]=point(i,1);positions.push(x,y,bottom(x,y)+.0012);}
+    const upper=positions.length/3;
+    for(let i=0;i<segments;i++){const [x,y]=point(i,1);positions.push(x,y,top(x,y)-.0008);}
+    for(const [from,to] of [[edge,lower],[lower,upper],[upper,cap+edge]])for(let i=0;i<segments;i++){
+      const a=from+i,b=from+(i+1)%segments,c=to+(i+1)%segments,d=to+i;
+      indices.push(a,b,d,b,c,d);
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);
+    geo.computeVertexNormals();
+    const p=geo.attributes.position,n=geo.attributes.normal,e=.00001;
+    for(let surface=0;surface<2;surface++)for(let i=surface*cap;i<(surface+1)*cap;i++){
+      const x=p.getX(i),y=p.getY(i),z=surface===0?bottom:top,sign=surface===0?-1:1;
+      const dx=(z(x+e,y)-z(x-e,y))/(2*e),dy=(z(x,y+e)-z(x,y-e))/(2*e);
+      const normal=new THREE.Vector3(-dx,-dy,1).normalize().multiplyScalar(sign);n.setXYZ(i,...normal.toArray());
+    }
+    n.needsUpdate=true;geo.computeBoundingBox();return geo;
+  }
   _clubBridge(name,a,b,r,mat,role='hosel'){
     const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b);
     const mid=start.clone().add(end).multiplyScalar(.5),length=start.distanceTo(end);
@@ -280,7 +340,8 @@ class ClubHeadBuilder{
       const forged=this._forgedBackGeometry(width,height,.022*gradeBulk,highToe,design);
       this._clubNamedPart(wedge?'LOFT_WEDGE_FORGED_BODY':'LOFT_IRON_FORGED_BODY',forged,M.forged,[.014,0,.007],[1,1,1],[0,0,0],'forged-body');
       this._clubNamedPart(wedge?'LOFT_WEDGE_FACE':'LOFT_IRON_FACE',this._ironPlateGeometry(width*.96,height*.94,.004,highToe,.0024),M.face,[-.002,0,.007],[1,1,1],[0,0,0],'face');
-      this._clubNamedPart(wedge?'LOFT_WEDGE_RELIEF_SOLE':'LOFT_IRON_SOLE',new THREE.CapsuleGeometry(.0075,width*.72,4,16),M.dark,[.018,0,-.032],[1,1,wedge?1.45:1],[0,0,0],'sole');
+      if(wedge)this._clubNamedPart('LOFT_WEDGE_RELIEF_SOLE',this._wedgeSoleGeometry(width,id==='sw',design),M.forged,[0,0,0],[1,1,1],[0,0,0],'sole');
+      else this._clubNamedPart('LOFT_IRON_SOLE',new THREE.CapsuleGeometry(.0075,width*.72,4,16),M.dark,[.018,0,-.032],[1,1,1],[0,0,0],'sole');
       this._clubGrooves(wedge?'LOFT_WEDGE_FACE_GROOVES':'LOFT_IRON_FACE_GROOVES',width*.70,-.021,6,.009,-.005,M.dark);
       if(design>=2)this._clubNamedPart(wedge?'LOFT_WEDGE_BACK_CHANNEL':'LOFT_IRON_CAVITY',this._ironPlateGeometry(width*.55,height*.40,.0015,highToe,.0005),M.dark,[.014+forged.userData.floor+.001,0,.007],[1,1,1],[0,0,0],'cavity');
       if(design>=3)this._clubNamedPart(wedge?'LOFT_WEDGE_TOP_RAIL':'LOFT_IRON_TOPLINE',new THREE.CapsuleGeometry(.003,width*.62,4,14),M.face,[.022,0,.043],[1,1,.68],[0,0,0],'topline');

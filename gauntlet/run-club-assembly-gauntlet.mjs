@@ -22,7 +22,7 @@ const meshRecord=object=>({
 });
 const fingerprint=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const rig=new LoftGolferRig(COLORS);
-const records={},protectedRecords={},forgingProtectedRecords={};
+const records={},protectedRecords={},forgingProtectedRecords={},soleProtectedRecords={};
 for(const club of CLUBS)for(const level of [1,10,25,50,75]){
   rig.setClub(club,level);
   const head=meshRecord(rig.clubHead);head.position=[0,0,0];head.quaternion=[0,0,0,1];head.scale=[1,1,1];
@@ -36,7 +36,10 @@ for(const club of CLUBS)for(const level of [1,10,25,50,75]){
   const backPart=/_FORGED_BODY$|_CAVITY$|_BACK_CHANNEL$|_TOP_RAIL$|_TOPLINE$|_CAVITY_BRIDGE$/;
   const protectedHead={...head,children:head.children.filter(child=>!(['iron','wedge'].includes(club.head)&&backPart.test(child.name)))};
   forgingProtectedRecords[club.id+':'+level]={head:fingerprint(protectedHead),motion:fingerprint(poses.map(p=>p.slice(0,2))),profile:records[club.id+':'+level].profile};
+  const soleProtectedHead={...head,children:head.children.filter(child=>!(club.head==='wedge'&&child.name==='LOFT_WEDGE_RELIEF_SOLE'))};
+  soleProtectedRecords[club.id+':'+level]={head:fingerprint(soleProtectedHead),motion:fingerprint(poses),profile:records[club.id+':'+level].profile};
 }
+if(process.argv.includes('--record-sole-protected')){console.log(fingerprint({objects:soleProtectedRecords,clubs:CLUBS}));process.exit(0);}
 if(process.argv.includes('--record-forging-protected')){console.log(fingerprint(forgingProtectedRecords));process.exit(0);}
 if(process.argv.includes('--record-protected')){console.log(fingerprint(protectedRecords));process.exit(0);}
 if(process.argv.includes('--record')){
@@ -59,5 +62,9 @@ for(const item of CLUBS)for(const level of [1,10,25,50,75]){
 // 037 deliberately supersedes only forged back body/cavity/topline/bridge, not
 // faces, soles, scoring grooves, heel necks, signals, grips or motion. Captured
 // BEFORE that back edit against the retained local 036 checkpoint 8a29150.
-assert.equal(fingerprint(forgingProtectedRecords),'de624583ed3b2c2f43c3b3906fc6165a0db5570efe059cc2379226d39776e483');
-console.log('PASS  20 unchanged full assemblies plus protected faces, soles, necks, grooves, grips, profiles and seven swing poses across all 40 objects');
+// 037 retained de624583ed3b2c2f43c3b3906fc6165a0db5570efe059cc2379226d39776e483.
+// 038 changes ONLY the two wedge sole meshes. This new literal was measured
+// before the sole edit against 037 (309d09f), including all four rigid stations,
+// every non-wedge object, every other wedge part and the complete CLUBS data.
+assert.equal(fingerprint({objects:soleProtectedRecords,clubs:CLUBS}),'158f1c8be87bf4014e2403ef6b19d591ce985102dba98cdba143e3d78e0aa2cd');
+console.log('PASS  all 40 assemblies preserve the 037 baseline except the ten intentionally rebuilt wedge soles; golf data and all seven pose stations are exact');
