@@ -114,7 +114,7 @@ export class GolfPhysics{
     // Putting is distance-authored by the player's actual backstroke.
     // A displayed 10 FT pace means approximately 10 feet of level-green roll.
     const speed=paceFeet!=null
-      ? Math.sqrt(2*surfacePhysics('green').rollingDecel*Math.max(.12,paceFeet*.3048))*(.985+.025*q)
+      ? Math.sqrt(2*surfacePhysics('green').rollingDecel*Math.max(0,paceFeet*.3048))*(.985+.025*q)
       : club.ballSpeed*clamp(power,.035,1.08)*(.86+.14*q);
     this.state={
       pos:position.clone(),
@@ -162,7 +162,12 @@ export class GolfPhysics{
 
     const dx=closestX-this.cup.x,dz=closestZ-this.cup.z;
     const d=Math.hypot(dx,dz);
-    if(d>CUP_LIP_CONTACT)return false;
+    if(d>CUP_LIP_CONTACT){
+      // Rejection belongs to one encounter, not the entire shot. A ball that
+      // rolls clear and returns downhill gets a new physical entry assessment.
+      s.captureRejected=false;s.cupLipResolved=false;
+      return false;
+    }
 
     const speed=Math.hypot(s.vel.x,s.vel.z);
     const direct=d<CUP_CAPTURE;
@@ -172,19 +177,17 @@ export class GolfPhysics{
     // across the cup between 120 Hz fixed steps.
     const edge=clamp(d/CUP_CAPTURE,0,1);
     const captureSpeed=1.95-(1.95-.50)*Math.pow(edge,1.62);
+    // A slow ball whose centre of mass is inside the mouth cannot balance on
+    // nonexistent turf. The 1.5 mm rim allowance retains supported edge rests;
+    // nothing outside the physical opening is attracted toward the cup.
+    const unsupported=d<CUP_RADIUS-.0015&&speed<.12;
     const normalCapture=direct&&speed<captureSpeed&&!s.captureRejected;
 
-    if(normalCapture){
+    if(normalCapture||unsupported){
       s.holed=true;s.stopped=true;s.surface='cup';s.vel.set(0,0,0);
       s.pos.set(this.cup.x,this._groundY(this.cup.x,this.cup.z),this.cup.z);
       this.active=false;
       return true;
-    }
-
-    if(direct&&speed>=captureSpeed){
-      // Once pace has exceeded the acceptance window it cannot be slowed by
-      // the rim and then accepted on the next fixed step.
-      s.captureRejected=true;
     }
 
     const ballDx=s.pos.x-this.cup.x,ballDz=s.pos.z-this.cup.z;
@@ -192,9 +195,14 @@ export class GolfPhysics{
     // Resolve the rim only after the ball reaches and begins leaving its
     // closest approach. Resolving on the inbound outer-overlap radius creates
     // an invisible wall in front of an otherwise centred putt.
-    if(!s.lipTouched&&speed>.12&&radialMotion>=0){
-      s.lipTouched=true;
-      if(d<CUP_CAPTURE){s.vel.multiplyScalar(.82);return false;}
+    if(!s.cupLipResolved&&speed>.12&&radialMotion>=0){
+      s.lipTouched=true;s.cupLipResolved=true;
+      if(d<CUP_CAPTURE){
+        // Judge rejection only at/past closest approach. Marking it on the
+        // inbound throat boundary applied the EDGE speed limit to every
+        // centre putt, even before the ball reached the centre acceptance zone.
+        s.captureRejected=true;s.vel.multiplyScalar(.82);return false;
+      }
       const n=new THREE.Vector3(ballDx||dx||.001,0,ballDz||dz||.001).normalize();
       const tangent=new THREE.Vector3(-n.z,0,n.x);
       const tangential=s.vel.dot(tangent);
@@ -397,6 +405,7 @@ export class GolfPhysics{
       const slopeAccel=G*ROLLING_GRAVITY_FACTOR*grade/Math.sqrt(1+grade*grade);
       const canPhysicallyHold=slopeAccel<material.rollingDecel*.94;
       if(hs0<material.settleSpeed*1.55&&(grade<material.staticGrade||canPhysicallyHold)){
+        if(this._tryCup(s,surface))return;
         s.vel.set(0,0,0);
         s.stopped=true;
         this.active=false;

@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three.module.js';
 import {CLUBS,LEVELS,DEFAULT_CLUB,equipmentTier,clubPresentationProfile} from './equipment.js';
-import {COLORS,COASTAL_AIR_SPEC,COASTAL_TURF_LIGHT_SPEC,WATER_LEVEL,terrainHeight,terrainContactY,sampleTerrain,sweepTerrainSegment,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js?v=031-final';
+import {COLORS,COASTAL_AIR_SPEC,COASTAL_TURF_LIGHT_SPEC,WATER_LEVEL,terrainHeight,terrainContactY,sampleTerrain,sweepTerrainSegment,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js?v=039-final';
 import {GOLFER_GROUND_CLEARANCE,LoftGolferRig} from './characterRig.js?v=038-final';
 import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
 import {LoftCamera} from './camera.js';
@@ -14,6 +14,9 @@ import {buildTargetStewardCopy,solveTargetStewardPlacement} from './targetStewar
 import {buildRoundChronicleModel} from './roundChronicle.js?v=033-final';
 import {LoftBallAtelier} from './ballAtelier.js';
 import {LoftClubAtelier} from './clubAtelier.js';
+import {puttPaceFromPull,puttingDistance,puttContactProfile,puttStrokeScale} from './putting.js';
+import {flightHudVisibility} from './flightPresentation.js';
+import {uiIconMarkup,windReadoutMarkup} from './uiMarks.js';
 
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -122,9 +125,10 @@ function scoreToParText(strokes=state.strokes,par=holeDef.par){const d=strokes-p
 
 function updateHoleHUD(){
   const nextStroke=state.strokes+1;
-  $('hole-number').textContent=String(holeDef.number).padStart(2,'0')+' · STROKE '+nextStroke;
+  const complete=Number.isFinite(state.holeScores[holeIndex]);
+  $('hole-number').textContent=String(holeDef.number).padStart(2,'0')+(complete?' · COMPLETE':' · STROKE '+nextStroke);
   $('hole-par').textContent='PAR '+holeDef.par;
-  $('wind-value').textContent=holeDef.windLabel;
+  $('wind-value').innerHTML=windReadoutMarkup(holeDef.windLabel);
   const completedPar=ROUND_HOLES.slice(0,state.holeScores.length).reduce((a,h)=>a+h.par,0);
   const completedStrokes=state.holeScores.reduce((a,b)=>a+(b||0),0);
   $('hud-score').textContent=state.holeScores.length?relativeScore(completedStrokes,completedPar):'E';
@@ -423,25 +427,17 @@ function cupDistanceFeet(){
   return Math.hypot(pin.x-TEE.x,pin.z-TEE.z)*3.28084;
 }
 function intendedPuttFeet(){
-  return Math.max(.5,state.targetDistance*3.28084);
-}
-function puttPaceFromPull(px,height){
-  // Long physical travel for short putts. The first third of the gesture is
-  // intentionally generous so 2–10 FT putts are easy to meter with a thumb.
-  // Longer putts then accelerate progressively instead of linearly.
-  const norm=clamp(px/(height*.25),0,1.10);
-  const feet=.45+46.5*Math.pow(norm,1.45);
-  return {norm,feet};
+  return Math.max(.01,state.targetDistance*3.28084);
 }
 function updatePuttPaceGhost(feet){
   if(!isPutting()||state.phase!=='ready'){puttPaceGhost.visible=false;return false;}
-  const d=Math.max(.15,feet*.3048);
+  const d=Math.max(0,feet*.3048);
   const forward=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
   const x=TEE.x+forward.x*d,z=TEE.z+forward.z*d;
   puttPaceGhost.position.set(x,playingContactY(x,z),z);
   const intended=intendedPuttFeet();
   const err=Math.abs(feet-intended);
-  const close=err<=Math.max(.50,intended*.05);
+  const close=err<=Math.max(.04,intended*.05);
   puttPaceRing.material.opacity=close ? .92 : .42;
   puttPaceRing.scale.setScalar(close?1.18:1);
   if(puttGhostMaterial)puttGhostMaterial.opacity=close ? .92 : .68;
@@ -480,7 +476,7 @@ function openPrecisionMap(){
   courseMap.classList.add('expanded');
   courseMap.setAttribute('aria-expanded','true');
   $('app').classList.add('map-open');
-  mapExpand.textContent='×';
+  mapExpand.innerHTML=uiIconMarkup('close');
   mapExpand.setAttribute('aria-label','Close course map');
   $('tip').style.opacity='0';
 }
@@ -488,7 +484,7 @@ function closePrecisionMap(){
   courseMap.classList.remove('expanded');
   courseMap.setAttribute('aria-expanded','false');
   $('app').classList.remove('map-open');
-  mapExpand.textContent='↗';
+  mapExpand.innerHTML=uiIconMarkup('expand');
   mapExpand.setAttribute('aria-label','Expand course map');
   mapDragPointer=null;
   updateHoleHUD();
@@ -503,7 +499,7 @@ function setAimFromMapClient(clientX,clientY){
   if(distance<.001)return;
 
   const c=club();
-  const min=c.head==='putter' ? .15 : (isShortGame() ? .35 : Math.max(1.8,c.carry*YARD*.12));
+  const min=c.head==='putter' ? .0127 : (isShortGame() ? .35 : Math.max(1.8,c.carry*YARD*.12));
   const max=c.head==='putter' ? 65*.3048 : c.carry*YARD*1.08;
   const yaw=clamp(Math.atan2(dx,-dz),COURSE_YAW-1.10,COURSE_YAW+1.10);
 
@@ -515,7 +511,7 @@ function setAimFromMapClient(clientX,clientY){
   updateLine();
 
   const label=c.head==='putter'
-    ? Math.max(1,Math.round(state.targetDistance*3.28084))+' FT'
+    ? puttingDistance(state.targetDistance).value+' '+puttingDistance(state.targetDistance).unit
     : Math.max(1,Math.round(state.targetDistance/YARD))+' YD';
   $('map-distance').textContent=label;
   topo.update({ball:ballGroup.position,target:state.target,pin,surface:state.currentLie,distanceUnit:isPutting()?'FT':'YD'});
@@ -648,7 +644,7 @@ function buildBag(){
     const b=document.createElement('button');b.className='club-card tier-'+tier.id;b.type='button';b.dataset.club=c.id;b.setAttribute('role','option');
     const hero=c.head==='putter'?65:c.carry;
     const unit=c.head==='putter'?'FT':'YD';
-    b.setAttribute('aria-label','Preview '+c.name+' '+hero+' '+unit+' · '+tier.name+' '+tier.rarity);
+    b.setAttribute('aria-label','Preview '+c.name+' '+hero+' '+unit+' · '+tier.name+' / '+c.model);
     b.innerHTML=`<span class="club-card-number">${String(index+1).padStart(2,'0')}</span>
       <span class="club-card-state">${c.id===state.clubId?'IN BAG':'VIEW'}</span>
       <span class="club-card-art">${clubArtSvg(c,{tier,hero:false,instance:'rail-'+index})}</span>
@@ -682,7 +678,7 @@ function syncBagHero(){
   $('bag-hero-finish').textContent=tier.finish;
   $('bag-hero-process').textContent=tier.process;
   clubAtelier.select(c,state.level);
-  $('bag-hero-tier').textContent=tier.name+' · '+tier.rarity;
+  $('bag-hero-tier').textContent=tier.name;
   $('bag-equipped-state').textContent=equipped?'IN BAG':'INSPECTION';
   $('bag-hero-model').textContent=c.model;
   $('bag-hero-name').textContent=c.name.toUpperCase()+' · '+c.feel;
@@ -717,9 +713,9 @@ function syncBag(){
   $('club-carry').textContent=c.head==='putter'?65:c.carry;
   $('club-carry').dataset.unit=c.head==='putter'?'FT':'YD';
   $('club-model').textContent=c.model;
-  $('club-tier').textContent=tier.name+' · '+tier.rarity;
+  $('club-tier').textContent=tier.name+' / '+c.model;
   $('club-chip-art').dataset.head=c.head;
-  $('bag-grade').textContent=tier.name+' · '+tier.rarity+' · '+tier.finish;
+  $('bag-grade').textContent=tier.name+' / '+tier.finish;
   $('bag-level').textContent='ABILITY LV '+state.level;
   syncBagHero();
 }
@@ -816,10 +812,11 @@ function setTarget(p){
   const forward=new THREE.Vector3(Math.sin(state.aimYaw),0,-Math.cos(state.aimYaw));
   const local=new THREE.Vector3(p.x-TEE.x,0,p.z-TEE.z);
   const projected=local.dot(forward);
-  const min=c.head==='putter' ? .30 : (isShortGame() ? .45 : Math.max(2.5,c.carry*YARD*.18)),max=c.carry*YARD*1.08;
+  const min=c.head==='putter' ? .0127 : (isShortGame() ? .45 : Math.max(2.5,c.carry*YARD*.18)),max=c.head==='putter'?65*.3048:c.carry*YARD*1.08;
   state.targetDistance=clamp(projected,min,max);
   syncTargetFromAim();
-  state.learned.line=true;updateLine();showContext(Math.round(state.targetDistance/YARD)+' YD',300);updateTip();
+  const distance=c.head==='putter'?puttingDistance(state.targetDistance):{value:Math.round(state.targetDistance/YARD),unit:'YD'};
+  state.learned.line=true;updateLine();showContext(distance.value+' '+distance.unit,300);updateTip();
 }
 
 function classify(q,path){if(Math.abs(path)>5.3)return path>0?'PUSH':'PULL';if(q>.965)return'PURE';if(q>.90)return'FLUSH';if(q>.80)return'SOLID';if(q>.69)return'PLAYABLE';return'HEAVY';}
@@ -879,13 +876,15 @@ function launchShot(metrics){
   };
   state.phase='flight';state.swingPhase=.60;state.shotCount++;state.strokes++;syncChronicleAvailability();
   state.landingFX=false;
-  state.ballCompression=1;
-  state.hitStop=q>.94 ? .030 : q>.82 ? .022 : .014;
+  const contact=c.head==='putter'?puttContactProfile(metrics.puttPaceFeet,q):null;
+  state.ballCompression=contact?.compression??1;
+  state.hitStop=contact?.hitStop??(q>.94 ? .030 : q>.82 ? .022 : .014);
 
-  cam.impact(.70+.30*q);
-  cam.beginFlight(aimYaw());
+  cam.impact(contact?.cameraImpulse??(.70+.30*q));
+  cam.beginFlight(aimYaw(),{ball:ballGroup.position,velocity:physics.state.vel,putting:c.head==='putter'});
+  $('app').classList.toggle('flight-active',flightHudVisibility(state.phase).round===0);
 
-  feedback.impact({quality:q,power:metrics.power,position:ballGroup.position,direction,club:c.head});
+  feedback.impact({quality:q,power:metrics.power,paceFeet:metrics.puttPaceFeet,position:ballGroup.position,direction,club:c.head});
   if(c.head!=='putter')feedback.startFlight(ballGroup.position);
   hidePuttPace();hideStrokeSignal();
 
@@ -912,12 +911,13 @@ function prepareShotAt(position,{penalty=false,lieOverride=null}={}){
 
   chooseAutoClub();
   defaultTarget(false);
+  golfer.puttStrokeScale=1;
   golfer.setPose(0,LEVELS[state.level]);
   feedback.clear();hidePuttPace();hideStrokeSignal();
 
   lineMesh.visible=true;halo.visible=true;
   $('result').classList.remove('show');
-  document.getElementById('app')?.classList.remove('swing-focus','result-open');
+  document.getElementById('app')?.classList.remove('swing-focus','result-open','flight-active');
   cam.resetAim();
   updateLine();updateHoleHUD();updateTip();syncChronicleAvailability();
 }
@@ -1077,6 +1077,7 @@ function finishShot(){
   if(state.phase==='result'||state.phase==='round-end')return;
   const holed=Boolean(physics.state?.holed);
   state.phase='result';syncChronicleAvailability();
+  $('app').classList.remove('flight-active');
   cam.beginResult(ballGroup.position,pin,{cup:holed});
 
   const feet=Math.hypot(ballGroup.position.x-pin.x,ballGroup.position.z-pin.z)*3.28084;
@@ -1118,7 +1119,7 @@ function finishShot(){
     $('again').textContent='DROP +1';
     state.resultAction='waterDrop';
   }else{
-    if(feet<2.5){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent='AT THE CUP · FINISH IT';}
+    if(feet<2.5){const distance=puttingDistance(feet*.3048);$('result-head').textContent=distance.value+' '+distance.unit;$('result-sub').textContent=feet<1?'AT THE LIP · SOFT TOUCH':'TO CUP · YOUR LINE';}
     else if(feet<45){$('result-head').textContent=Math.max(1,Math.round(feet))+' FT';$('result-sub').textContent=(feet<12?'DIALED':'ON '+surfaceDisplay(surface))+' · '+(ballGroup.position.z<pin.z?'LONG':'SHORT');}
     else{$('result-head').textContent=Math.round(feet/3)+' YDS';$('result-sub').textContent='TO PIN · '+surfaceDisplay(surface);}
     $('again').textContent='NEXT SHOT';
@@ -1162,12 +1163,24 @@ $('run-it-back').onclick=()=>{
 
 const pointers=new Map();
 let gesture=null;
+function cancelPendingStroke(){
+  if(state.phase!=='ready'||!cam.isSwingLocked)return;
+  state.interaction=null;state.swingPhase=0;golfer.puttStrokeScale=1;
+  document.getElementById('app')?.classList.remove('swing-focus');
+  cam.cancelSwing();syncChronicleAvailability();golfer.setPose(0,LEVELS[state.level]);
+  hidePuttPace();hideStrokeSignal();$('context').classList.remove('show');
+  $('swing-meter').classList.remove('show');$('swing-fill').style.height='0';
+  setTip(isPutting()?'PULL THE SIGNAL BACK · RETURN THROUGH BALL':'PULL THE SIGNAL BACK · DRIVE THROUGH');
+}
 canvas.addEventListener('pointerdown',e=>{
   feedback.unlock();
   if($('bag').classList.contains('open')||chronicleIsOpen())return;
   $('level-menu').classList.remove('open');$('level-chip').setAttribute('aria-expanded','false');
   canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,px:e.clientX,py:e.clientY});
   if(pointers.size===2){
+    // Two fingers always mean camera intent. Release the first finger's
+    // provisional swing lock before entering pinch, without launching a ball.
+    cancelPendingStroke();
     const a=[...pointers.values()];gesture={type:'pinch',lastDist:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),lastMid:{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}};$('tip').style.opacity='0';return;
   }
   const p={x:e.clientX,y:e.clientY},bs=screenOf(ballGroup.position.clone()),hs=screenOf(halo.position.clone()),db=Math.hypot(p.x-bs.x,p.y-bs.y),dh=Math.hypot(p.x-hs.x,p.y-hs.y);
@@ -1220,20 +1233,20 @@ canvas.addEventListener('pointermove',e=>{
     if(gesture.putt){
       // PUTTING: the backstroke itself authors pace. Tiny strokes remain tiny.
       // There is deliberately no hidden minimum-power floor.
-      const pace=puttPaceFromPull(backPx,r.height);
+      const pace=puttPaceFromPull(backPx,r.height,cupDistanceFeet());
       gesture.load=Math.max(gesture.load,pace.norm);
       gesture.puttPaceFeet=Math.max(gesture.puttPaceFeet,pace.feet);
       const reversal=e.clientY<gesture.deep-4;
 
       if(!reversal){
-        const loadPose=clamp(pace.norm/.82,0,1);
-        state.swingPhase=(loadPose*loadPose*(3-2*loadPose))*.38;
+        golfer.puttStrokeScale=puttStrokeScale(pace.feet);
+        state.swingPhase=.38;
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
         updateStrokeSignal(clamp(pace.norm,0,1),{putting:true,returning:false});
 
         const close=updatePuttPaceGhost(pace.feet);
-        const paceText=pace.feet<10?pace.feet.toFixed(1):String(Math.round(pace.feet));
-        showContext(close?'ON PACE':paceText+' FT',9999);
+        const paceText=puttingDistance(pace.feet*.3048);
+        showContext(close?'ON PACE':paceText.value+' '+paceText.unit,9999);
 
         if(close&&!gesture.paceCue){
           gesture.paceCue=true;
@@ -1245,9 +1258,11 @@ canvas.addEventListener('pointermove',e=>{
           feedback.puttTransition(pace.norm);
         }
 
-        const strokeSpan=Math.max(16,backPx);
+        const strokeSpan=Math.max(8,backPx);
         const through=clamp((gesture.deep-e.clientY)/(strokeSpan*1.08),0,1.25);
-        state.swingPhase=.38+through*.22;
+        // The same scaled pendulum continues through reversal and follow-through.
+        golfer.puttStrokeScale=puttStrokeScale(gesture.puttPaceFeet);
+        state.swingPhase=.38+clamp(through,0,1)*.22;
         golfer.setPose(state.swingPhase,LEVELS[state.level]);
         const signalT=clamp(gesture.load*(1-through),0,1);
         updateStrokeSignal(signalT,{putting:true,returning:true});
@@ -1388,7 +1403,7 @@ function endPointer(e){
   pointers.delete(e.pointerId);if(pointers.size>0){if(pointers.size===1)gesture=null;return;}
   if(gesture&&gesture.id===e.pointerId){
     if(gesture.type==='line'){$('context').classList.remove('show');updateTip();}
-    if(gesture.type==='swing'&&!gesture.impact){state.interaction=null;state.swingPhase=0;document.getElementById('app')?.classList.remove('swing-focus');cam.cancelSwing();syncChronicleAvailability();golfer.setPose(0,LEVELS[state.level]);hidePuttPace();hideStrokeSignal();$('context').classList.remove('show');$('swing-meter').classList.remove('show');$('swing-fill').style.height='0';setTip(gesture.putt?'PULL THE SIGNAL BACK · RETURN THROUGH BALL':'PULL THE SIGNAL BACK · DRIVE THROUGH');}
+    if(gesture.type==='swing'&&!gesture.impact)cancelPendingStroke();
   }
   gesture=null;
 }
@@ -1416,10 +1431,23 @@ new ResizeObserver(resize).observe($('stage'));resize();
 
 let last=performance.now();
 let lastMapUpdate=0;
+let flightFixtureCaptured=false;
+let flightFixtureWindup=false;
 function frame(now){
   const dt=Math.min(.03,(now-last)/1000||.016);last=now;
   if(ballAtelier.active){ballAtelier.render(dt);requestAnimationFrame(frame);return;}
   if(clubAtelier.active){clubAtelier.render(dt);requestAnimationFrame(frame);return;}
+
+  if(flightFixtureWindup){
+    state.swingPhase=Math.min(.60,state.swingPhase+dt*.65);
+    golfer.setPose(state.swingPhase,LEVELS[state.level]);
+    updateStrokeSignal(state.swingPhase<=.38?state.swingPhase/.38:1-(state.swingPhase-.38)/.22,{putting:false,returning:state.swingPhase>.38});
+    if(gauntletFixture==='flight-signal'&&state.swingPhase>=.38){flightFixtureCaptured=true;flightFixtureWindup=false;}
+    else if(state.swingPhase>=.60){
+      flightFixtureWindup=false;
+      launchShot({power:1,path:0,tempoScore:1,rhythm:1,center:1,commitment:1,loadScore:1,speedScore:1});
+    }
+  }
 
   if(state.phase==='ready'&&!cam.isSwingLocked){
     const nextYaw=state.aimYaw+(state.aimYawTarget-state.aimYaw)*(1-Math.exp(-8.6*dt));
@@ -1470,7 +1498,8 @@ function frame(now){
       if(ps.surface!=='air'&&ps.surface!=='cup'&&ps.surface!=='water'&&!ps.stopped){
         feedback.roll(ps.surface,Math.hypot(ps.vel.x,ps.vel.z));
       }
-      cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin,putting:Boolean(state.shot?.putting)});
+      cam.updateFlight(dt,{ball:ballGroup.position,velocity:ps.vel,pin,putting:Boolean(state.shot?.putting),grounded:Boolean(ps.lastImpactSurface)});
+      feedback.trail.visible=cam.flightTraceVisible(feedback.trailPoints);
 
       if(ps.lastImpactSurface&&!state.landingFX){
         state.landingFX=true;
@@ -1480,6 +1509,11 @@ function frame(now){
       if(ps.stopped){
         if(ps.recovered)showContext('BALL SETTLED',520);
         finishShot();
+      }
+      if(gauntletFixture?.startsWith('flight-')){
+        const moment=gauntletFixture.slice(7);
+        flightFixtureCaptured=(moment==='release'&&ps.simTime>0)||(moment==='apex'&&ps.vel.y<=0&&ps.surface==='air')||
+          (moment==='landing'&&Boolean(ps.lastImpactSurface))||(moment==='rest'&&ps.stopped);
       }
     }
   }else if(state.phase==='result')cam.updateResult(dt,{ball:ballGroup.position,pin});
@@ -1522,12 +1556,20 @@ function frame(now){
 
   if(state.phase==='ready')ring.scale.setScalar(.96+Math.sin(now*.0038)*.04);
   if(now-lastMapUpdate>66){
-    const mapSurface=state.phase==='flight'?(state.shot?.putting?surfaceAt(ballGroup.position.x,ballGroup.position.z):'AIR'):state.phase==='ready'?state.currentLie:surfaceAt(ballGroup.position.x,ballGroup.position.z);
+    const mapSurface=physics.state?.holed?'cup':state.phase==='flight'?(state.shot?.putting?surfaceAt(ballGroup.position.x,ballGroup.position.z):'AIR'):state.phase==='ready'?state.currentLie:surfaceAt(ballGroup.position.x,ballGroup.position.z);
     topo.update({ball:ballGroup.position,target:state.target,pin,surface:mapSurface,distanceUnit:isPutting()?'FT':'YD'});
     lastMapUpdate=now;
   }
   positionTargetSteward();
-  renderer.render(scene,camera);requestAnimationFrame(frame);
+  renderer.render(scene,camera);
+  if(flightFixtureCaptured){
+    $('app').dataset.flightCapture=gauntletFixture;
+    $('app').dataset.ballHeight=String(ballGroup.position.y-playingHeight(ballGroup.position.x,ballGroup.position.z));
+    const ballScreen=ballGroup.position.clone().project(camera),signalScreen=strokeSignalDot.position.clone().project(camera);
+    $('app').dataset.flightFrame=JSON.stringify({ball:[ballScreen.x,ballScreen.y],signal:[signalScreen.x,signalScreen.y],cameraRange:camera.position.distanceTo(ballGroup.position),time:physics.state?.simTime||0});
+    return;
+  }
+  requestAnimationFrame(frame);
 }
 
 setTimeout(()=>{$('boot').style.opacity='0';setTimeout(()=>$('boot')?.remove(),520);$('hole-intro').style.opacity='1';setTimeout(()=>$('hole-intro').style.opacity='0',1300);},220);
@@ -1537,26 +1579,51 @@ setTimeout(()=>{$('boot').style.opacity='0';setTimeout(()=>$('boot')?.remove(),5
 // and `cup-close` starts a two-foot inspection using the same gameplay, camera,
 // physics, score, and result systems.
 const gauntletFixture=new URLSearchParams(location.search).get('gauntlet');
-if(gauntletFixture==='cup'||gauntletFixture==='cup-close'){
+if(gauntletFixture?.startsWith('flight-')){
+  // Opt-in capture uses the real launch, unchanged solver and normal frame loop.
+  // Only the QA page can stop presenting a frame at a requested flight landmark.
   setTimeout(()=>{
-    const fixtureFeet=gauntletFixture==='cup-close'?2:8;
+    const fixtureClub=new URLSearchParams(location.search).get('club')||'iron7';
+    if(CLUBS.some(c=>c.id===fixtureClub&&c.head!=='putter'))state.clubId=fixtureClub;
+    state.learned={camera:true,line:true,stroke:true,putt:true};
+    golfer.setClub(club(),state.level);syncBag();defaultTarget(false);updateLine();
+    setTimeout(()=>{
+      cam.beginSwing(aimYaw());state.swingPhase=0;state.interaction='swing';
+      $('app').classList.add('swing-focus');beginStrokeSignal({putting:false,shortGame:false});
+      flightFixtureWindup=true;
+    },1600);
+  },90);
+}else if(gauntletFixture==='cup'||gauntletFixture==='cup-close'||gauntletFixture==='cup-edge'||gauntletFixture==='cup-roll'||gauntletFixture==='cup-tap'){
+  setTimeout(()=>{
+    const fixtureFeet=['cup-edge','cup-tap'].includes(gauntletFixture)?.065/.3048:gauntletFixture==='cup-close'?2:8;
     const back=TEE.clone().sub(pin);back.y=0;
     if(back.lengthSq()<.001)back.set(0,0,1);else back.normalize();
     const fixture=pin.clone().addScaledVector(back,fixtureFeet/3.28084);
     fixture.y=playingContactY(fixture.x,fixture.z);
     state.learned={camera:true,line:true,stroke:true,putt:true};
     prepareShotAt(fixture,{lieOverride:'green'});
-    showContext('CUP FIXTURE · '+fixtureFeet+' FT',650);
+    const distance=puttingDistance(fixtureFeet*.3048);
+    showContext('CUP FIXTURE · '+distance.value+' '+distance.unit,650);
+    if(gauntletFixture==='cup-roll'||gauntletFixture==='cup-tap'){
+      // Explicit QA fixture, through the real launch/score/result path. Normal
+      // entry and the edge fixture never launch a stroke without player input.
+      setTimeout(()=>{
+        const paceFeet=gauntletFixture==='cup-tap'?.5:9.2;
+        if(gauntletFixture==='cup-tap'){state.strokes=2;updateHoleHUD();}
+        cam.beginSwing(aimYaw());golfer.puttStrokeScale=puttStrokeScale(paceFeet);
+        launchShot({power:paceFeet/55,puttPaceFeet:paceFeet,path:0,tempoScore:1,rhythm:1,center:1,commitment:1,loadScore:1,speedScore:1});
+      },1800);
+    }
   },90);
 }else if(gauntletFixture==='ball'){
   setTimeout(()=>{openBag();showBagCategory('ball');},90);
-}else if(gauntletFixture==='chronicle-live'||gauntletFixture==='chronicle-final'){
+}else if(gauntletFixture==='chronicle-live'||gauntletFixture==='chronicle-final'||gauntletFixture==='chronicle-bogey'){
   // Scorecard fixtures only arrange legitimate round state, then enter through
   // the same renderer and modal lifecycle used by live play.
   setTimeout(()=>{
-    const final=gauntletFixture==='chronicle-final';
+    const final=gauntletFixture!=='chronicle-live';
     state.learned={camera:true,line:true,stroke:true,putt:true};
-    state.holeScores=final?[2,3,4]:[2];
+    state.holeScores=gauntletFixture==='chronicle-bogey'?[4,3,4]:final?[2,3,4]:[2];
     startHole(final?ROUND_HOLES.length-1:1,{intro:false});
     state.strokes=final?4:2;updateHoleHUD();
     if(final){state.phase='round-end';showRoundEnd();}

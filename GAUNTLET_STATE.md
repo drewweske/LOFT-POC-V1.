@@ -1,8 +1,8 @@
 # LOFT Gauntlet State
 
-Updated: 2026-09-08
+Updated: 2026-09-09
 
-Build: Local Integration 038 / official v1 assessment remains Integration 035
+Build: Integration 041 THE FLIGHT, including retained 039–040; publication pending final push verification
 
 Branch: `prototype-1-gauntlet`
 
@@ -10,13 +10,48 @@ Playable artifact: `/prototype1/`
 
 ## Current build assessment
 
-Integrations 036–038 repair actual iron/wedge heel attachment, slim shaft/ferrule,
+**Current checkpoint:** Flight camera/UI and the official-logo correction are
+implemented. All 105 executable gates pass. Across 378 trajectories / 166,269
+frames, minimum apex sky coverage is 68.77%, worst ball-edge margin is 9.057%
+(required 6.667%), and the actual ball occupies at least six vertical apex pixels
+in desktop/portrait/short-landscape test views. One distance instrument survives
+airborne play; normal HUD/receipt and Next Shot return at rest. The full protected
+040 solver/terrain/rig/clubface/ball bytes are unchanged by this camera/UI work.
+
+Official Bag and Chronicle logos use the unchanged checked-in WebP asset. The
+invented monochrome SVG was rejected and deleted. Only a cream-matte master is
+available; use its native surface, never invent a logo to simulate transparency.
+
+Flight-only scores: **IMPACT 6.8 / FLIGHT 7.1 / LANDING 6.3**. These are not
+production-quality claims and do not score the golfer. Detailed before/after,
+rejected candidates, limitations and live checks: `gauntlet/history/integration_041.md`.
+The earlier putting/iPhone-preview work is separately recorded in history 040.
+
+**THE SHOT AS DATA has not begun implementation.** Read-only audit found native
+Math functions in the protected solver cannot guarantee identical last bits across
+every JS engine forever. The user was asked to choose exact current calculations
+with a versioned-runtime guarantee, or authorize deterministic numerical math.
+No answer is recorded yet. Do not silently weaken the requested guarantee.
+
+| New data gate | State |
+| --- | --- |
+| DETERMINISM | Pending numerical/runtime decision; no seeded resolver shipped |
+| PURITY | Not implemented; extraction audit complete |
+| REPLAY | Not implemented; no record/replay system shipped |
+
+The assessment below is retained historical context through 039, not this session's
+active target or a fresh visual critic pass.
+
+Integration 039 adds a bounded inland hill/saddle setting, precisely joined beyond
+the playable field. The first over-tall hill candidate was lowered after live review.
+It adds one draw / 17,946 triangles / no textures or shadows; all 77 gates pass,
+including the unchanged complete terrain/contact hash. Integrations 036–038 repair actual iron/wedge heel attachment, slim shaft/ferrule,
 recessed forgings and purpose-built wedge soles. PW has a 20 mm working sole; SW
-has a 38 mm relieved platform. All 74 gates pass; faces, repaired necks, grips,
+has a 38 mm relieved platform. Faces, repaired necks, grips,
 head motion and every golf number remain unchanged. Only wedge sole geometry and
 its material were intentionally superseded in 038. The published v1 checkpoint on main is
-still 035 (`55350bd` including publication notes); no new remote push is implied by
-continuing local development. The next target is the flat inland horizon composition.
+still 035 (`55350bd` including publication notes) at the start of this run. The latest
+user now requests publishing each completed checkpoint. See publication status below.
 
 The prototype is functionally healthy and materially closer to one LOFT world, but it
 does not yet meet the Good Work production bar. Integrations 016–030 now provide a
@@ -43,10 +78,10 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 | Category | Honest score | Assessment |
 | --- | ---: | --- |
-| Technical integrity | 9.0/10 | 74 executable gates, closed forgings/soles, exact triangle support and shared buffers; physical-device performance is not yet validated. |
+| Technical integrity | 9.0/10 | 77 executable gates, off-play scenery/seam checks, closed soles and exact terrain/ball contact; physical-device performance is not yet validated. |
 | UI / UX clarity | 7.2/10 | World-linked shot facts, preview/Equip separation and one live/final ledger; primary navigation, progression and settings remain. |
 | LOFT identity | 6.2/10 | Restrained direction is established, but raw course and character screenshots still expose prototype construction. |
-| Terrain / environment | 4.8/10 | Physical field and surface identity agree; composition, vegetation and rock/material detail remain far below the destination references. |
+| Terrain / environment | 5.0/10 | The inland setting now frames the course and the physical field is unchanged; close turf, playable routing, vegetation and geology remain far below the destination references. |
 | Character / animation | 4.8/10 | Connected anatomy, grip and swing are improved; face, garment deformation and silhouette still need production-level craft. |
 | Equipment desirability | 6.2/10 | Repaired heel attachment, real recesses and purpose-built wedge soles; thick face/body proportions and machining remain below the production references. |
 | Ball identity | 7.4/10 | Same 338-dimple ball is inspectable with dense bowls, curved normals and one fixed signature; exact quad-symmetric production topology remains unproven. |
@@ -55,6 +90,19 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 ## Completed improvements
 
+- Integration 041: height-driven broadcast flight framing, continuous captured-pose
+  handoff, measured-displacement carry, short-landscape ball readability, exact
+  airborne UI silence, SVG instrument arrows, clean Chronicle score layout and
+  restored official logo asset. Existing punch and protected systems untouched.
+- Integration 040, before the Flight freeze: inbound cup rejection repair, tiny
+  pace control, quiet contact/drop, complete/holed score ordering, two-finger
+  cancellation and safe current-address LAN preview. See its separate history.
+
+- Integration 039: one authored off-play inland hill/saddle mesh, 431 western and
+  146 northern matching 0.8 m seam stations, restrained heath color and one draw.
+  Actual camera projections/rays across three holes and three aspects preserve
+  target and landmark visibility; the existing contact field is bit-for-bit protected.
+  See `gauntlet/history/integration_039.md`.
 - Integration 038: actual narrow PW / wide SW cambered soles, trailing and heel/toe
   relief, controlled edge shoulders and analytic surface normals. Four independently
   authored gates use actual triangles and reject deliberately broken geometry.
@@ -138,12 +186,18 @@ assessment, not evidence that this iteration changed or damaged those assets.
 - Deterministic address/top/impact/finish visual fixtures now make character review
   repeatable without changing real gameplay motion.
 - Current gates: terrain 14/14; visual 37/37; ball 6/6; assembly preservation 1/1;
-  atelier 5/5; neck 4/4; forging 3/3; wedge sole 4/4: PASS. Latest live checks cover desktop/portrait/short landscape,
+  atelier 5/5; neck 4/4; forging 3/3; wedge sole 4/4; hinterland 3/3: PASS. Latest live checks cover desktop/portrait/short landscape,
   actual club inspection and Club/Ball/Club/course return. Full manual three-hole
-  and physical-device tests were not repeated in 037.
+  and physical-device tests were not repeated in 038–039. The two-foot real putting
+  fixture and map open/close were inspected in 039, not a new full manual round.
 - No Supabase, AEZRIO, unrelated repository, or new dependency was introduced.
 
 ## Current regressions
+
+No confirmed runtime regression is open in the tested 041 matrix. The user-reported
+wrong logo was a real regression and has been corrected to the official asset.
+An inherited browser/server interruption was recovered by starting only the LOFT
+loopback server; normal preview is available again. No network/firewall setting changed.
 
 Publication status: code push to LOFT main succeeded. Existing GitHub Pages workflow
 34128693974 failed at Configure Pages: no Pages site exists, and its workflow token
@@ -165,10 +219,14 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **World-first horizon composition — current target:** the opening course still
-   reads as a lane on a flat table. Test an authored inland ridge beyond the physical
-   recovery boundary, joined to the current field edge, without changing playable
-   terrain/contact samples, hazards, routes or landmark placement.
+1. **THE SHOT AS DATA — current target:** establish the determinism boundary, then
+   extract only resolution, seeded dispersion and compact record replay. Current
+   native transcendental math and whole-file protection gates must be reconciled
+   explicitly; do not weaken tests or change physics silently.
+2. **Near-field turf / cut readability — queued, out of scope:** the course has more setting
+   but the ground under the golfer still reads as a smooth painted sheet. Improve the
+   maintained-grass/rough/fringe/sand material scale in real tee and putting views,
+   without adding noisy false-break lines, changing contact geometry or adding systems.
 2. **Production character asset pipeline:** the code-native golfer is coherent, but a
    future skinned mesh, facial blendshapes, wardrobe variants, and secondary motion
    are required to reach the character-board production ceiling.
@@ -187,14 +245,12 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**Authored inland horizon / course setting**
+**THE SHOT AS DATA — determinism, purity, record replay only**
 
-Keep the official assessment checkpoint stable. Replace the flat inland skyline with
-broad authored hills and a saddle behind Ridge House, beyond x=-92 or z=-292 (physics
-recovers outside |x|=88 / z=-286). Join the current visual field boundary exactly;
-preserve its complete contact fingerprint. Great means a readable coastal setting
-in the normal tee/approach views, not decorative noise or a wall blocking landmarks.
-Reject if the actual gameplay frame does not materially improve.
+Finish publication of the verified Flight checkpoint. Await the numerical/runtime
+decision before implementing resolveShot. No art, Bag stats/vocabulary, terrain,
+character, hole tuning, Rowan scores, networking or control redesign. Physics must
+compute the same values unless the user explicitly changes that constraint.
 
 ## Reference comparison
 
@@ -223,11 +279,24 @@ Topology and Bag references then exposed sparse close geometry and missing physi
 inspection; Integration 034 resolves those with the real playable ball. The Bag and
 zero-brand Object Test exposed another discrepancy: club hero drawings could not prove
 the desirability of actual held models. Integration 035 now inspects those assemblies;
-it exposes a center-mounted iron/wedge shaft and paddle-like silhouette, unlike the
-reference's heel-attached engineered irons. This is the next bounded repair.
+it exposed a center-mounted iron/wedge shaft. Integrations 036–038 repair the heel,
+forged back and wedge support. Integration 039 begins restoring the World/Main Shot
+reference's course setting with a bounded inland ridgeline. The remaining ground-level
+discrepancy is material scale: turf still reads painted and too uniform in real play.
 
 ## Experiments attempted
 
+- 041: height-driven pitch won apex sky but initially left a tiny trailing ball.
+  Actual-displacement carry repaired that lag; camera-side trace culling removed
+  an eye-plane streak. Responsive short-landscape distance closed the remaining
+  four-pixel ball gap. All old gates and four new flight gates pass.
+- 041: a traced monochrome logo was rejected by the user. Replaced with the exact
+  official asset; no new logo or derivative image was created.
+
+- Integration 039's first hills reached about 42.5 m and read as a wall behind Ridge
+  House. Lower authored masses retained the setting without overwhelming the frame.
+  Every shared-edge vertex/color matches the retained field. An initial expression
+  syntax error was immediately corrected before browser QA; all final imports pass.
 - Integration 038 replaced identical capsule soles with real purpose-specific support.
   The first smooth-edged candidate passed geometry checks but looked padded. Controlled
   machining shoulders and analytic cap normals reduced that defect. Corrected wedge
@@ -399,17 +468,18 @@ reference's heel-attached engineered irons. This is the next bounded repair.
 
 ## Next action
 
-The requested source publication is complete and remote SHA verified. Public Pages
-hosting is pending explicit user approval; do not infer it from the earlier main push.
-For the next Gauntlet iteration, inspect the ordinary tee screenshot and build one
-bounded off-play inland hill/saddle experiment. `worldV2.js` owns the current field;
-`physics.js` recovers beyond |x|=88 and z=-286. Any scenery must stay beyond the
-rendered field edge x=-92 or z=-292, join sampled boundary vertices, preserve the
-literal terrain hash, and keep lighthouse/clubhouse silhouettes readable. Test and
-visually compare before accepting; no playable height or golf system changes.
+Resolve the user's determinism choice. A mechanically generated no-Three numeric
+kernel can preserve original files as exact compatibility/parity oracles while
+moving composition-root resolution. Keep each operation's order, isolate course
+caches per call, and compare every fixed-step state to the old solver. Do not
+hand-copy a second tunable solver. Record Float64 inputs and versions; include
+power, speedScore, putting pace and canonical form in addition to six gestures.
+Seed the sine phase rather than changing its distribution to uniform noise.
+Replay must retain spin, surfaces, events, holed/recovered/stopped flags, not XYZ only.
+Even this does not provide universal cross-engine math identity without authorization.
 
-Normal preview: `http://127.0.0.1:43117/prototype1/`. The local server was restored with
-hidden Node `gauntlet/serve.mjs 43117`; if absent next session, restart only this LOFT-local
-server. Local retained entry: `game.js?v=038-final`. Official main stays at 035.
-Detailed evidence is in integrations 033–038. Local 037 checkpoint is `309d09f`.
-No Pages authorization was granted. Do not attempt a hosting workaround.
+Normal preview: `http://127.0.0.1:43117/prototype1/`, hidden Node
+`gauntlet/serve.mjs 43117`. If absent, restart only this LOFT-local server. Current
+entry is `game.js?v=041-flight`. Normal route has no automated fixture/freeze.
+Physical iPhone testing remains pending; use README's same-Wi-Fi instructions.
+No Pages authorization was granted; do not attempt a hosting workaround.

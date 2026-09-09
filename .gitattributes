@@ -1,0 +1,8 @@
+# These canonical sources are byte-locked by the preservation gate. Do not
+# let a checkout's core.autocrlf rewrite them before the gate can verify them.
+prototype1/physics.js -text whitespace=cr-at-eol
+prototype1/worldV2.js -text whitespace=cr-at-eol
+prototype1/characterRig.js -text whitespace=cr-at-eol
+prototype1/clubVisual.js -text whitespace=cr-at-eol
+prototype1/clubAssembly.js -text whitespace=cr-at-eol
+prototype1/ballVisual.js -text whitespace=cr-at-eol

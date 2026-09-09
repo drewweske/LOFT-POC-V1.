@@ -1,0 +1,3 @@
+# Local LOFT preview diagnostics; never part of the playable distribution.
+/gauntlet/lan-preview.out.log
+/gauntlet/lan-preview.err.log

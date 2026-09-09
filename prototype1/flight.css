@@ -1,0 +1,27 @@
+/* THE FLIGHT. One live yardage instrument; everything else waits for rest. */
+/* Use the unaltered official master. It includes a cream matte: do not trace
+   or invent a replacement mark. The Chronicle header provides its native surface. */
+.bag-brand .loft-wordmark-official{mix-blend-mode:multiply}
+.chronicle-brand{background:var(--cream);padding:8px;border-radius:4px;border:0}
+.chronicle-brand .loft-wordmark-official{mix-blend-mode:multiply}
+.chronicle-brand span{color:var(--ink)}
+#app.flight-active .hud,
+#app.flight-active .club-chip,
+#app.flight-active .right-tools,
+#app.flight-active #level-menu,
+#app.flight-active #context,
+#app.flight-active #tip,
+#app.flight-active #hole-intro,
+#app.flight-active #swing-meter,
+#app.flight-active #target-steward{opacity:0!important;pointer-events:none!important;transition:none!important}
+#app.flight-active .course-map:not(.expanded){opacity:1!important;transform:none;pointer-events:none;transition:none;background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none}
+#app.flight-active .map-head{display:block;padding:0}
+#app.flight-active .map-head>div,
+#app.flight-active #map-expand,
+#app.flight-active .map-plot,
+#app.flight-active .map-foot,
+#app.flight-active .map-hint{opacity:0!important;visibility:hidden}
+#app.flight-active #map-distance{display:block;position:absolute;right:0;top:0;padding:10px 12px;border-radius:8px;background:var(--ink);color:var(--cream);font:650 17px/20px var(--loft-display);font-variant-numeric:tabular-nums;opacity:1!important}
+@media(max-width:600px){
+  #app.flight-active .course-map:not(.expanded){transform:translateX(-50%)}
+}

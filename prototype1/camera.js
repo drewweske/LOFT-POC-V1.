@@ -7,6 +7,10 @@ const TAU=Math.PI*2;
 const wrap=a=>{while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a;};
 const smoothAngle=(a,b,r,dt)=>a+wrap(b-a)*(1-Math.exp(-r*dt));
 const AIM_REBASE_DISTANCE=32;
+export const FLIGHT_CAMERA_SPEC=Object.freeze({
+  system:'LOFT_THE_FLIGHT_V1',punchDistance:.28,minFollowDistance:7.2,
+  impactBlendSeconds:.78,edgeInset:1/15,apexBelowRatio:.22
+});
 
 export const CAMERA_MODE=Object.freeze({
   AIM:'aim',
@@ -67,9 +71,14 @@ export class LoftCamera{
     this.aimDist=8.4;this.aimDistT=8.4;
     this.puttDist=CAMERA_COMPOSITION_SPEC.puttingDistance;this.puttDistT=CAMERA_COMPOSITION_SPEC.puttingDistance;
     this.puttingActive=false;this.swingDist=8.4;
+    this.puttOrigin=new THREE.Vector3();
 
     this.flightHeading=0;
     this.flightDist=9.7;
+    this.flightTime=0;this.flightPeak=1;this.flightNormalizedHeight=0;
+    this.flightReleasePos=new THREE.Vector3();this.flightReleaseLook=new THREE.Vector3();
+    this.flightStartBall=new THREE.Vector3();this.flightInitialized=false;
+    this.flightLastBall=new THREE.Vector3();
 
     this.resultOrbit=0;this.resultOrbitT=0;
     this.resultPitch=.18;this.resultPitchT=.18;
@@ -108,9 +117,14 @@ export class LoftCamera{
 
   cancelSwing(){this._enter(CAMERA_MODE.AIM);}
 
-  beginFlight(aimYaw){
+  beginFlight(aimYaw,{ball=null,velocity=null,putting=this.puttingActive}={}){
     this.lockedAimYaw=aimYaw;
     this.flightHeading=aimYaw;
+    this.flightTime=0;this.flightInitialized=Boolean(ball);
+    this.flightReleasePos.copy(this.pos);this.flightReleaseLook.copy(this.look);
+    if(ball){this.flightStartBall.copy(ball);this.flightLastBall.copy(ball);}
+    this.flightPeak=Math.max(.35,Math.pow(Math.max(0,velocity?.y||0),2)/(2*9.80665));
+    this.flightNormalizedHeight=0;this.puttingActive=putting;
     this._enter(CAMERA_MODE.FLIGHT);
   }
 
@@ -128,6 +142,14 @@ export class LoftCamera{
 
   impact(amount=1){
     this.impactKick=clamp(amount,0,1.25);
+  }
+
+  flightTraceVisible(points){
+    // A polyline crossing the eye plane projects into a screen-long streak.
+    // Cull that existing effect as a camera presentation decision, without
+    // changing its geometry, the actual ball or its physical trajectory.
+    const forward=this.camera.getWorldDirection(new THREE.Vector3());
+    return points.every(point=>point.clone().sub(this.camera.position).dot(forward)>this.camera.near+.05);
   }
 
   aimPitchBy(dy){
@@ -197,6 +219,7 @@ export class LoftCamera{
   updateAim(dt,{ball,pin=null,aimYaw,putting=false}){
     if(this.mode!==CAMERA_MODE.AIM)this._enter(CAMERA_MODE.AIM);
     this.puttingActive=putting;
+    if(putting)this.puttOrigin.copy(ball);
     this.aimPitch=smooth(this.aimPitch,this.aimPitchT,6.6,dt);
     this.aimDist=smooth(this.aimDist,this.aimDistT,6.0,dt);
     this.puttDist=smooth(this.puttDist,this.puttDistT,6.0,dt);
@@ -253,40 +276,67 @@ export class LoftCamera{
     this._commit(desiredPos,desiredLook,putting ? 7.2 : 10.5,putting ? 8.4 : 11.5,dt);
   }
 
-  updateFlight(dt,{ball,velocity,pin,putting=false}){
+  updateFlight(dt,{ball,velocity,pin,putting=false,grounded=false}){
     if(this.mode!==CAMERA_MODE.FLIGHT)return;
 
     this.impactKick=smooth(this.impactKick,0,13,dt);
+    if(putting){
+      // Read the roll from the address camera. A tap must not cut to the full
+      // flight lens/distance; long lags gradually hand the view to the ball.
+      this._setFov(37.8,dt);
+      const composition=cameraCompositionProfile(this.camera.aspect,true);
+      const forward=new THREE.Vector3(Math.sin(this.lockedAimYaw),0,-Math.cos(this.lockedAimYaw));
+      const right=new THREE.Vector3(forward.z,0,-forward.x);
+      const travel=this.puttOrigin.distanceTo(ball);
+      const anchor=this.puttOrigin.clone().lerp(ball,clamp((travel-1.2)/5,0,1));
+      const framing=clamp(this.swingDist,3,7.2);
+      const desiredPos=anchor.clone().addScaledVector(forward,-framing)
+        .addScaledVector(right,.035+composition.lateralShift)
+        .add(new THREE.Vector3(0,.68+framing*.105+this.aimPitch*1.55,0));
+      const desiredLook=anchor.clone().addScaledVector(forward,clamp(Math.min(anchor.distanceTo(pin),framing*.55),.55,2.4))
+        .addScaledVector(right,composition.lateralShift).add(new THREE.Vector3(0,.07+composition.lookLift,0));
+      this._clearSight(desiredPos,desiredLook,.30);this._safeY(desiredPos,.84);
+      this._commit(desiredPos,desiredLook,6.1,7.6,dt);
+      return;
+    }
+    if(!this.flightInitialized){
+      this.flightStartBall.copy(ball);this.flightInitialized=true;
+      this.flightLastBall.copy(ball);
+      this.flightPeak=Math.max(.35,velocity.y*velocity.y/(2*9.80665));
+    }
+    this.flightTime+=dt;
     this._setFov(41.8+this.impactKick*1.15,dt);
-
     const horizontal=velocity.clone();horizontal.y=0;
-    let desiredHeading=this.flightHeading;
-    if(horizontal.lengthSq()>.035)desiredHeading=Math.atan2(horizontal.x,-horizontal.z);
-    this.flightHeading=smoothAngle(this.flightHeading,desiredHeading,3.4,dt);
-
-    const speed=horizontal.length();
+    if(horizontal.lengthSq()>.035)this.flightHeading=smoothAngle(this.flightHeading,Math.atan2(horizontal.x,-horizontal.z),3.4,dt);
     const height=Math.max(0,ball.y-this.terrainHeight(ball.x,ball.z));
-    const rolling=height<.28&&speed<8.0;
-    const dynamicDist=putting ? clamp(3.8+speed*.34,3.9,5.5) : (rolling ? clamp(4.9+speed*.28,5.0,7.1) : clamp(8.2+speed*.045+height*.022,8.4,12.3));
-    this.flightDist=smooth(this.flightDist,dynamicDist,rolling?6.2:4.8,dt);
-
-    const forward=new THREE.Vector3(Math.sin(this.flightHeading),0,-Math.cos(this.flightHeading)).normalize();
-    const right=new THREE.Vector3(forward.z,0,-forward.x).normalize();
-
-    const desiredPos=ball.clone()
-      .addScaledVector(forward,-this.flightDist*.88-this.impactKick*.28)
-      .addScaledVector(right,this.flightDist*(putting ? .012 : (rolling ? .045 : .095)))
-      .add(new THREE.Vector3(0,(putting ? .92 : (rolling ? 1.58 : 2.70))+clamp(height*.085,0,1.95)+this.impactKick*.05,0));
-
-    const toPin=pin.clone().sub(ball);toPin.y=0;
-    const pinBias=toPin.lengthSq()>.01?toPin.normalize():forward;
-    const desiredLook=ball.clone()
-      .addScaledVector(forward,1.00)
-      .addScaledVector(pinBias,.30)
-      .add(new THREE.Vector3(0,.10,0));
-
-    this._safeY(desiredPos,1.25);
-    this._commit(desiredPos,desiredLook,7.8,10.0,dt);
+    this.flightPeak=Math.max(this.flightPeak,height);
+    // Height, not a cinematic timer, owns the pitch. The physical ascent opens
+    // sky, apex holds it, and the same descending height reveals the landing.
+    const normalized=grounded?0:clamp(height/this.flightPeak,0,1);
+    this.flightNormalizedHeight=smooth(this.flightNormalizedHeight,normalized,8,dt);
+    const h=this.flightNormalizedHeight,arc=h*h*(3-2*h);
+    const rolling=grounded||height<.28;
+    // A short landscape viewport has half the vertical pixels of portrait.
+    // Move the camera closer, never enlarge the protected gameplay ball.
+    const wide=clamp((this.camera.aspect-1.85)/.30,0,1);
+    const airDistance=lerp(FLIGHT_CAMERA_SPEC.minFollowDistance,4.2,wide);
+    this.flightDist=smooth(this.flightDist,rolling?lerp(5.8,4.2,wide):airDistance,5,dt);
+    const forward=new THREE.Vector3(Math.sin(this.flightHeading),0,-Math.cos(this.flightHeading));
+    const right=new THREE.Vector3(forward.z,0,-forward.x);
+    const desiredPos=ball.clone().addScaledVector(forward,-this.flightDist-this.impactKick*FLIGHT_CAMERA_SPEC.punchDistance)
+      .addScaledVector(right,.16*(1-arc))
+      .add(new THREE.Vector3(0,lerp(1.55,-this.flightDist*FLIGHT_CAMERA_SPEC.apexBelowRatio,arc)+this.impactKick*.05,0));
+    const desiredLook=ball.clone().addScaledVector(forward,1.4).add(new THREE.Vector3(0,.10,0));
+    const t=clamp(this.flightTime/FLIGHT_CAMERA_SPEC.impactBlendSeconds,0,1),release=t*t*(3-2*t);
+    desiredPos.lerp(this.flightReleasePos,1-release);
+    desiredLook.lerp(this.flightReleaseLook,1-release);
+    // Carry the rig with the measured shot displacement, then damp only its
+    // framing. Damping world translation alone leaves the camera several
+    // metres behind the intended rig and shrinks the actual ball at apex.
+    const travel=ball.clone().sub(this.flightLastBall).multiplyScalar(release);
+    this.pos.add(travel);this.look.add(travel);this.flightLastBall.copy(ball);
+    this._clearSight(desiredPos,desiredLook,.28);this._safeY(desiredPos,.88);
+    this._commit(desiredPos,desiredLook,7.8,10,dt);
   }
 
   updateResult(dt,{ball,pin}){

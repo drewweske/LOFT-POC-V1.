@@ -604,6 +604,7 @@ export class LoftGolferRig{
     if(tt<.38)phase=lerp(0,.24,ease(tt/.38));        // backstroke
     else if(tt<.60)phase=lerp(.24,0,out((tt-.38)/.22)); // return to impact
     else phase=lerp(0,-.34,out((tt-.60)/.40));          // roll-through
+    phase*=this.puttStrokeScale??1;
 
     p.handL=[.12,.845,-.035+phase*.24];
     p.handR=[.13,.838,.038+phase*.24];

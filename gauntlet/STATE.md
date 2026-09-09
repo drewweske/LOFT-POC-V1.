@@ -1,12 +1,44 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Local Integration 038 / official v1 assessment remains Integration 035
+Current build: Integration 041 THE FLIGHT; publication pending verification
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Purpose-built wedge soles complete; inland horizon next
-Iteration: integration_038
+Active subsystem: Flight closure complete; Shot As Data awaits determinism boundary
+Iteration: integration_041
 
-Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-08.
+Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-09.
+
+## Integration 041 verdict
+
+Camera/UI only: normalized-height pitch, continuous release, readable real ball,
+single airborne distance readout, SVG instrument arrows and corrected score layout.
+The invented logo was rejected and replaced with the unmodified official asset.
+105/105 gates pass; 378 flight trajectories retain at least 68.77% apex sky and
+9.057% edge margin. Full protected 040 bytes are unchanged. Live rest/Next Shot,
+Bag, scorecard and both phone orientations checked. IMPACT 6.8 / FLIGHT 7.1 /
+LANDING 6.3; no golfer score. Details: `history/integration_041.md`.
+
+Next: THE SHOT AS DATA. Determinism/Purity/Replay are pending, not claimed passed.
+Native Math cross-engine identity conflicts with preserving every computation;
+the user's numerical/runtime decision is required. No architecture changes yet.
+
+## Integration 040 verdict
+
+Cup inbound-rejection repair, sub-inch pace, quiet contact/drop, COMPLETE/HOLED
+truth and two-finger input recovery. Safe private-address preview with no firewall
+or hosting changes. 13 putting + 4 input + 4 preview gates; real 65 mm lip finish
+and next-hole transition checked. Physical iPhone unverified. See history 040.
+
+## Integration 039 verdict
+
+Coastal Ridge now has a bounded inland hill/saddle setting instead of an empty flat
+skyline. One draw / 17,946 triangles / zero new textures or shadow passes. The first
+over-tall candidate was lowered after live critique. Every 0.8 m apron station joins
+the original field; all new triangles stay beyond the existing recovery boundary.
+All 77 gates pass, including the literal terrain/contact fingerprint. Desktop tee,
+phone two-foot putt and map-return checks are healthy. This does not solve the
+remaining production asset or playable routing gaps. Next: near-field turf/cuts.
+Details: `history/integration_039.md`. Main remains the 035 assessment.
 
 ## Integration 038 verdict
 

@@ -59,6 +59,9 @@ small number of deep, cohesive improvements over feature count or ornamental pol
 - LOFT targets stylized realism, sculpted simplicity, controlled curvature, honest
   matte materials, warm natural light, restrained orange signal, and human-first
   golf culture.
+- Use the official checked-in LOFT logo asset. Never trace, approximate, generate,
+  or redesign the mark. If a transparent master is unavailable, preserve the
+  official asset and place it on its native cream surface; do not invent a mark.
 - Apply the zero-brand test: remove logo, typography, and orange. The world,
   character, object, or interface should still belong unmistakably to LOFT.
 - The world is the hero. UI informs, frames, and leaves. Avoid generic web-app

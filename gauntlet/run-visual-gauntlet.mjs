@@ -709,7 +709,10 @@ check('Target Steward is a read-only world instrument with explicit club range s
   assert.match(stewardRule,/pointer-events:none/);
   assert.match(stewardRule,/touch-action:none/);
   assert.match(css,/\.club-chip-distance small\{[^}]*font:[^;}]*9px\/10px/);
-  assert.doesNotMatch(stewardSource,/^\s*import\s/m);
+  // The shared distance formatter is pure and keeps near-cup inches identical
+  // in the target instrument, map and receipt. No runtime/DOM dependencies.
+  assert.doesNotMatch(stewardSource.replace("import {puttingDistance} from './putting.js';",''),/^\s*import\s/m);
+  assert.doesNotMatch(readFileSync('prototype1/putting.js','utf8'),/^\s*import\s|\b(?:document|window|THREE)\b/m);
   assert.doesNotMatch(stewardSource,/\b(?:document|window|addEventListener|PointerEvent|THREE)\b/);
   assert.match(game,/from '\.\/targetSteward\.js\?v=032-/);
   assert.match(game,/\$\('club-range-label'\)\.textContent=c\.head==='putter'\?'RANGE':'CARRY'/);

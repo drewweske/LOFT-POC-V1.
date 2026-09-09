@@ -1,3 +1,4 @@
+import {puttingDistance} from './putting.js';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const YARD=.9144;
 const FOOT=.3048;
@@ -38,14 +39,14 @@ export function buildTargetStewardCopy({
 
   if(atCup){
     return Object.freeze({
-      mode:'cup',kicker:'TO CUP',value:String(roundedDistance(safeCup,'FT')),unit:'FT',
+      mode:'cup',kicker:'TO CUP',...puttingDistance(safeCup),
       detail:`${elevationCopy(safeElevation)} · ${safeSurface}`
     });
   }
   if(putting){
     return Object.freeze({
-      mode:'putt',kicker:'PUTT PACE',value:String(roundedDistance(safeTarget,'FT')),unit:'FT',
-      detail:`CUP ${roundedDistance(safeCup,'FT')} FT`
+      mode:'putt',kicker:'PUTT PACE',...puttingDistance(safeTarget),
+      detail:`CUP ${puttingDistance(safeCup).value} ${puttingDistance(safeCup).unit}`
     });
   }
   return Object.freeze({

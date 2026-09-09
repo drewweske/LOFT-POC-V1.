@@ -1,3 +1,4 @@
+import {puttingDistance} from './putting.js';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export class LoftTopoMap{
@@ -8,7 +9,7 @@ export class LoftTopoMap{
     this.aim=root.querySelector('#map-aim');
     this.distance=root.querySelector('#map-distance');
     this.lie=root.querySelector('#map-lie');
-    this.svg=root.querySelector('svg');
+    this.svg=root.querySelector('.map-plot svg');
     this.pinMark=root.querySelector('.map-pin');
     this.tee={x:0,z:0};
     this.pin={x:0,z:-156};
@@ -67,8 +68,8 @@ export class LoftTopoMap{
     }
     if(this.distance){
       const meters=Math.hypot(target.x-ball.x,target.z-ball.z);
-      this.distance.textContent=distanceUnit==='FT'
-        ? Math.max(1,Math.round(meters*3.28084))+' FT'
+      this.distance.textContent=surface.toLowerCase()==='cup'?'HOLED':distanceUnit==='FT'
+        ? puttingDistance(meters).value+' '+puttingDistance(meters).unit
         : Math.max(1,Math.round(meters/.9144))+' YD';
     }
     if(this.lie)this.lie.textContent=surface.toUpperCase();

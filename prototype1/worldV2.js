@@ -1,5 +1,6 @@
 import * as THREE from '../vendor/three.module.js';
 import {ROUND_HOLES} from './round.js';
+import {createCoastalHinterland} from './coastalHinterland.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -2040,6 +2041,7 @@ export function buildWorld(scene,pin){
   terrainMat.stencilZPass=THREE.KeepStencilOp;
   const terrain=new THREE.Mesh(terrainGeo,terrainMat);
   terrain.receiveShadow=true;terrain.castShadow=false;world.add(terrain);
+  world.add(createCoastalHinterland(terrainHeight,(x,z)=>courseVisualSample(x,z).color));
 
   // --- WATER ---------------------------------------------------------------
   const waves=waveTexture();

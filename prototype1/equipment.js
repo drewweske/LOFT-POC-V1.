@@ -17,11 +17,11 @@ export const CLUBS=[
 ];
 
 export const EQUIPMENT_TIERS=Object.freeze({
-  1:{id:'foundation',name:'FOUNDATION',rarity:'COMMON',finish:'BRUSHED STONE',material:'UTILITY STEEL',construction:'ONE-PIECE CAST',process:'BROAD SOLE · EXPOSED SEAM',accent:'STONE',signal:false,designLevel:1},
-  10:{id:'field',name:'FIELD',rarity:'COMMON+',finish:'SILVER SATIN',material:'REFINED STEEL',construction:'CLEAN CAST + INSERT',process:'TUNED SOLE · CLEAN EDGE',accent:'CREAM',signal:false,designLevel:2},
-  25:{id:'tour',name:'TOUR',rarity:'RARE',finish:'SMOKED CHROME',material:'FORGED CHROME',construction:'COMPACT FORGED BODY',process:'MACHINED CAVITY · THIN TOPLINE',accent:'INK',signal:true,designLevel:3},
-  50:{id:'signature',name:'SIGNATURE',rarity:'EPIC',finish:'BLACK TITANIUM',material:'CARBON + TITANIUM',construction:'MULTI-MATERIAL CHASSIS',process:'CARBON BRIDGE · TUNGSTEN PORT',accent:'ORANGE',signal:true,designLevel:4},
-  75:{id:'icon',name:'ICON',rarity:'LEGENDARY',finish:'PEARL CERAMIC',material:'CERAMIC + TITANIUM',construction:'CERAMIC MONO-SHELL',process:'FLOATING FACE · SIGNATURE WEIGHT',accent:'SIGNAL ORANGE',signal:true,designLevel:5}
+  1:{id:'foundation',name:'FOUNDATION',finish:'BRUSHED STONE',material:'UTILITY STEEL',construction:'ONE-PIECE CAST',process:'BROAD SOLE · EXPOSED SEAM',accent:'STONE',signal:false,designLevel:1},
+  10:{id:'field',name:'FIELD',finish:'SILVER SATIN',material:'REFINED STEEL',construction:'CLEAN CAST + INSERT',process:'TUNED SOLE · CLEAN EDGE',accent:'CREAM',signal:false,designLevel:2},
+  25:{id:'tour',name:'TOUR',finish:'SMOKED CHROME',material:'FORGED CHROME',construction:'COMPACT FORGED BODY',process:'MACHINED CAVITY · THIN TOPLINE',accent:'INK',signal:true,designLevel:3},
+  50:{id:'signature',name:'SIGNATURE',finish:'BLACK TITANIUM',material:'CARBON + TITANIUM',construction:'MULTI-MATERIAL CHASSIS',process:'CARBON BRIDGE · TUNGSTEN PORT',accent:'ORANGE',signal:true,designLevel:4},
+  75:{id:'icon',name:'ICON',finish:'PEARL CERAMIC',material:'CERAMIC + TITANIUM',construction:'CERAMIC MONO-SHELL',process:'FLOATING FACE · SIGNATURE WEIGHT',accent:'SIGNAL ORANGE',signal:true,designLevel:5}
 });
 
 export const CLUB_PRESENTATION_PROFILES=Object.freeze({

@@ -1,4 +1,5 @@
 import * as THREE from '../vendor/three.module.js';
+import {puttContactProfile} from './putting.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=(a,b,r,dt)=>a+(b-a)*(1-Math.exp(-r*dt));
@@ -212,23 +213,30 @@ export class LoftFeedback{
 
   }
 
-  impact({quality=.8,power=.8,position,direction,club='iron'}){
+  impact({quality=.8,power=.8,paceFeet=10,position,direction,club='iron'}){
     const q=clamp(quality,0,1),p=clamp(power,0,1.1);
+    const energy=club==='putter'?puttContactProfile(paceFeet,q).energy:1;
+    // Retain each shot's envelope for the whole transient. The old update()
+    // overwrote a quiet putt with the full iron-sized ring on the next frame.
+    this.impactEnvelope=club==='putter'
+      ? {scale:.22+.16*energy,growth:.32,opacity:.16+.12*energy,dot:.22+.20*energy,dotOpacity:.12+.14*energy}
+      : {scale:.55,growth:2.15,opacity:.62,dot:.75+.28*q,dotOpacity:.30+.42*q};
     this.impactLife=1;
     this.impactRing.position.copy(position);this.impactRing.position.y+=.015;
-    this.impactRing.scale.setScalar(club==='putter'?.34:.55);
-    this.impactRing.material.opacity=club==='putter'?.42:.62;
+    this.impactRing.scale.setScalar(this.impactEnvelope.scale);
+    this.impactRing.material.opacity=this.impactEnvelope.opacity;
     this.impactDot.position.copy(position);this.impactDot.position.y+=.045;
-    this.impactDot.scale.setScalar(club==='putter'?.58:(.75+.28*q));
-    this.impactDot.material.opacity=club==='putter'?(.22+.24*q):(.30+.42*q);
+    this.impactDot.scale.setScalar(this.impactEnvelope.dot);
+    this.impactDot.material.opacity=this.impactEnvelope.dotOpacity;
 
     if(club==='putter'){
       // Real putting character: elastomer/body knock + milled face tick.
       // No musical success chime; quality is heard as a cleaner, shorter strike.
-      this._tone(318,190,.050,.014+.010*p,'sine');
-      this._noise({freq:1450+650*q,q:1.35,dur:.025,gain:.026+.032*q});
-      this._noise({freq:4200,q:.82,dur:.012,gain:.008+.012*q,delay:.001,type:'highpass'});
-      if(q>.955)this._noise({freq:2850,q:2.4,dur:.018,gain:.013,delay:.004});
+      const gain=.30+.70*energy;
+      this._tone(318,190,.030+.020*energy,(.014+.010*energy)*gain,'sine');
+      this._noise({freq:1450+650*q,q:1.35,dur:.018+.007*energy,gain:(.026+.032*q)*gain});
+      this._noise({freq:4200,q:.82,dur:.012,gain:(.008+.012*q)*gain,delay:.001,type:'highpass'});
+      if(q>.955)this._noise({freq:2850,q:2.4,dur:.018,gain:.013*gain,delay:.004});
     }else if(club==='driver'||club==='wood'){
       // Driver / wood: compressed ball-body crack, composite face transient,
       // then a very short air snap. Better strike = tighter transient, not louder UI.
@@ -300,15 +308,18 @@ export class LoftFeedback{
       this.landLife=1;
       this.landRing.position.copy(position);this.landRing.position.y+=.02;
       this.landRing.scale.setScalar(.42);this.landRing.material.opacity=.42;
+      this.landEnvelope={scale:.42,growth:.75,opacity:.24};
     }
     // Cup is the most important reward sound in LOFT: ball catches liner,
     // drops into the cup, then a restrained flagstick/liner tail.
-    this._noise({freq:1750,q:1.45,dur:.028,gain:.060});
-    this._tone(360,150,.080,.030,'sine',.010);
-    this._noise({freq:760,q:.60,dur:.095,gain:.030,delay:.020});
-    this._noise({freq:2850,q:2.0,dur:.036,gain:.020,delay:.050});
-    if(score<0)this._noise({freq:2100,q:1.25,dur:.050,gain:.018,delay:.090});
-    this._vibrate(score<0?[7,18,10,24,16]:[8,18,12]);
+    this._noise({freq:1750,q:1.45,dur:.028,gain:.025});
+    // The retained spatial drop meets the liner bottom around 350 ms. Reward
+    // the actual arrival there, instead of playing the whole cup at acceptance.
+    this._tone(360,150,.080,.030,'sine',.310);
+    this._noise({freq:760,q:.60,dur:.095,gain:.040,delay:.340});
+    this._noise({freq:2850,q:2.0,dur:.036,gain:.020,delay:.370});
+    if(score<0)this._noise({freq:2100,q:1.25,dur:.050,gain:.018,delay:.410});
+    this._vibrate(score<0?[3,310,8,18,12,24,10]:[3,310,8,18,12]);
   }
 
   surfaceTransition(to,speed=0){
@@ -326,6 +337,7 @@ export class LoftFeedback{
   }
 
   land({surface='fairway',position,quality=.8}){
+    this.landEnvelope={scale:.60,growth:3.1,opacity:surface==='water'?.42:.30};
     this.landLife=1;
     this.landRing.position.copy(position);this.landRing.position.y+=.018;
     this.landRing.scale.setScalar(.60);
@@ -385,17 +397,19 @@ export class LoftFeedback{
     if(this.impactLife>0){
       this.impactLife=Math.max(0,this.impactLife-dt*7.2);
       const t=1-this.impactLife;
-      this.impactRing.scale.setScalar(.55+t*2.15);
-      this.impactRing.material.opacity=.62*this.impactLife*this.impactLife;
-      this.impactDot.scale.setScalar(.9+t*.65);
-      this.impactDot.material.opacity=.52*this.impactLife;
+      const e=this.impactEnvelope;
+      this.impactRing.scale.setScalar(e.scale+t*e.growth);
+      this.impactRing.material.opacity=e.opacity*this.impactLife*this.impactLife;
+      this.impactDot.scale.setScalar(e.dot+t*e.growth*.30);
+      this.impactDot.material.opacity=e.dotOpacity*this.impactLife;
     }
 
     if(this.landLife>0){
       this.landLife=Math.max(0,this.landLife-dt*3.3);
       const t=1-this.landLife;
-      this.landRing.scale.setScalar(.6+t*3.1);
-      this.landRing.material.opacity=.30*this.landLife*this.landLife;
+      const e=this.landEnvelope;
+      this.landRing.scale.setScalar(e.scale+t*e.growth);
+      this.landRing.material.opacity=e.opacity*this.landLife*this.landLife;
     }
 
     for(const t of this.turf){
