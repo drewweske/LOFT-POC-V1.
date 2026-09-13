@@ -2,20 +2,31 @@
 
 Updated: 2026-09-13
 
-Build: Integration 042 THE SEALED SHOT Step 1 evidence; playable game remains Integration 041
+Build: Integration 043 THE SEALED SHOT Step 2 closure; gameplay/visual behavior remains Integration 041
 
 Branch: `prototype-1-gauntlet`
 
 Playable artifact: `/prototype1/`
 
-Publication blocker: Step 1 implementation/evidence is committed locally at
-`b51554e8e36081313f0dd2ee4e139167fd483887`. The main push was rejected by the
-publication safety check because the commit archives the supplied governing DOCX
-and findings document. No push occurred; remote main was reverified at `4497fc9`.
-Obtain explicit approval to publish those archived documents to LOFT GitHub main
-before retrying. Do not bypass the rejection or start Step 2.
+Publication approval: the user explicitly approved publishing the original
+governing DOCX and findings with the accumulated Step 1 + Step 2 checkpoint to
+LOFT `main`. The earlier document-publication blocker is resolved. Both original
+archives remain byte-identical; latest local findings are a separate addendum.
+Destination is the verified LOFT origin, ordinary fast-forward, never force push.
 
 ## Current build assessment
+
+**Step 2 closure: PASS, 132/132 checks (105 existing + 19 Step 1 + 8 Step 2).**
+`launchShot(metrics, dispersion)` now accepts the raw sine operand for tests.
+Omitted/undefined keeps the exact clock expression at its original launch site.
+2,240 default + 2,240 explicit-undefined comparisons, 5,880 injected + 5,880 repeat
+comparisons, and 30 paired trajectories / 15,901 fixed frames are bit-identical.
+Only the exact game.js seam changes production source. Step 1 fixtures were not
+regenerated: reversing that unique two-edit seam restores the whole 041 game hash;
+all 42 other preservation entries match directly. No seed, resolver, authoritative
+result, bands, Q/epsilon, physics, visual or MARGIN changes. Details and exact paths:
+`gauntlet/history/integration_043.md`, `gauntlet/sealed-shot/evidence/step2-node.json`.
+Step 2 is closed; **STOP before Step 3**. Required runtime rows remain pending below.
 
 **Current checkpoint:** Flight camera/UI and the official-logo correction are
 implemented. All 105 executable gates pass. Across 378 trajectories / 166,269
@@ -53,6 +64,7 @@ counts, hashes, vectors and limitations: `gauntlet/history/integration_042.md`.
 | COURSE HASH STABILITY | PENDING full required matrix — PASS on Node + Chromium/reload; WebKit, Gecko, physical iOS WebView untested |
 | BOUNDARY KEY VECTORS | PASS — 9 independent byte/word fixtures; no runtime bands |
 | Parity fixture/version | FROZEN v1 — 6 solver-side trajectories, 3,176 fixed frames |
+| Step 2 injection/preservation | PASS — Node v24.15.0/V8; exact default operand/site, fixed-scalar parity, narrow inverse seam |
 | SEED INTEGRITY | Not implemented — production seeded dispersion belongs to Step 5 |
 | EXTRACTION PARITY / PURITY | Not implemented — no extracted resolver exists |
 | DETERMINISM / BOUNDARY SAFETY / REPLAY | Not implemented — later authorized steps |
@@ -108,6 +120,10 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 ## Completed improvements
 
+- Integration 043: Step 2 dependency seam only. Native clock default and all
+  launch/reaction computations retained; exact input/state/trajectory comparisons,
+  strict inverse-seam preservation and full 132-check evidence. Original governing
+  documents approved for publication without modification. No Step 3 work.
 - Integration 042: Step 1 contract evidence only. Exact authorities archived;
   seed/key independent BigInt oracle, DataView subject, binary course schema and
   artifact closure, immutable ID ledger, raw-bit parity oracle, predicate audit,
@@ -242,9 +258,10 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **THE SEALED SHOT — next authorized target: Step 2 only.** Make dispersion
-   injectable while preserving current wall-clock behavior. Do not install a seed,
-   extract the solver, remove form, quantize results or implement boundary bands yet.
+1. **THE SEALED SHOT — after this closure, Step 3 only.** Extract `resolveShot`
+   with native math untouched and injected dispersion, then structural PURITY.
+   Not implemented in 043. Do not install a seed, remove form, quantize results or
+   implement boundary bands in that next step.
 2. **Near-field turf / cut readability — queued, out of scope:** the course has more setting
    but the ground under the golfer still reads as a smooth painted sheet. Improve the
    maintained-grass/rough/fringe/sand material scale in real tee and putting views,
@@ -267,10 +284,10 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**THE SEALED SHOT — Step 1 evidence checkpoint; stop after publication.**
+**THE SEALED SHOT — Step 2 closure; stop after publication.**
 
-Step 2 must not begin in this turn. After Step 1 acceptance, next authorized work is
-dispersion injection only. COURSE HASH STABILITY remains pending on WebKit, Gecko
+Step 1 is accepted and was not redone. Step 2 is implemented and verified; Step 3
+must not begin in this turn. COURSE HASH STABILITY remains pending on WebKit, Gecko
 and physical iOS WebView; these rows are not waived. Governing v1.2 + findings are archived with
 digests. Existing math/contact/geometry/assets/stats remain protected. Freeze all
 v1 contract fixtures; never regenerate them to hide a regression or silently change
@@ -499,13 +516,13 @@ discrepancy is material scale: turf still reads painted and too uniform in real 
 
 ## Next action
 
-**Make dispersion injectable while preserving current wall-clock behavior.**
-This is Step 2, not permission to implement Steps 3–12. Keep the current
-`Math.sin(performance.now()*.012)` default and its scaling/evaluation placement,
-with no change to form, quality, trajectories or visuals. Read the archived v1.2
-authority, F-001–F-007 and local F-008–F-013 first. The pure resolver's later canonical
-signature is `resolveShot(ShotIntent, Course)` per F-003. Do not use the superseded
-three-argument signature or treat seed vectors as production SEED INTEGRITY.
+**STOP after Step 2 closure publication.** Next authorized work in a later turn:
+Step 3, extract `resolveShot` with native math untouched and injected dispersion,
+then structural PURITY. Keep the live `Math.sin(performance.now()*.012)` behavior;
+no seeded dispersion before Step 5. Read archived v1.2, F-001–F-007 and local
+F-008–F-015 first. The later canonical signature is `resolveShot(ShotIntent, Course)`
+per F-003. No resolver has been extracted yet. Do not treat Step 2 comparisons as
+EXTRACTION PARITY or Step 1 vectors as production SEED INTEGRITY.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`, hidden Node
 `gauntlet/serve.mjs 43117`. If absent, restart only this LOFT-local server. Current

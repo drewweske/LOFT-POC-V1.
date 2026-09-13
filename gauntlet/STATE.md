@@ -1,12 +1,30 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Integration 042 THE SEALED SHOT Step 1 evidence; gameplay remains 041
+Current build: Integration 043 THE SEALED SHOT Step 2 closure; gameplay remains 041
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Step 1 evidence checkpoint; full required runtime coverage pending
-Iteration: integration_042
+Active subsystem: Step 2 closure only; stop before Step 3
+Iteration: integration_043
 
 Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-13.
+
+## Integration 043 verdict
+
+132/132: 105 existing + 19 Step 1 + 8 Step 2. Optional raw sine scalar at
+`launchShot(metrics, dispersion)`; omitted/undefined reads the identical legacy
+clock expression at the same operand. 2,240 default and 2,240 undefined comparisons;
+5,880 injected and 5,880 repeats; 30 trajectory pairs / 15,901 fixed frames.
+All launch inputs, real solver state and instrumented reaction calls match.
+The exact two-edit inverse restores the original game.js hash; 42 other baseline
+files and all 11 frozen artifact locks stay exact. No Step 1 rebaselining.
+
+User approved original DOCX/findings publication to LOFT main. Archives remain
+byte-identical. Latest addendum F-015 and full evidence: history 043 and
+`sealed-shot/evidence/step2-node.json`. Node/V8 tested this step. Chromium byte
+evidence is historical Step 1 only. WebKit, Gecko, physical iOS WebView PENDING.
+Stop after publishing accumulated Step 1 + Step 2. No Step 3 implementation.
+Next authorized: extract resolveShot with native math untouched and injected
+dispersion, then structural PURITY. No seed, authoritative result or boundary work.
 
 ## Integration 042 verdict
 

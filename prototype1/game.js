@@ -830,13 +830,14 @@ function classifyPutt(q,path,paceFeet){
   return'TOUCH';
 }
 
-function launchShot(metrics){
+function launchShot(metrics,dispersion){
   if(state.phase!=='ready')return;
   const c=club(),L=LEVELS[state.level],lie=state.currentLie||surfaceAt(TEE.x,TEE.z);
 
   // LOFT Stroke quality is not one hidden power number. A great strike requires
   // rhythm, centered path, decisive release and useful load.
-  const pathNoise=(1-L.form)*Math.sin(performance.now()*.012)*(c.head==='putter' ? .18 : .75);
+  // Optional raw sine scalar is a test seam; omitted keeps the legacy clock read here.
+  const pathNoise=(1-L.form)*(dispersion===undefined?Math.sin(performance.now()*.012):dispersion)*(c.head==='putter' ? .18 : .75);
   const finalPath=clamp(metrics.path+pathNoise,-9,9);
   const skill=c.head==='putter'
     ? metrics.tempoScore*.30+metrics.rhythm*.27+metrics.center*.29+metrics.commitment*.14

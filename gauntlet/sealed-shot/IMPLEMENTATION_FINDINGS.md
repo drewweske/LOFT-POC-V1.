@@ -1,4 +1,4 @@
-# Step 1 implementation findings
+# Sealed Shot implementation findings
 
 2026-09-13. Addendum to the unmodified authoritative F-001–F-007 log in
 `authority/IMPLEMENTATION_FINDINGS.md`. v1.2 remains CLOSED. No existing seed/key
@@ -162,3 +162,56 @@ No claim of every-runtime coverage is made. See `evidence/step1-provenance.json`
 
 F-009–F-011's predicate audit is preserved exactly. No Q/epsilon, runtime boundary
 logic, sampling change, physics/visual change or Step 2 implementation occurred.
+
+## F-015 — Step 2 dispersion is a per-call raw-operand seam only
+
+2026-09-13, Integration 043. Step 1 is accepted; nothing was regenerated.
+The user explicitly approved publishing the unchanged original DOCX and original
+F-001–F-007 findings archive alongside this latest addendum to LOFT GitHub main.
+
+Signature: `launchShot(metrics, dispersion)`. The optional scalar is the raw
+`Math.sin(performance.now()*.012)` operand, before `(1-L.form)` and the existing
+putter `.18` / other-club `.75` factors. Tests supply finite scalars in [-1,1].
+No new validation/clamping/coercion, callback source, global override or seed is
+introduced. Omitted **or explicitly undefined** evaluates the same clock formula
+at the original operand in the original statement. The ready guard still runs
+first; club/level/lie and the left `(1-L.form)` factor still evaluate before the
+clock. Even form=1 retains the clock read. All four call sites remain one-argument.
+There is no production wiring for injected data or persistence between calls.
+
+The pre-Step-2 source comes from immutable commit
+`7fbb6b877954ebd652e6296f4828ce5e8271e008`; its complete game.js is equal to
+Integration 041 `4497fc90827ceda14ddf5d46f10b3ebccff7ec34`. Test-only VM adapters
+execute the actual old/current launch bodies, with the real unchanged GolfPhysics.
+For fixed-scalar comparison, only the old sine operand is replaced by a supplied
+test value, not a retyped path/quality/launch calculation. Raw F64 snapshots retain
+signed zero and undefined presence. Reactions are checked as instrumented calls
+and state, **not** a new browser visual review.
+
+Step 1's 43-file preservation fixture remains unchanged. Its game.js check now
+inverts **only** the two unique, exact authorized edits, then hashes the entire
+reconstructed file against the original 041 digest. It is not a byte-equality
+claim for current game.js and not a broad exemption. Deliberate formula, factor,
+clamp, caller, UI and duplicate-seam mutations are rejected. All 42 other entries
+still compare directly with the frozen raw/Git-text policy. Historical Step 1
+evidence, projection, vectors and all 11 locks are untouched.
+
+Evidence: 132/132 (105 existing + 19 Step 1 + 8 Step 2); 2,240 default pairs,
+2,240 explicit-undefined pairs, 5,880 injected pairs, 5,880 clock-independent
+repeats. Thirty paired trajectories use six legacy fixture configurations × five
+levels with supplied metrics/scalars: all 15,901 fixed frames match exactly.
+The six original frozen trajectories are separately verified by the Step 1 gate.
+Full command/stdout/source hashes: `evidence/step2-node.json` and history 043.
+
+Runtime: Node v24.15.0, V8 13.6.233.17-node.48, Windows x64. Chromium 152 initial/
+reload byte evidence remains historical Step 1 evidence, not a Step 2 run. WebKit,
+Gecko and physical iOS WebView remain PENDING. No every-runtime claim.
+
+F-009–F-011 remain byte-for-byte unchanged: swept-distance + speed cup capture;
+separate pre/post-roll speed/grade/resistance rest checks with no angular-speed
+rest test; procedural surface classification, not triangle-ID classification.
+No Q/epsilon, bands, feature candidates, REST identity policy, hysteresis or trace
+schema was chosen. No frozen serialization/hash/sampling semantics changed.
+
+Step 2 is closed. STOP before Step 3. Next authorized work: extract `resolveShot`
+with native math untouched and injected dispersion, then structural PURITY.
