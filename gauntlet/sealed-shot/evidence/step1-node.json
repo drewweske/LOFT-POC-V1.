@@ -1,0 +1,168 @@
+{
+  "phase": "THE SEALED SHOT Step 1",
+  "baseCommit": "4497fc90827ceda14ddf5d46f10b3ebccff7ec34",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "arch": "x64",
+  "existing": 105,
+  "step1": 19,
+  "total": 124,
+  "passed": 124,
+  "failed": 0,
+  "runs": [
+    {
+      "command": "node gauntlet/run-atelier-gauntlet.mjs",
+      "sourceSha256": "b46294ee9ba5b966728ef7627c6be1fff3d15cdba1fccddd38dc2b44afdaec6f",
+      "expected": 5,
+      "passes": 5,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  all forty inspection heads share the held factory buffers, materials and native transforms\nPASS  one renderer cannot be borrowed by two inspectors and always returns to the true course parent\nPASS  every actual head and full assembly fits desktop, portrait and landscape at all inspection presets\nPASS  selection discards nodes without disposing shared assets and stationary inspection does not draw\nPASS  Workshop wiring previews actual clubs without equipping and closes the previous owner first\n\nLOFT ATELIER GAUNTLET: 5/5 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-ball-gauntlet.mjs",
+      "sourceSha256": "941be6bbd9db4adc015cc98eed71d28ef46a6362654d95c72e81e7ab81d6239b",
+      "expected": 6,
+      "passes": 6,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  ordinary tee creation defers hero geometry until a near camera needs the shared surface\nPASS  all 338 hero dimples have dense curved geometry and full physical depth\nPASS  surface normals agree with finite-difference geometry instead of flat triangle seams\nPASS  gameplay, inspection and ghost reuse physical buffers without changing display/contact radii\nPASS  one permanent signature follows the surface across all LODs\nPASS  Workshop borrows and restores one renderer, bounds input, and stops drawing at rest\n\nLOFT BALL GAUNTLET: 6/6 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-club-assembly-gauntlet.mjs",
+      "sourceSha256": "6c8b8e41568832fb6c8473ec27ca11fb0eb3a5388eade416509f9d3b90954bf6",
+      "expected": 1,
+      "passes": 1,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  all 40 assemblies preserve the 037 baseline except the ten intentionally rebuilt wedge soles; golf data and all seven pose stations are exact\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-club-forging-gauntlet.mjs",
+      "sourceSha256": "f5c80bc3d44fe45042a9aba7e6a3b78965e7273a7cccc2c4238677aa2ea0a7ff",
+      "expected": 3,
+      "passes": 3,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  every forging is a closed outward-wound manifold inside a bounded geometry budget\nPASS  physical section progresses from solid casting to a genuinely recessed forged cavity\nPASS  tier progression owns different geometry and restrained readable body finishes without altering the strike face\n\nLOFT CLUB FORGING GAUNTLET: 3/3 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-club-neck-gauntlet.mjs",
+      "sourceSha256": "3f34884598ca8e3fd08687829710dca0a8e8c342ffbbba6868912e0bf9e0943e",
+      "expected": 4,
+      "passes": 4,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  all twenty iron/wedge necks enter the solid heel and meet the ferrule without a floating joint\nPASS  the heel neck leaves the central scoring face unobstructed at every grade\nPASS  held and inspected clubs share the exact construction and every rigid joint throughout 101 swing samples\nPASS  driver, wood, hybrid and putter retain the frozen twenty-object construction and seven-pose baseline\n\nLOFT CLUB NECK GAUNTLET: 4/4 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-flight-gauntlet.mjs",
+      "sourceSha256": "39fccb7096852f40696ff8fd2e3982f07f80d7c0a94217890db26a0f2ea0eab9",
+      "expected": 7,
+      "passes": 7,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  protected solver, contact field, cup, poses, clubface and ball bytes are unchanged this session\nPASS  APEX SKY: actual seven-club / three-hole trajectories retain > half sky in all three aspect ratios\nPASS  BALL FRAMING: the whole gameplay ball stays > 1/15 from every edge from release through rest\nPASS  CONTINUOUS IMPACT: mode handoff is exact; translation and rotation stay inside the established punch envelope\nPASS  camera-side trace visibility rejects an eye-plane crossing without changing effect geometry\nPASS  Deck Clear: marks are inline geometry, tiers have no rarity, and completed strokes precede the HUD refresh\nPASS  UI SILENCE: one live target-distance element survives airborne and other HUD stays absent until rest\n\nMEASURED {\"build\":\"current camera with protected current solver\",\"trajectories\":126,\"frames\":46770,\"minimumOpticalSky\":{\"value\":0.7318738602464442,\"shot\":\"1/driver/imperfect/landscape\"},\"minimumTerrainSky\":{\"value\":0.6877192982456141,\"shot\":\"3/iron7/imperfect/landscape\"},\"minimumBallMargin\":{\"value\":0.09323978942860417,\"shot\":\"1/sw/clean/landscape\",\"time\":0.4000000000000004},\"maxImpactRotationDegrees\":0.038344249016796596}\n\nLOFT FLIGHT GAUNTLET: 7/7 checks passed\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-hinterland-gauntlet.mjs",
+      "sourceSha256": "07878f4ca9c1f8826cb0cebfceff790e2ca0451c8714e2188613c93bd6fcda24",
+      "expected": 3,
+      "passes": 3,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  authored hinterland is deterministic bounded scenery entirely outside the playable recovery envelope\nPASS  every 0.8 metre field seam remains physically coincident and color-continuous\nPASS  real camera frames retain visible landform relief without occluding golf targets or landmarks\n\nLOFT HINTERLAND GAUNTLET: 3/3 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-preview-gauntlet.mjs",
+      "sourceSha256": "805686c2c5e4ab12a5b700831167ff19cf4f4e1729e0dc2a7628bc1d85ca5225",
+      "expected": 4,
+      "passes": 4,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  playable distribution and shared modules are served without stale caches\nPASS  private files, path escapes, listings and mutation methods are denied\nPASS  explicit private LAN binding only; loopback stays the default\nPASS  LAN startup follows current address and rejects ambiguous interfaces\n\nLOFT PREVIEW GAUNTLET: 4/4 checks passed\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-putting-gauntlet.mjs",
+      "sourceSha256": "70392fbebde2fd5b29a81e1af06aea864c26ee5fedc34fc260b9b2604abaca86",
+      "expected": 13,
+      "passes": 13,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  firm centred entries are not rejected at the inbound throat boundary\nPASS  hot centres and glancing edges remain honest misses\nPASS  slow unsupported overhang falls before static-friction settlement\nPASS  supported rim and near-cup rests are not magnetized\nPASS  rim rejection cannot slow-capture in the same pass but clears on a new encounter\nPASS  pace-authored sub-inch strokes have no twelve-centimetre launch floor\nPASS  short-putt thumb range is generous and continuous at every supported height\nPASS  real three-hole greens accept deliberate four-inch finishes from all directions\nPASS  tap contact stays quiet throughout its envelope; full shots retain weight\nPASS  cup reward meets the actual drop instead of finishing its audio at the rim\nPASS  the course map reports a holed ball as HOLED, not an invented inch remaining\nPASS  scaled pendulum has a continuous reversal and stable impact grip\nPASS  putt contact retains the green-reading lens and camera position\n\nLOFT PUTTING GAUNTLET: 13/13 checks passed\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-stroke-input-gauntlet.mjs",
+      "sourceSha256": "befd69c2b7b2adcbbac9a66a8d24afc09ed98437694269b3f6cbb1fcff3fe71d",
+      "expected": 4,
+      "passes": 4,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  portrait and landscape pull-return strokes launch once with their authored pace\nPASS  lift/cancel during the backstroke costs no stroke and releases the view\nPASS  a second finger releases provisional swing intent and pinch zoom remains live\nPASS  full-swing return still launches with load, rhythm, release and path metrics\n\nLOFT STROKE INPUT GAUNTLET: 4/4 checks passed\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-terrain-gauntlet.mjs",
+      "sourceSha256": "58cf60db8ceb6127fbb27e2bc9bf17642dfebcbea2dffc913e8d5dd05834f0e2",
+      "expected": 14,
+      "passes": 14,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  repository boundary is the verified LOFT remote\nPASS  LOFT Field V4 validates\nPASS  literal terrain contact field matches the protected baseline\nPASS  terrain samples share height and a unit readable normal\nPASS  course cuts and hazards resolve to visible physical identities\nPASS  surface personalities progress from green through sand\nPASS  exact sweep ignores departing contact and catches entering terrain\nPASS  grounded launch separates cleanly into air\nPASS  first bounce separates instead of re-colliding at time zero\nPASS  fairway to first-cut transition is immediate and height-safe\nPASS  fixed-step shot is deterministic across 30/60/120 Hz frame delivery\nPASS  water transition resolves on the crossing step at the visible ocean\nPASS  cup accepts a controlled centre putt and rejects hot/edge entries\nPASS  critical gameplay DOM contracts remain present\n\nLOFT TERRAIN GAUNTLET: 14/14 checks passed\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-visual-gauntlet.mjs",
+      "sourceSha256": "c3bb9b47e299c64d6bc67d5a416d21ab7afcff7efba7df517dffc86ccb8a6fa2",
+      "expected": 37,
+      "passes": 37,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  repository boundary is LOFT-POC-V1 with no unrelated services\nPASS  trusted club flight and carry numbers remain unchanged\nPASS  five collectible equipment grades resolve deterministically\nPASS  club presentation profiles are bounded, deterministic and physics-neutral\nPASS  every club earns physical construction from Foundation to Icon\nPASS  six club families retain distinct zero-brand silhouettes\nPASS  hero and rail drawings scope every SVG resource id\nPASS  every club is a multi-part engineered object at base and icon grades\nPASS  every authored club sole clears turf at address and impact\nPASS  low and legendary putters have materially different construction\nPASS  playable club craft is collectible, grounded and ball-clear across every grade\nPASS  swing anatomy and club length stay fixed through 201 samples\nPASS  putting motion stays anatomically rigid and on the authored address\nPASS  head and garment details inherit the character transforms\nPASS  golfer limbs use sculpted anatomical shells instead of cylinder mannequins\nPASS  golfer face, focus and grip form one coherent LOFT system\nPASS  full swing is one grounded pelvis-led kinetic chain\nPASS  golfer apparel uses tailored body shells and layered footwear\nPASS  camera exposes close, fluid full-shot, putting and result envelopes\nPASS  camera rebases world cuts without sacrificing local aim damping\nPASS  mobile camera composition keeps golfer, ball, pin and cup inside the live field\nPASS  LOFT field, workshop and receipt UI contracts are present\nPASS  Target Steward expresses the shot decision and survives responsive placement\nPASS  Target Steward is a read-only world instrument with explicit club range semantics\nPASS  Round Chronicle models live and final score truth without counting the active hole\nPASS  Round Chronicle is a responsive golf-native ledger with accessible controls\nPASS  Round Chronicle is modal, phase-safe and isolated from scoring and shot input\nPASS  Workshop preview does not equip until explicit confirmation\nPASS  spatial cup owns a regulation aperture, liner, depth and full-size drop\nPASS  the playable LOFT ball has 338 real dimples and one fixed signature\nPASS  protected terrain contact identity remains intact and greens have no blade speckle\nPASS  Coastal Turf & Light V2 separates cuts without touching the protected field\nPASS  Lighthouse Headland stays off-course, bounded and immutable at runtime\nPASS  Coastal Atmosphere V2 is authored, camera-readable and gameplay-neutral\nPASS  Coastal Atmosphere V2 lives inside every production camera envelope\nPASS  Coastal Ecology replaces perimeter repetition with bounded grounded communities\nPASS  Ridge House is a grounded bounded destination instead of a box placeholder\n\nLOFT VISUAL GAUNTLET: 37/37 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-wedge-sole-gauntlet.mjs",
+      "sourceSha256": "b24b2ef1401fe49ead624c5c8309706d9febc6d4ec0dbf3f51e7fec5cd9f4fb7",
+      "expected": 4,
+      "passes": 4,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  purpose-built wedge soles are closed outward-wound physical surfaces within one bounded draw\nPASS  sand wedges own a wider working sole than pitching wedges at every construction grade\nPASS  actual underside triangles carry convex camber, trailing relief and lifted heel/toe edges\nPASS  new soles remain ball-clear and preserve the measured address/impact support envelope\n\nLOFT WEDGE SOLE GAUNTLET: 4/4 PASS\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "command": "node gauntlet/run-sealed-shot-gauntlet.mjs",
+      "sourceSha256": "ec2f1f094b536f12eca838599ed9daaa8cd7ddfd6918e59b54caf97eec729d87",
+      "expected": 19,
+      "passes": 19,
+      "exitCode": 0,
+      "pass": true,
+      "stdout": "PASS  Frozen v1 authority, schema, ID ledger, vectors and parity fixture digests match\nPASS  SEED CONTRACT VECTORS: 11 independently derived byte/FNV/fmix/u32/float vectors\nPASS  Seed lengths distinguish ambiguous concatenation; seed IDs are raw UTF-8, not NFC\nPASS  Seed rejects invalid integers and malformed ID input rather than truncating\nPASS  BOUNDARY KEY VECTORS: 9 independent frozen byte/word vectors, no band implementation\nPASS  Boundary domain and occurrence are validated; zero-based occurrence survives\nPASS  Reference generator is isolated from subject/game code; gates never regenerate fixtures\nPASS  COURSE HASH STABILITY: explicit binary order matches two independent byte/digest fixtures\nPASS  Course negative-zero normalization is recursive over numeric fields\nPASS  Non-finite values rejected, even in excluded presentation data and unknown fields\nPASS  Course NFC applies to strings, never inferred object key order\nPASS  Authored array order and every encoded physics/identity field affect the digest\nPASS  Presentation exclusions are finite, explicit and closed; unknown versions/fields refuse\nPASS  Authored feature permanence rejects renamed/reindexed IDs, not geometry edits or reordered arrays\nPASS  Course physics artifact closure: both immutable sources verified; authored holes match legacy\nPASS  Seeds, keys and course bytes/digests repeat in a fresh bare Node process\nPASS  Frozen parity projection version/source and all six legacy trajectories remain exact\nPASS  Parity projection retains -0 and optional presence; does not quantize or omit state fields\nPASS  ZERO BEHAVIOR CHANGE: 43 gameplay/asset/vendor/old-gate files match Git baseline; protected bytes exact\n\nLOFT SEALED SHOT STEP 1: 19/19 PASS; 0 FAIL\nSEED INTEGRITY, EXTRACTION PARITY, production DETERMINISM and BOUNDARY SAFETY remain NOT IMPLEMENTED.\n",
+      "stderr": "",
+      "error": null
+    }
+  ]
+}

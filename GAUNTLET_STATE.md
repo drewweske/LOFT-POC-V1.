@@ -1,8 +1,8 @@
 # LOFT Gauntlet State
 
-Updated: 2026-09-09
+Updated: 2026-09-13
 
-Build: Integration 041 THE FLIGHT, including retained 039–040; publication pending final push verification
+Build: Integration 042 THE SEALED SHOT Step 1 evidence; playable game remains Integration 041
 
 Branch: `prototype-1-gauntlet`
 
@@ -27,17 +27,28 @@ production-quality claims and do not score the golfer. Detailed before/after,
 rejected candidates, limitations and live checks: `gauntlet/history/integration_041.md`.
 The earlier putting/iPhone-preview work is separately recorded in history 040.
 
-**THE SHOT AS DATA has not begun implementation.** Read-only audit found native
-Math functions in the protected solver cannot guarantee identical last bits across
-every JS engine forever. The user was asked to choose exact current calculations
-with a versioned-runtime guarantee, or authorize deterministic numerical math.
-No answer is recorded yet. Do not silently weaken the requested guarantee.
+**THE SEALED SHOT v1.2 FINAL supersedes the old pending numerical decision.**
+Read its exact archived authority and latest findings under `gauntlet/sealed-shot/`.
+v1.2 is CLOSED: native physics stays unchanged; later authoritative results and
+measured boundary handling follow its explicit build order. No old numerical-choice
+question remains blocking. Integration 041 was verified on remote main at `4497fc9`.
 
-| New data gate | State |
+**Step 1 artifacts are implemented and locally verified; required runtime coverage remains pending.** Independent seed/key vectors, concrete
+versioned course encoding/hash, authored cup-ID permanence, frozen raw-bit parity
+projection and predicate findings are checked in. 105 unchanged existing + 19 new
+checks pass. Browser byte checks pass 48/48 before and after reload. No gameplay,
+visual, physics, equipment, control or networking source changed. Detailed commands,
+counts, hashes, vectors and limitations: `gauntlet/history/integration_042.md`.
+
+| Sealed Shot gate | State |
 | --- | --- |
-| DETERMINISM | Pending numerical/runtime decision; no seeded resolver shipped |
-| PURITY | Not implemented; extraction audit complete |
-| REPLAY | Not implemented; no record/replay system shipped |
+| SEED CONTRACT VECTORS | PASS — 11 independent fixtures, standalone implementation |
+| COURSE HASH STABILITY | PENDING full required matrix — PASS on Node + Chromium/reload; WebKit, Gecko, physical iOS WebView untested |
+| BOUNDARY KEY VECTORS | PASS — 9 independent byte/word fixtures; no runtime bands |
+| Parity fixture/version | FROZEN v1 — 6 solver-side trajectories, 3,176 fixed frames |
+| SEED INTEGRITY | Not implemented — production seeded dispersion belongs to Step 5 |
+| EXTRACTION PARITY / PURITY | Not implemented — no extracted resolver exists |
+| DETERMINISM / BOUNDARY SAFETY / REPLAY | Not implemented — later authorized steps |
 
 The assessment below is retained historical context through 039, not this session's
 active target or a fresh visual critic pass.
@@ -89,6 +100,11 @@ assessment, not evidence that this iteration changed or damaged those assets.
 | Camera / game feel | 7.7/10 | Close putting remains accessible; cross-hole rebasing prevents backward/underground interpolation while local resets stay smooth. |
 
 ## Completed improvements
+
+- Integration 042: Step 1 contract evidence only. Exact authorities archived;
+  seed/key independent BigInt oracle, DataView subject, binary course schema and
+  artifact closure, immutable ID ledger, raw-bit parity oracle, predicate audit,
+  full regression evidence. Original playable source/asset bytes preserved.
 
 - Integration 041: height-driven broadcast flight framing, continuous captured-pose
   handoff, measured-displacement carry, short-landscape ball readability, exact
@@ -219,10 +235,9 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **THE SHOT AS DATA — current target:** establish the determinism boundary, then
-   extract only resolution, seeded dispersion and compact record replay. Current
-   native transcendental math and whole-file protection gates must be reconciled
-   explicitly; do not weaken tests or change physics silently.
+1. **THE SEALED SHOT — next authorized target: Step 2 only.** Make dispersion
+   injectable while preserving current wall-clock behavior. Do not install a seed,
+   extract the solver, remove form, quantize results or implement boundary bands yet.
 2. **Near-field turf / cut readability — queued, out of scope:** the course has more setting
    but the ground under the golfer still reads as a smooth painted sheet. Improve the
    maintained-grass/rough/fringe/sand material scale in real tee and putting views,
@@ -245,12 +260,14 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**THE SHOT AS DATA — determinism, purity, record replay only**
+**THE SEALED SHOT — Step 1 evidence checkpoint; stop after publication.**
 
-Finish publication of the verified Flight checkpoint. Await the numerical/runtime
-decision before implementing resolveShot. No art, Bag stats/vocabulary, terrain,
-character, hole tuning, Rowan scores, networking or control redesign. Physics must
-compute the same values unless the user explicitly changes that constraint.
+Step 2 must not begin in this turn. After Step 1 acceptance, next authorized work is
+dispersion injection only. COURSE HASH STABILITY remains pending on WebKit, Gecko
+and physical iOS WebView; these rows are not waived. Governing v1.2 + findings are archived with
+digests. Existing math/contact/geometry/assets/stats remain protected. Freeze all
+v1 contract fixtures; never regenerate them to hide a regression or silently change
+serialization. No visual critic pass was authorized or performed this session.
 
 ## Reference comparison
 
@@ -285,6 +302,13 @@ reference's course setting with a bounded inland ridgeline. The remaining ground
 discrepancy is material scale: turf still reads painted and too uniform in real play.
 
 ## Experiments attempted
+
+- 042: independent BigInt/Buffer oracle and imul/DataView subject agree; explicit
+  regeneration reproduces locked fixtures. Node fresh processes and Chromium reload
+  agree on all encoded vectors and course digests. Solver-side parity fixtures retain
+  all raw bits. A fixture-authoring Git subprocess buffer limit was raised for the
+  existing vendor file; no live code was affected. See finding F-013 for checkout
+  line-ending evidence and raw-byte protection boundaries.
 
 - 041: height-driven pitch won apex sky but initially left a tiny trailing ball.
   Actual-displacement carry repaired that lag; camera-side trace culling removed
@@ -468,15 +492,13 @@ discrepancy is material scale: turf still reads painted and too uniform in real 
 
 ## Next action
 
-Resolve the user's determinism choice. A mechanically generated no-Three numeric
-kernel can preserve original files as exact compatibility/parity oracles while
-moving composition-root resolution. Keep each operation's order, isolate course
-caches per call, and compare every fixed-step state to the old solver. Do not
-hand-copy a second tunable solver. Record Float64 inputs and versions; include
-power, speedScore, putting pace and canonical form in addition to six gestures.
-Seed the sine phase rather than changing its distribution to uniform noise.
-Replay must retain spin, surfaces, events, holed/recovered/stopped flags, not XYZ only.
-Even this does not provide universal cross-engine math identity without authorization.
+**Make dispersion injectable while preserving current wall-clock behavior.**
+This is Step 2, not permission to implement Steps 3–12. Keep the current
+`Math.sin(performance.now()*.012)` default and its scaling/evaluation placement,
+with no change to form, quality, trajectories or visuals. Read the archived v1.2
+authority, F-001–F-007 and local F-008–F-013 first. The pure resolver's later canonical
+signature is `resolveShot(ShotIntent, Course)` per F-003. Do not use the superseded
+three-argument signature or treat seed vectors as production SEED INTEGRITY.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`, hidden Node
 `gauntlet/serve.mjs 43117`. If absent, restart only this LOFT-local server. Current

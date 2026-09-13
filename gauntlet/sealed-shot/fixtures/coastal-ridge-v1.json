@@ -1,0 +1,88 @@
+{
+  "coursePackageSchemaVersion": 1,
+  "courseId": "coastal-ridge",
+  "physicsArtifacts": [
+    {
+      "role": "contact-field-v4",
+      "sha256": "36d7fd8c8404a4ad71b89ed9d74855ece435969b99ae50922463bd004b6681f0"
+    },
+    {
+      "role": "surface-response-v1",
+      "sha256": "8eab0d770d0ecdaa54f1117bfcd5275def04cdc115e597968c7b766b4dcce22d"
+    }
+  ],
+  "features": [
+    {
+      "authorKey": "ridge.cup",
+      "featureId": "coastal.ridge.cup"
+    },
+    {
+      "authorKey": "shelf.cup",
+      "featureId": "coastal.shelf.cup"
+    },
+    {
+      "authorKey": "lighthouse.cup",
+      "featureId": "coastal.lighthouse.cup"
+    }
+  ],
+  "holes": [
+    {
+      "holeId": "coastal.ridge",
+      "cupFeatureId": "coastal.ridge.cup",
+      "number": 1,
+      "par": 3,
+      "tee": [
+        0.46,
+        0
+      ],
+      "pin": [
+        2.5,
+        -156.36
+      ],
+      "defaultWind": [
+        3.13,
+        0
+      ]
+    },
+    {
+      "holeId": "coastal.shelf",
+      "cupFeatureId": "coastal.shelf.cup",
+      "number": 2,
+      "par": 3,
+      "tee": [
+        -8,
+        10
+      ],
+      "pin": [
+        12,
+        -170
+      ],
+      "defaultWind": [
+        -2.24,
+        -0.55
+      ]
+    },
+    {
+      "holeId": "coastal.lighthouse",
+      "cupFeatureId": "coastal.lighthouse.cup",
+      "number": 3,
+      "par": 4,
+      "tee": [
+        8,
+        18
+      ],
+      "pin": [
+        -8,
+        -218
+      ],
+      "defaultWind": [
+        1.75,
+        -1.4
+      ]
+    }
+  ],
+  "presentation": {
+    "displayName": "Coastal Ridge",
+    "description": "Integration 041 authoring snapshot; not loaded by gameplay."
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "baseCommit": "4497fc90827ceda14ddf5d46f10b3ebccff7ec34",
+  "files": {
+    "gauntlet/run-atelier-gauntlet.mjs": {
+      "workingSha256": "b46294ee9ba5b966728ef7627c6be1fff3d15cdba1fccddd38dc2b44afdaec6f",
+      "sha256": "b46294ee9ba5b966728ef7627c6be1fff3d15cdba1fccddd38dc2b44afdaec6f",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-ball-gauntlet.mjs": {
+      "workingSha256": "941be6bbd9db4adc015cc98eed71d28ef46a6362654d95c72e81e7ab81d6239b",
+      "sha256": "941be6bbd9db4adc015cc98eed71d28ef46a6362654d95c72e81e7ab81d6239b",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-club-assembly-gauntlet.mjs": {
+      "workingSha256": "6c8b8e41568832fb6c8473ec27ca11fb0eb3a5388eade416509f9d3b90954bf6",
+      "sha256": "6c8b8e41568832fb6c8473ec27ca11fb0eb3a5388eade416509f9d3b90954bf6",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-club-forging-gauntlet.mjs": {
+      "workingSha256": "f5c80bc3d44fe45042a9aba7e6a3b78965e7273a7cccc2c4238677aa2ea0a7ff",
+      "sha256": "f5c80bc3d44fe45042a9aba7e6a3b78965e7273a7cccc2c4238677aa2ea0a7ff",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-club-neck-gauntlet.mjs": {
+      "workingSha256": "3f34884598ca8e3fd08687829710dca0a8e8c342ffbbba6868912e0bf9e0943e",
+      "sha256": "3f34884598ca8e3fd08687829710dca0a8e8c342ffbbba6868912e0bf9e0943e",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-flight-gauntlet.mjs": {
+      "workingSha256": "39fccb7096852f40696ff8fd2e3982f07f80d7c0a94217890db26a0f2ea0eab9",
+      "sha256": "39fccb7096852f40696ff8fd2e3982f07f80d7c0a94217890db26a0f2ea0eab9",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-hinterland-gauntlet.mjs": {
+      "workingSha256": "07878f4ca9c1f8826cb0cebfceff790e2ca0451c8714e2188613c93bd6fcda24",
+      "sha256": "07878f4ca9c1f8826cb0cebfceff790e2ca0451c8714e2188613c93bd6fcda24",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-preview-gauntlet.mjs": {
+      "workingSha256": "805686c2c5e4ab12a5b700831167ff19cf4f4e1729e0dc2a7628bc1d85ca5225",
+      "sha256": "805686c2c5e4ab12a5b700831167ff19cf4f4e1729e0dc2a7628bc1d85ca5225",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-putting-gauntlet.mjs": {
+      "workingSha256": "70392fbebde2fd5b29a81e1af06aea864c26ee5fedc34fc260b9b2604abaca86",
+      "sha256": "70392fbebde2fd5b29a81e1af06aea864c26ee5fedc34fc260b9b2604abaca86",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-stroke-input-gauntlet.mjs": {
+      "workingSha256": "befd69c2b7b2adcbbac9a66a8d24afc09ed98437694269b3f6cbb1fcff3fe71d",
+      "sha256": "befd69c2b7b2adcbbac9a66a8d24afc09ed98437694269b3f6cbb1fcff3fe71d",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-terrain-gauntlet.mjs": {
+      "workingSha256": "58cf60db8ceb6127fbb27e2bc9bf17642dfebcbea2dffc913e8d5dd05834f0e2",
+      "sha256": "58cf60db8ceb6127fbb27e2bc9bf17642dfebcbea2dffc913e8d5dd05834f0e2",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-visual-gauntlet.mjs": {
+      "workingSha256": "c3bb9b47e299c64d6bc67d5a416d21ab7afcff7efba7df517dffc86ccb8a6fa2",
+      "sha256": "c3bb9b47e299c64d6bc67d5a416d21ab7afcff7efba7df517dffc86ccb8a6fa2",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "gauntlet/run-wedge-sole-gauntlet.mjs": {
+      "workingSha256": "b24b2ef1401fe49ead624c5c8309706d9febc6d4ec0dbf3f51e7fec5cd9f4fb7",
+      "sha256": "b24b2ef1401fe49ead624c5c8309706d9febc6d4ec0dbf3f51e7fec5cd9f4fb7",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "index.html": {
+      "workingSha256": "4e48c32557bedd714f5fb2eaae24d7c9cd2309f3c033da7767d2115bb730b1a5",
+      "sha256": "4e48c32557bedd714f5fb2eaae24d7c9cd2309f3c033da7767d2115bb730b1a5",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/assets/loft-ball-official.webp": {
+      "workingSha256": "91057931f1d6dd52f1bf0f0af02249f529ac850c7aabc8f22c0ffd8b6919536d",
+      "sha256": "91057931f1d6dd52f1bf0f0af02249f529ac850c7aabc8f22c0ffd8b6919536d",
+      "comparison": "raw bytes"
+    },
+    "prototype1/assets/loft-wordmark-official.webp": {
+      "workingSha256": "6354893abbfa5f8d0c6d97e5b2401e56856ff8622acffef3777ba25f0f216401",
+      "sha256": "6354893abbfa5f8d0c6d97e5b2401e56856ff8622acffef3777ba25f0f216401",
+      "comparison": "raw bytes"
+    },
+    "prototype1/ballAtelier.js": {
+      "workingSha256": "e75856a167c3b5c3d056908633c8b521c3e91565439b0e710a0503b0c5840cf2",
+      "sha256": "e75856a167c3b5c3d056908633c8b521c3e91565439b0e710a0503b0c5840cf2",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/ballVisual.js": {
+      "workingSha256": "c9bac03182ba292889c59fe996e38d6b4f5fe1dadbca729c7972cc650801a264",
+      "sha256": "c9bac03182ba292889c59fe996e38d6b4f5fe1dadbca729c7972cc650801a264",
+      "comparison": "raw bytes"
+    },
+    "prototype1/camera.js": {
+      "workingSha256": "1ceb5b3641910b1fcb17e5ed37cd9656fbf637ef51ac4b1fb29cac72c3ce3d8d",
+      "sha256": "d2859c7255edbb2579f39740d8c761b172d7e081c052041de49a83066fcb12b9",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/characterRig.js": {
+      "workingSha256": "b82ff9aca3345f7bb8c0e10bff3a9a6719f2f6d12c0e36551c037031408e0054",
+      "sha256": "b82ff9aca3345f7bb8c0e10bff3a9a6719f2f6d12c0e36551c037031408e0054",
+      "comparison": "raw bytes"
+    },
+    "prototype1/clubAssembly.js": {
+      "workingSha256": "bb88b8185900b0840e2013d0303058628a4036dd2889105f6f0fce63c4b9afd7",
+      "sha256": "bb88b8185900b0840e2013d0303058628a4036dd2889105f6f0fce63c4b9afd7",
+      "comparison": "raw bytes"
+    },
+    "prototype1/clubAtelier.js": {
+      "workingSha256": "04016092cb7b1f90f98598ab6c84793ef53e7cb0891280beecbb589b5485148c",
+      "sha256": "04016092cb7b1f90f98598ab6c84793ef53e7cb0891280beecbb589b5485148c",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/clubVisual.js": {
+      "workingSha256": "138a69ec0cf59b028e1af67a530b205f72dc3bc2b1b01ac139ccb06769002898",
+      "sha256": "138a69ec0cf59b028e1af67a530b205f72dc3bc2b1b01ac139ccb06769002898",
+      "comparison": "raw bytes"
+    },
+    "prototype1/coastalHinterland.js": {
+      "workingSha256": "5f08d84a8ab17531e9f2b1f8cd049ef61384efc8018b5734789d0a67466d28d8",
+      "sha256": "5f08d84a8ab17531e9f2b1f8cd049ef61384efc8018b5734789d0a67466d28d8",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/equipment.js": {
+      "workingSha256": "385c3afba263c81d63b554c9f8f76e1b54e28f0a48e3e4abd4e545680f98e052",
+      "sha256": "0cbc92a11d5e10070adc101890af16cd34a468169d9fbff5b712b3a38fd260ac",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/feedback.js": {
+      "workingSha256": "d2fe07bc7af18925d5ea88117ceb1aea342abcd557788fbb1d39b2040eb1a644",
+      "sha256": "da34bf36b3beef26b0f153681fc6f12e0958fe6bac64801c041ad827c4103b11",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/flight.css": {
+      "workingSha256": "d400235d37b7c4156ff077f8117502aa7951450b7f74401e9cb35bdcb5ea8c73",
+      "sha256": "d400235d37b7c4156ff077f8117502aa7951450b7f74401e9cb35bdcb5ea8c73",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/flightPresentation.js": {
+      "workingSha256": "220fa13e89b61c1f948a2c4ea24ffd952712a7dd2da9f3a14bc5d4485968958a",
+      "sha256": "220fa13e89b61c1f948a2c4ea24ffd952712a7dd2da9f3a14bc5d4485968958a",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/game.js": {
+      "workingSha256": "0720872503e0cb532183bcde23a3dcabb443ea681789ac17a4f7d857ad5ece0a",
+      "sha256": "36af652ce5836c28f8a2cbde3542c7c0c20d8c3095338c91714ef16b25bd3290",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/index.html": {
+      "workingSha256": "e70cd4c6c2a5eb87692c4c3ec0f4acece484ee39e3e638d3d23b2ef0c54c523e",
+      "sha256": "e70cd4c6c2a5eb87692c4c3ec0f4acece484ee39e3e638d3d23b2ef0c54c523e",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/objectAtelier.js": {
+      "workingSha256": "69478f1fe8340c3f1abb34e7e81ad887a109d70de328a6e7ddef2baba5d406e2",
+      "sha256": "69478f1fe8340c3f1abb34e7e81ad887a109d70de328a6e7ddef2baba5d406e2",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/physics.js": {
+      "workingSha256": "3f3a446663b9fbd4bafd83bb4b93302f02f4cb7ec6d2d3d0f16712a01a9a7c76",
+      "sha256": "3f3a446663b9fbd4bafd83bb4b93302f02f4cb7ec6d2d3d0f16712a01a9a7c76",
+      "comparison": "raw bytes"
+    },
+    "prototype1/putting.js": {
+      "workingSha256": "f65596e6dbe6d3a87a6aa0b86c242b503a7772fb05e699ee839d05de77cd6caf",
+      "sha256": "f65596e6dbe6d3a87a6aa0b86c242b503a7772fb05e699ee839d05de77cd6caf",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/round.js": {
+      "workingSha256": "418f5789a0bcedd629e4efa2daa07d05842c59a6e5747e2ab8f7d1a3f199354e",
+      "sha256": "bb69bbc71d8186edbe6f0d726e9fc8393f777735a8cac7112e48677e41c45acf",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/roundChronicle.js": {
+      "workingSha256": "ab22b2c5fac803f29bb103d57eddff758ae34bdb3b10104be5917ac659f8ff6a",
+      "sha256": "ab22b2c5fac803f29bb103d57eddff758ae34bdb3b10104be5917ac659f8ff6a",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/styles.css": {
+      "workingSha256": "63aacf6b2d02fdb8c5edc7be4f83b0bd064af719bcaa3996f113736fdf7cc7ad",
+      "sha256": "63aacf6b2d02fdb8c5edc7be4f83b0bd064af719bcaa3996f113736fdf7cc7ad",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/surfaces.js": {
+      "workingSha256": "863930909d39f553ca458a737cd68465d780d93741acbc82114a7e1538da3166",
+      "sha256": "2e91be7ea5f12dad082f85726889d6f40f9f7b9081715f233de93b2a0ab70e9e",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/targetSteward.js": {
+      "workingSha256": "e8d23437e7fde0d696a127f5c844c4515d755a1229221f3d4ae58efe1a47575c",
+      "sha256": "e8d23437e7fde0d696a127f5c844c4515d755a1229221f3d4ae58efe1a47575c",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/topoMap.js": {
+      "workingSha256": "5167a1f5e68b56b8b045644dceb677a1a820cec3afb6ee85a3fe63661ea53110",
+      "sha256": "0f522749efb0707bb5b046441dae029b9b6a7d0f2450a5366a6429a97d738816",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/uiMarks.js": {
+      "workingSha256": "b7636d03b670eabf19f72ed11d06449ecd229f1124836e29dc197e128dc0e0ba",
+      "sha256": "b7636d03b670eabf19f72ed11d06449ecd229f1124836e29dc197e128dc0e0ba",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/world.js": {
+      "workingSha256": "cbcdc1a1ccefe8ade347b274c261b7a2f70c8fe3de599aa2bad5d9c01b24cb66",
+      "sha256": "3f6ad3ee5dbfa8279fb7f70a6a9398b9b8a7bede7f225cc773392c71bfadea20",
+      "comparison": "Git text LF (CRLF only normalized)"
+    },
+    "prototype1/worldV2.js": {
+      "workingSha256": "4cefe0b45a267ca0266a1e4aaeadaeecd64f1eabdedd86ac84551c892eabb531",
+      "sha256": "4cefe0b45a267ca0266a1e4aaeadaeecd64f1eabdedd86ac84551c892eabb531",
+      "comparison": "raw bytes"
+    },
+    "vendor/three.module.js": {
+      "workingSha256": "2cc2ca1a3afe24ce57e77261f44d842dc8dde5e50285b43b8eb74e0bfeb6cf71",
+      "sha256": "a97ec6852978949b7941c070b81292b842473a37549222353fa0a70c18d7285a",
+      "comparison": "Git text LF (CRLF only normalized)"
+    }
+  }
+}

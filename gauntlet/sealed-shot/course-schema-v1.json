@@ -1,0 +1,16 @@
+{
+  "coursePackageSchemaVersion": 1,
+  "encoding": "little-endian; strings=u32 UTF-8 byte length + NFC UTF-8; arrays=u32 count + authored-order elements; f64 IEEE-754 with -0 normalized to +0; non-finite rejected",
+  "fieldOrder": [
+    ["coursePackageSchemaVersion", "u32", 1],
+    ["courseId", "string"],
+    ["physicsArtifacts", "array", [["role", "string"], ["sha256", "32 raw digest bytes"]]],
+    ["features", "array", [["featureId", "string"], ["authorKey", "string"]]],
+    ["holes", "array", [["holeId", "string"], ["number", "u32"], ["par", "u32"], ["cupFeatureId", "string"], ["tee", "f64 x, f64 z"], ["pin", "f64 x, f64 z"], ["defaultWind", "f64 x, f64 z"]]]
+  ],
+  "excludedPresentationFields": ["presentation.displayName", "presentation.description"],
+  "legacyPresentationExclusions": ["ROUND_HOLES.name", "ROUND_HOLES.series", "ROUND_HOLES.windLabel", "worldV2.js before SURFACE_LIFT except clamp/lerp/smoothstep", "worldV2.js from const RGB onward", "surfaces.js surfaceDisplay"],
+  "unknownFields": "reject, including unknown presentation fields",
+  "artifactClosure": "Physics programs are immutable content-addressed course artifacts, not decimal serialization of numeric fields. Their complete archived bytes must match their digest. All current procedural field constants, derived geometry, interpolation, normals, surface classification and surface response participate via these artifacts. Authored hole numeric data participates as f64/u32. No runtime package loader is introduced at Step 1.",
+  "featureIdentity": "Authored authorKey -> featureId ledger; edit geometry without regenerating IDs. Never infer IDs from array/triangle/export order. Step 1 authors cup identities only. Surface candidate selection and rest semantic identity are deferred pending predicate evidence; the features array is not a runtime candidate set."
+}

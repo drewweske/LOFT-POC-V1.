@@ -1,0 +1,700 @@
+{
+  "parityProjectionVersion": 1,
+  "projectionSha256": "11adea692e88a1636833e00688ceff2eda1d64c7e19904e2d06771975ceee906",
+  "comparison": "raw IEEE-754 little-endian bits; negative zero preserved; no quantization; launch + every 1/120 frame + terminal; optional-field presence explicit",
+  "runtime": "v24.15.0",
+  "cases": [
+    {
+      "input": {
+        "name": "full-swing",
+        "method": "launch",
+        "club": "driver",
+        "position": [
+          0.46,
+          0
+        ],
+        "cup": [
+          2.5,
+          -156.36
+        ],
+        "wind": [
+          3.13,
+          0,
+          0
+        ],
+        "launch": {
+          "power": 0.8,
+          "path": 1.25,
+          "form": 0.7,
+          "aimYaw": 0.012,
+          "strike": 0.87,
+          "release": 0.88,
+          "lie": "tee"
+        }
+      },
+      "expected": {
+        "launchFrame": [
+          1,
+          true,
+          "0000000000000000",
+          [
+            "713d0ad7a370dd3f",
+            "09834556533fd03f",
+            "0000000000000000"
+          ],
+          [
+            "89aa95e06013f33f",
+            "947c3d2caa7e2a40",
+            "16fc29158cb64ec0"
+          ],
+          [
+            "217d4ad7b3faef3f",
+            "70529dfee3009f3f",
+            "2f34d090b5dc933f"
+          ],
+          "de1c2d46679e7040",
+          "d7a3703d0ad7eb3f",
+          "0000000000000000",
+          [
+            "713d0ad7a370dd3f",
+            "09834556533fd03f",
+            "0000000000000000"
+          ],
+          "air",
+          null,
+          null,
+          null,
+          false,
+          false,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ],
+        "frames": 930,
+        "trajectorySha256": "e8de3e74fa3fa0c981d037786fd4c9751de6d153976210515b238d70d5cf0819",
+        "terminalFrame": [
+          1,
+          false,
+          "0000000000000000",
+          [
+            "3138662360621b40",
+            "4b14639bd5761540",
+            "42b67ef57e5165c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          [
+            "217d4ad7b3faef3f",
+            "70529dfee3009f3f",
+            "2f34d090b5dc933f"
+          ],
+          "bd32c0fff307f03f",
+          "d7a3703d0ad7eb3f",
+          "c500000000001f40",
+          [
+            "3138662360621b40",
+            "4b14639bd5761540",
+            "42b67ef57e5165c0"
+          ],
+          "green",
+          "fringe",
+          "green",
+          [
+            "fringe",
+            "green"
+          ],
+          true,
+          true,
+          false,
+          false,
+          false,
+          [
+            "present",
+            false
+          ],
+          false
+        ]
+      }
+    },
+    {
+      "input": {
+        "name": "iron",
+        "method": "launch",
+        "club": "iron7",
+        "position": [
+          0.46,
+          0
+        ],
+        "cup": [
+          2.5,
+          -156.36
+        ],
+        "wind": [
+          3.13,
+          0,
+          0
+        ],
+        "launch": {
+          "power": 1,
+          "path": -0.7,
+          "form": 1,
+          "aimYaw": 0.014,
+          "strike": 0.96,
+          "release": 1,
+          "lie": "fairway"
+        }
+      },
+      "expected": {
+        "launchFrame": [
+          1,
+          true,
+          "0000000000000000",
+          [
+            "713d0ad7a370dd3f",
+            "09834556533fd03f",
+            "0000000000000000"
+          ],
+          [
+            "9a105373c028db3f",
+            "390aa47af6573040",
+            "3cebdd025a2e45c0"
+          ],
+          [
+            "0451649d90feef3f",
+            "62a5e9f8063190bf",
+            "72c260b52183843f"
+          ],
+          "1bc739ccb3248440",
+          "b81e85eb51b8ee3f",
+          "0000000000000000",
+          [
+            "713d0ad7a370dd3f",
+            "09834556533fd03f",
+            "0000000000000000"
+          ],
+          "air",
+          null,
+          null,
+          null,
+          false,
+          false,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ],
+        "frames": 870,
+        "trajectorySha256": "8adfb893c8d46765f8e10cc1b5a843ca77f45120dda2f4e3ab9e6e3cdbba6386",
+        "terminalFrame": [
+          1,
+          false,
+          "0000000000000000",
+          [
+            "1cd820bd74a92140",
+            "b847a1cd97a31240",
+            "9730dd6f6e5862c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          [
+            "0451649d90feef3f",
+            "62a5e9f8063190bf",
+            "72c260b52183843f"
+          ],
+          "56ad4140e7965a40",
+          "b81e85eb51b8ee3f",
+          "a900000000001d40",
+          [
+            "1cd820bd74a92140",
+            "b847a1cd97a31240",
+            "9730dd6f6e5862c0"
+          ],
+          "fairway",
+          "fairway",
+          "fairway",
+          null,
+          true,
+          true,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ]
+      }
+    },
+    {
+      "input": {
+        "name": "wedge",
+        "method": "launch",
+        "club": "pw",
+        "position": [
+          2,
+          -100
+        ],
+        "cup": [
+          2.5,
+          -156.36
+        ],
+        "wind": [
+          0,
+          0,
+          0
+        ],
+        "launch": {
+          "power": 0.55,
+          "path": 0.5,
+          "form": 0.38,
+          "aimYaw": 0,
+          "strike": 0.8,
+          "release": 0.75,
+          "lie": "rough"
+        }
+      },
+      "expected": {
+        "launchFrame": [
+          1,
+          true,
+          "0000000000000000",
+          [
+            "0000000000000040",
+            "368aac8908370340",
+            "00000000000059c0"
+          ],
+          [
+            "5375b2795b36a63f",
+            "d1b3de120bd22040",
+            "8c989ded64682cc0"
+          ],
+          [
+            "5ae9442bbdfeef3f",
+            "c2bdd73a4cb1913f",
+            "8de2e48f6b04693f"
+          ],
+          "2453b76a3d718440",
+          "9a9999999999e93f",
+          "0000000000000000",
+          [
+            "0000000000000040",
+            "368aac8908370340",
+            "00000000000059c0"
+          ],
+          "air",
+          null,
+          null,
+          null,
+          false,
+          false,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ],
+        "frames": 459,
+        "trajectorySha256": "2758cd48b767fcbad5e9d609797890863a69f269a854246a082fb04efec8eff0",
+        "terminalFrame": [
+          1,
+          false,
+          "0000000000000000",
+          [
+            "68d15815bf8dfb3f",
+            "565150d6971e0c40",
+            "4b3f1195921860c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          [
+            "5ae9442bbdfeef3f",
+            "c2bdd73a4cb1913f",
+            "8de2e48f6b04693f"
+          ],
+          "475baafe250d6240",
+          "9a9999999999e93f",
+          "8199999999990e40",
+          [
+            "68d15815bf8dfb3f",
+            "565150d6971e0c40",
+            "4b3f1195921860c0"
+          ],
+          "fairway",
+          "fairway",
+          "fairway",
+          null,
+          true,
+          true,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ]
+      }
+    },
+    {
+      "input": {
+        "name": "bunker",
+        "method": "launch",
+        "club": "sw",
+        "position": [
+          -13,
+          -125
+        ],
+        "cup": [
+          2.5,
+          -156.36
+        ],
+        "wind": [
+          3.13,
+          0,
+          0
+        ],
+        "launch": {
+          "power": 0.8,
+          "path": 1.5,
+          "form": 0.7,
+          "aimYaw": 0.3,
+          "strike": 0.88,
+          "release": 0.8,
+          "lie": "sand"
+        }
+      },
+      "expected": {
+        "launchFrame": [
+          1,
+          true,
+          "0000000000000000",
+          [
+            "0000000000002ac0",
+            "768c90b041fd0540",
+            "0000000000405fc0"
+          ],
+          [
+            "ed2bda8b34741240",
+            "b7772523a79f2840",
+            "66a87a4d59eb2cc0"
+          ],
+          [
+            "fd4f7f1e9677ee3f",
+            "4e9c848e35f5a13f",
+            "50413f230d71d33f"
+          ],
+          "ba696c2b2ae58a40",
+          "295c8fc2f528ec3f",
+          "0000000000000000",
+          [
+            "0000000000002ac0",
+            "768c90b041fd0540",
+            "0000000000405fc0"
+          ],
+          "air",
+          null,
+          null,
+          null,
+          false,
+          false,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ],
+        "frames": 564,
+        "trajectorySha256": "2801b070a91974f0c0a624b4bd8300a971e25834b42f1dbf60b21b1c5f30606f",
+        "terminalFrame": [
+          1,
+          false,
+          "0000000000000000",
+          [
+            "066897f1839be9bf",
+            "045c02529f351440",
+            "ac586261dd0964c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          [
+            "fd4f7f1e9677ee3f",
+            "4e9c848e35f5a13f",
+            "50413f230d71d33f"
+          ],
+          "85984d2099444540",
+          "295c8fc2f528ec3f",
+          "e7cccccccccc1240",
+          [
+            "066897f1839be9bf",
+            "045c02529f351440",
+            "ac586261dd0964c0"
+          ],
+          "green",
+          "green",
+          "green",
+          null,
+          true,
+          true,
+          false,
+          false,
+          false,
+          [
+            "present",
+            false
+          ],
+          false
+        ]
+      }
+    },
+    {
+      "input": {
+        "name": "putt",
+        "method": "putt",
+        "club": "putter",
+        "position": [
+          2.5,
+          -153.36
+        ],
+        "cup": [
+          2.5,
+          -156.36
+        ],
+        "wind": [
+          0,
+          0,
+          0
+        ],
+        "launch": {
+          "power": 0.3,
+          "paceFeet": 10.4,
+          "path": 0,
+          "aimYaw": 0,
+          "strike": 0.95
+        }
+      },
+      "expected": {
+        "launchFrame": [
+          1,
+          true,
+          "0000000000000000",
+          [
+            "0000000000000440",
+            "49ce3e6207181440",
+            "ec51b81e852b63c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "62a07a0ddd3d01c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "0000000000000000",
+          "666666666666ee3f",
+          "0000000000000000",
+          [
+            "0000000000000440",
+            "49ce3e6207181440",
+            "ec51b81e852b63c0"
+          ],
+          "green",
+          null,
+          "green",
+          null,
+          false,
+          false,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ],
+        "frames": 336,
+        "trajectorySha256": "f350e4876bd71c4f6bc7f46aed96924e50d6449198c2cd7298a205bc83d91538",
+        "terminalFrame": [
+          1,
+          false,
+          "0000000000000000",
+          [
+            "68fab32233660540",
+            "1c4392d02d1c1440",
+            "d2360c79b68a63c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "0000000000000000",
+          "666666666666ee3f",
+          "5666666666660640",
+          [
+            "68fab32233660540",
+            "1c4392d02d1c1440",
+            "d2360c79b68a63c0"
+          ],
+          "green",
+          null,
+          "green",
+          null,
+          true,
+          false,
+          false,
+          false,
+          false,
+          [
+            "present",
+            false
+          ],
+          false
+        ]
+      }
+    },
+    {
+      "input": {
+        "name": "lip-putt",
+        "method": "putt",
+        "club": "putter",
+        "position": [
+          2.5,
+          -156.295
+        ],
+        "cup": [
+          2.5,
+          -156.36
+        ],
+        "wind": [
+          0,
+          0,
+          0
+        ],
+        "launch": {
+          "power": 0.01,
+          "paceFeet": 0.15,
+          "path": 0,
+          "aimYaw": 0,
+          "strike": 1
+        }
+      },
+      "expected": {
+        "launchFrame": [
+          1,
+          true,
+          "0000000000000000",
+          [
+            "0000000000000440",
+            "3c2fe568601e1440",
+            "3d0ad7a3708963c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "dc5c2830f595d0bf"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "0000000000000000",
+          "000000000000f03f",
+          "0000000000000000",
+          [
+            "0000000000000440",
+            "3c2fe568601e1440",
+            "3d0ad7a3708963c0"
+          ],
+          "green",
+          null,
+          "green",
+          null,
+          false,
+          false,
+          false,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ],
+        "frames": 17,
+        "trajectorySha256": "0123b4ceda10c7522fd7886429e8ccdd17753eeacacd9087e8f71b2f357435cd",
+        "terminalFrame": [
+          1,
+          false,
+          "0000000000000000",
+          [
+            "0000000000000440",
+            "0f408cab6d1e1440",
+            "ec51b81e858b63c0"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "0000000000000000",
+          "000000000000f03f",
+          "222222222222c23f",
+          [
+            "3e50f2e175010440",
+            "7a58faba631e1440",
+            "7d863a6c538a63c0"
+          ],
+          "cup",
+          null,
+          "green",
+          null,
+          true,
+          false,
+          true,
+          false,
+          false,
+          [
+            "absent"
+          ],
+          false
+        ]
+      }
+    }
+  ]
+}

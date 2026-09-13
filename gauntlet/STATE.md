@@ -1,12 +1,26 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Integration 041 THE FLIGHT; publication pending verification
+Current build: Integration 042 THE SEALED SHOT Step 1 evidence; gameplay remains 041
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Flight closure complete; Shot As Data awaits determinism boundary
-Iteration: integration_041
+Active subsystem: Step 1 evidence checkpoint; full required runtime coverage pending
+Iteration: integration_042
 
-Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-09.
+Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-13.
+
+## Integration 042 verdict
+
+124/124 gates: 105 unchanged existing, 19 Step 1; browser 48/48, repeated on reload.
+Independent seed/key vectors, canonical course bytes/hash and feature-ID ledger,
+frozen raw-bit parity fixture and actual predicate audit. No game source changed.
+Authority: archived v1.2 FINAL + findings. The old numerical-choice question is
+superseded by that authority, not an outstanding blocker. See history 042 for
+exact hashes/commands/evidence. No production seed, resolver, bands or replay yet.
+
+COURSE HASH STABILITY: PASS locally on Node/Chromium; PENDING WebKit, Gecko and
+physical iOS WebView. No every-runtime pass is claimed. Stop after publication.
+After Step 1 acceptance: **make dispersion injectable while preserving current
+wall-clock behavior.** Step 2 was not started. Freeze and preserve Step 1 artifacts.
 
 ## Integration 041 verdict
 
@@ -18,9 +32,8 @@ The invented logo was rejected and replaced with the unmodified official asset.
 Bag, scorecard and both phone orientations checked. IMPACT 6.8 / FLIGHT 7.1 /
 LANDING 6.3; no golfer score. Details: `history/integration_041.md`.
 
-Next: THE SHOT AS DATA. Determinism/Purity/Replay are pending, not claimed passed.
-Native Math cross-engine identity conflicts with preserving every computation;
-the user's numerical/runtime decision is required. No architecture changes yet.
+Historical 041 continuation requested a numerical decision. The new v1.2 authority
+supersedes that question; see 042 above. Production data gates remain pending.
 
 ## Integration 040 verdict
 

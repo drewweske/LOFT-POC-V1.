@@ -1,0 +1,13 @@
+{
+  "authority/IMPLEMENTATION_FINDINGS.md": "092c264903f714fa28ddb00f598341f51548ccba658bc4ae1ebbc1918d761950",
+  "authority/LOFT The Sealed Shot Executable Spec v1.2.docx": "c207a3f6c7c3b8250ea54f9078290f46a395c551b7a2f73b729e4ed6e67678fd",
+  "coastal-feature-ids-v1.json": "e8d2dd83a8ae9ca5858a7364a67f22fc80eb9071f1317d66ab2953a848228960",
+  "course-schema-v1.json": "bb64a71059c7ba36f04ff09575632c2bedc57dd30fd5a3aada1d12a00c135049",
+  "fixtures/36d7fd8c8404a4ad71b89ed9d74855ece435969b99ae50922463bd004b6681f0.txt": "36d7fd8c8404a4ad71b89ed9d74855ece435969b99ae50922463bd004b6681f0",
+  "fixtures/8eab0d770d0ecdaa54f1117bfcd5275def04cdc115e597968c7b766b4dcce22d.txt": "8eab0d770d0ecdaa54f1117bfcd5275def04cdc115e597968c7b766b4dcce22d",
+  "fixtures/behavior-baseline-v1.json": "26e0b8dc14c0b519e3d7cb55e8c12f26ed6ac74eba1dba847d5e3c1e44136c41",
+  "fixtures/coastal-ridge-v1.json": "4d6f5080fa22af3b69bd954280674e053884fdf4d0a449a4fc4ff147ca688419",
+  "fixtures/contract-vectors-v1.json": "0dbe102ba707ccc30c6da4f7cb4e202564f223a3083b544b7055b23885d27bd8",
+  "fixtures/parity-v1.json": "55b4efd39884d52434831d6e79e43b71d43f338ae17609a8d7a2515a268444e5",
+  "parity-projection-v1.mjs": "11adea692e88a1636833e00688ceff2eda1d64c7e19904e2d06771975ceee906"
+}

@@ -1,0 +1,374 @@
+{
+  "source": "Executable Specification v1.2 FINAL §§2.1–2.3; findings F-001/F-005",
+  "seedContractVersion": 1,
+  "boundaryContractVersion": 1,
+  "coursePackageSchemaVersion": 1,
+  "seedVectors": [
+    {
+      "input": {
+        "roundId": "",
+        "playerId": "",
+        "holeIndex": 0,
+        "strokeIndex": 0
+      },
+      "bytes": "00000000000000000000000000000000",
+      "fnv1a32": 1768495365,
+      "shotSeed": 3252299835,
+      "unitFloat": 0.757235063938424
+    },
+    {
+      "input": {
+        "roundId": "AB",
+        "playerId": "C",
+        "holeIndex": 0,
+        "strokeIndex": 0
+      },
+      "bytes": "02000000414201000000430000000000000000",
+      "fnv1a32": 3939670358,
+      "shotSeed": 2178644768,
+      "unitFloat": 0.5072552636265755
+    },
+    {
+      "input": {
+        "roundId": "A",
+        "playerId": "BC",
+        "holeIndex": 0,
+        "strokeIndex": 0
+      },
+      "bytes": "01000000410200000042430000000000000000",
+      "fnv1a32": 582308442,
+      "shotSeed": 357076639,
+      "unitFloat": 0.08313838369213045
+    },
+    {
+      "input": {
+        "roundId": "round-001",
+        "playerId": "player-001",
+        "holeIndex": 0,
+        "strokeIndex": 0
+      },
+      "bytes": "09000000726f756e642d3030310a000000706c617965722d3030310000000000000000",
+      "fnv1a32": 3917793783,
+      "shotSeed": 276342607,
+      "unitFloat": 0.06434102705679834
+    },
+    {
+      "input": {
+        "roundId": "round-001",
+        "playerId": "player-001",
+        "holeIndex": 0,
+        "strokeIndex": 1
+      },
+      "bytes": "09000000726f756e642d3030310a000000706c617965722d3030310000000001000000",
+      "fnv1a32": 2572716774,
+      "shotSeed": 195344947,
+      "unitFloat": 0.04548228974454105
+    },
+    {
+      "input": {
+        "roundId": "round-001",
+        "playerId": "player-001",
+        "holeIndex": 1,
+        "strokeIndex": 0
+      },
+      "bytes": "09000000726f756e642d3030310a000000706c617965722d3030310100000000000000",
+      "fnv1a32": 2351131350,
+      "shotSeed": 1459608290,
+      "unitFloat": 0.339841537643224
+    },
+    {
+      "input": {
+        "roundId": "round-002",
+        "playerId": "player-001",
+        "holeIndex": 0,
+        "strokeIndex": 0
+      },
+      "bytes": "09000000726f756e642d3030320a000000706c617965722d3030310000000000000000",
+      "fnv1a32": 893741902,
+      "shotSeed": 3283147086,
+      "unitFloat": 0.7644172492437065
+    },
+    {
+      "input": {
+        "roundId": "round-001",
+        "playerId": "player-002",
+        "holeIndex": 0,
+        "strokeIndex": 0
+      },
+      "bytes": "09000000726f756e642d3030310a000000706c617965722d3030320000000000000000",
+      "fnv1a32": 181242602,
+      "shotSeed": 2052845184,
+      "unitFloat": 0.47796526551246643
+    },
+    {
+      "input": {
+        "roundId": "R\u0000X",
+        "playerId": "P\u0000Y",
+        "holeIndex": 4294967295,
+        "strokeIndex": 4294967295
+      },
+      "bytes": "0300000052005803000000500059ffffffffffffffff",
+      "fnv1a32": 3696525546,
+      "shotSeed": 3393600717,
+      "unitFloat": 0.7901342392433435
+    },
+    {
+      "input": {
+        "roundId": "rondé",
+        "playerId": "球🏌",
+        "holeIndex": 2147483648,
+        "strokeIndex": 16909060
+      },
+      "bytes": "06000000726f6e64c3a907000000e79083f09f8f8c0000008004030201",
+      "fnv1a32": 911364209,
+      "shotSeed": 2151339421,
+      "unitFloat": 0.5008977421093732
+    },
+    {
+      "input": {
+        "roundId": "rondé",
+        "playerId": "球🏌",
+        "holeIndex": 2147483648,
+        "strokeIndex": 16909060
+      },
+      "bytes": "07000000726f6e6465cc8107000000e79083f09f8f8c0000008004030201",
+      "fnv1a32": 3801499156,
+      "shotSeed": 3516908387,
+      "unitFloat": 0.8188440434169024
+    }
+  ],
+  "boundaryVectors": [
+    {
+      "input": {
+        "shotSeed": 0,
+        "domain": 1,
+        "featureId": "fixture.cup",
+        "occurrence": 0
+      },
+      "bytes": "00000000010000000b000000666978747572652e63757000000000",
+      "fnv1a32": 1406289990,
+      "boundaryWord": 3513442588
+    },
+    {
+      "input": {
+        "shotSeed": 0,
+        "domain": 2,
+        "featureId": "fixture.cup",
+        "occurrence": 0
+      },
+      "bytes": "00000000020000000b000000666978747572652e63757000000000",
+      "fnv1a32": 549719835,
+      "boundaryWord": 1980733381
+    },
+    {
+      "input": {
+        "shotSeed": 0,
+        "domain": 3,
+        "featureId": "fixture.cup",
+        "occurrence": 0
+      },
+      "bytes": "00000000030000000b000000666978747572652e63757000000000",
+      "fnv1a32": 2438458744,
+      "boundaryWord": 657199478
+    },
+    {
+      "input": {
+        "shotSeed": 0,
+        "domain": 1,
+        "featureId": "fixture.cup",
+        "occurrence": 1
+      },
+      "bytes": "00000000010000000b000000666978747572652e63757001000000",
+      "fnv1a32": 2751366999,
+      "boundaryWord": 2919535938
+    },
+    {
+      "input": {
+        "shotSeed": 1,
+        "domain": 1,
+        "featureId": "fixture.cup",
+        "occurrence": 0
+      },
+      "bytes": "01000000010000000b000000666978747572652e63757000000000",
+      "fnv1a32": 3741198593,
+      "boundaryWord": 2358652321
+    },
+    {
+      "input": {
+        "shotSeed": 0,
+        "domain": 1,
+        "featureId": "fixture.edge",
+        "occurrence": 0
+      },
+      "bytes": "00000000010000000c000000666978747572652e6564676500000000",
+      "fnv1a32": 2384920380,
+      "boundaryWord": 888043678
+    },
+    {
+      "input": {
+        "shotSeed": 4294967295,
+        "domain": 3,
+        "featureId": "",
+        "occurrence": 4294967295
+      },
+      "bytes": "ffffffff0300000000000000ffffffff",
+      "fnv1a32": 1345119150,
+      "boundaryWord": 2587250004
+    },
+    {
+      "input": {
+        "shotSeed": 16909060,
+        "domain": 2,
+        "featureId": "edge\u0000é🏌",
+        "occurrence": 2147483648
+      },
+      "bytes": "04030201020000000b0000006564676500c3a9f09f8f8c00000080",
+      "fnv1a32": 2273495305,
+      "boundaryWord": 361735190
+    },
+    {
+      "input": {
+        "shotSeed": 16909060,
+        "domain": 2,
+        "featureId": "edge\u0000é🏌",
+        "occurrence": 2147483648
+      },
+      "bytes": "04030201020000000c000000656467650065cc81f09f8f8c00000080",
+      "fnv1a32": 1533095956,
+      "boundaryWord": 1797793582
+    }
+  ],
+  "courses": [
+    {
+      "name": "coastal-ridge-v1",
+      "input": {
+        "coursePackageSchemaVersion": 1,
+        "courseId": "coastal-ridge",
+        "physicsArtifacts": [
+          {
+            "role": "contact-field-v4",
+            "sha256": "36d7fd8c8404a4ad71b89ed9d74855ece435969b99ae50922463bd004b6681f0"
+          },
+          {
+            "role": "surface-response-v1",
+            "sha256": "8eab0d770d0ecdaa54f1117bfcd5275def04cdc115e597968c7b766b4dcce22d"
+          }
+        ],
+        "features": [
+          {
+            "authorKey": "ridge.cup",
+            "featureId": "coastal.ridge.cup"
+          },
+          {
+            "authorKey": "shelf.cup",
+            "featureId": "coastal.shelf.cup"
+          },
+          {
+            "authorKey": "lighthouse.cup",
+            "featureId": "coastal.lighthouse.cup"
+          }
+        ],
+        "holes": [
+          {
+            "holeId": "coastal.ridge",
+            "cupFeatureId": "coastal.ridge.cup",
+            "number": 1,
+            "par": 3,
+            "tee": [
+              0.46,
+              0
+            ],
+            "pin": [
+              2.5,
+              -156.36
+            ],
+            "defaultWind": [
+              3.13,
+              0
+            ]
+          },
+          {
+            "holeId": "coastal.shelf",
+            "cupFeatureId": "coastal.shelf.cup",
+            "number": 2,
+            "par": 3,
+            "tee": [
+              -8,
+              10
+            ],
+            "pin": [
+              12,
+              -170
+            ],
+            "defaultWind": [
+              -2.24,
+              -0.55
+            ]
+          },
+          {
+            "holeId": "coastal.lighthouse",
+            "cupFeatureId": "coastal.lighthouse.cup",
+            "number": 3,
+            "par": 4,
+            "tee": [
+              8,
+              18
+            ],
+            "pin": [
+              -8,
+              -218
+            ],
+            "defaultWind": [
+              1.75,
+              -1.4
+            ]
+          }
+        ],
+        "presentation": {
+          "displayName": "Coastal Ridge",
+          "description": "Integration 041 authoring snapshot; not loaded by gameplay."
+        }
+      },
+      "byteLength": 544,
+      "bytes": "010000000d000000636f617374616c2d72696467650200000010000000636f6e746163742d6669656c642d763436d7fd8c8404a4ad71b89ed9d74855ece435969b99ae50922463bd004b6681f013000000737572666163652d726573706f6e73652d76318eab0d770d0ecdaa54f1117bfcd5275def04cdc115e597968c7b766b4dcce22d0300000011000000636f617374616c2e72696467652e6375700900000072696467652e63757011000000636f617374616c2e7368656c662e637570090000007368656c662e63757016000000636f617374616c2e6c69676874686f7573652e6375700e0000006c69676874686f7573652e637570030000000d000000636f617374616c2e7269646765010000000300000011000000636f617374616c2e72696467652e637570713d0ad7a370dd3f00000000000000000000000000000440ec51b81e858b63c00ad7a3703d0a094000000000000000000d000000636f617374616c2e7368656c66020000000300000011000000636f617374616c2e7368656c662e63757000000000000020c00000000000002440000000000000284000000000004065c0ec51b81e85eb01c09a9999999999e1bf12000000636f617374616c2e6c69676874686f757365030000000400000016000000636f617374616c2e6c69676874686f7573652e6375700000000000002040000000000000324000000000000020c00000000000406bc0000000000000fc3f666666666666f6bf",
+      "sha256": "3c32c824133f2df71bc7750de287db8bc22bdb094b3a7d5738a9805a6d288a20"
+    },
+    {
+      "name": "binary-edges-v1",
+      "input": {
+        "coursePackageSchemaVersion": 1,
+        "courseId": "Café",
+        "physicsArtifacts": [],
+        "features": [
+          {
+            "featureId": "cup.é",
+            "authorKey": "authored-cup"
+          }
+        ],
+        "holes": [
+          {
+            "holeId": "h",
+            "number": 1,
+            "par": 3,
+            "cupFeatureId": "cup.é",
+            "tee": [
+              0,
+              1.5
+            ],
+            "pin": [
+              -2.25,
+              0
+            ],
+            "defaultWind": [
+              0.125,
+              -0.5
+            ]
+          }
+        ]
+      },
+      "byteLength": 122,
+      "bytes": "0100000005000000436166c3a90000000001000000060000006375702ec3a90c000000617574686f7265642d6375700100000001000000680100000003000000060000006375702ec3a90000000000000000000000000000f83f00000000000002c00000000000000000000000000000c03f000000000000e0bf",
+      "sha256": "2da352afb20fe28bda421c8f53c7ebe1ede11e7c129471df9c07d98f379f8815"
+    }
+  ]
+}

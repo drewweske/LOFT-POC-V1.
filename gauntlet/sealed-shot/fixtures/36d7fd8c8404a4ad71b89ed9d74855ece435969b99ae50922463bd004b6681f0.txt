@@ -1,0 +1,474 @@
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smoothstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+
+export const SURFACE_LIFT=Object.freeze({
+  rough:0,firstCut:0,fairway:0,tee:0,fringe:0,green:0,sand:0
+});
+
+export const BUNKERS=[
+  {x:-13,z:-125,sx:7.2,sz:3.7,seed:.4},
+  {x:24,z:-138,sx:7.4,sz:3.6,seed:1.7},
+  {x:28,z:-190,sx:7.0,sz:3.8,seed:2.8},
+  {x:-30,z:-239,sx:6.8,sz:3.4,seed:3.7}
+];
+
+export const WATER_LEVEL=-.22;
+const FIRST_CUT_WIDTH=2.35;
+
+const TEE_PADS=ROUND_HOLES.map((h,i)=>({
+  x:h.tee[0],z:h.tee[1],rx:i===2?4.3:4.0,rz:i===2?3.0:2.8
+}));
+
+const GREENS=ROUND_HOLES.map((h,i)=>({
+  x:h.pin[0],z:h.pin[1],
+  rx:i===2?10.8:9.8,
+  rz:i===2?7.7:7.0,
+  fringeX:i===2?12.7:11.6,
+  fringeZ:i===2?9.5:8.6,
+  seed:17+i*23,
+  // Each green has an authored putting character. Values remain restrained
+  // enough for readable mobile putting while giving the three holes identity.
+  tiltX:[-.0048,.0072,-.0060][i],
+  tiltZ:[-.0030,.0018,.0046][i],
+  crownX:[-1.8,2.2,-2.4][i],
+  crownZ:[1.0,-1.2,1.6][i]
+}));
+
+export function fairwayProfile(z){
+  const t=clamp((-z+2)/246,0,1);
+  const center=
+    -1.1+
+    Math.sin(t*Math.PI*1.16)*3.45-
+    Math.sin(t*Math.PI*2.62)*1.72+
+    Math.sin(t*Math.PI*4.85)*.54;
+  const width=
+    8.9+
+    8.2*Math.sin(Math.PI*clamp(t,0,1))+
+    1.35*Math.sin(t*Math.PI*3.25);
+  return {t,center,width,insideRange:z<=12&&z>=-252};
+}
+
+
+function fairwayEdgeWidth(z,side){
+  const p=fairwayProfile(z);
+  const phase=side<0?1.37:-.62;
+  const organic=
+    .62*Math.sin((z+24)*.061+phase)+
+    .28*Math.sin((z-17)*.143-phase*.7)+
+    .16*Math.cos((z+81)*.227+phase);
+  return p.width+organic;
+}
+
+function fairwaySignedDistance(x,z){
+  const p=fairwayProfile(z);
+  if(!p.insideRange)return Infinity;
+  const side=x<p.center?-1:1;
+  return Math.abs(x-p.center)-fairwayEdgeWidth(z,side);
+}
+
+function hash2(ix,iz){
+  let n=(ix*374761393+iz*668265263)^0x5bf03635;
+  n=(n^(n>>>13))*1274126177;
+  return ((n^(n>>>16))>>>0)/4294967295;
+}
+function valueNoise(x,z){
+  const ix=Math.floor(x),iz=Math.floor(z),fx=x-ix,fz=z-iz;
+  const ux=fx*fx*(3-2*fx),uz=fz*fz*(3-2*fz);
+  const a=hash2(ix,iz),b=hash2(ix+1,iz),c=hash2(ix,iz+1),d=hash2(ix+1,iz+1);
+  return lerp(lerp(a,b,ux),lerp(c,d,ux),uz)*2-1;
+}
+function fbm(x,z){
+  let sum=0,amp=.56,freq=1;
+  for(let i=0;i<3;i++){
+    sum+=valueNoise(x*freq,z*freq)*amp;
+    freq*=2.03;amp*=.47;
+  }
+  return sum;
+}
+
+function baseLandHeight(x,z){
+  const t=clamp((-z+14)/284,0,1);
+  const p=fairwayProfile(z);
+  const lateral=x-p.center;
+
+  // Macro architecture: broad golf-scale landforms.
+  const climb=3.55*smoothstep(.03,.94,t);
+  const ridge=
+    2.58*Math.exp(-Math.pow((z+168)/66,2))*
+    (.66+.34*Math.exp(-Math.pow((lateral+2)/29,2)));
+  const shelfA=
+    1.28*Math.exp(-Math.pow((z+82)/48,2))*
+    (.74+.26*Math.exp(-Math.pow((lateral-3)/30,2)));
+  const shelfB=
+    2.08*Math.exp(-Math.pow((z+226)/40,2))*
+    (.70+.30*Math.exp(-Math.pow((lateral+1)/31,2)));
+  const saddleA=-.94*Math.exp(-Math.pow((z+121)/43,2))*Math.exp(-Math.pow((lateral+9)/32,2));
+  const saddleB=-.52*Math.exp(-Math.pow((z+203)/27,2))*Math.exp(-Math.pow((lateral-8)/25,2));
+
+  // Visible, low-frequency natural shaping. No invisible micro-divots.
+  const earth=.23*fbm((x+140)*.030,(z+330)*.030)+.070*fbm((x-60)*.071,(z+70)*.071);
+  const crossfall=.0175*lateral*Math.sin((z+22)*.0115);
+  const broadRoll=.14*Math.sin((z+20)*.021)+.085*Math.cos((z-42)*.038);
+  // A broad landing crest followed by a shallow hollow breaks the opening
+  // climb into a readable golf landform instead of one long visual ramp.
+  const landingCrest=.75*Math.exp(-Math.pow((z+75)/25,2))*
+    (.82+.18*Math.exp(-Math.pow(lateral/30,2)));
+  const landingHollow=-.45*Math.exp(-Math.pow((z+102)/21,2))*
+    Math.exp(-Math.pow(lateral/31,4));
+  // Drainage and shoulder rolls are deliberately broad and visible.
+  const shoulder=.22*Math.sin((z+40)*.034)*
+    Math.exp(-Math.pow((Math.abs(lateral)-p.width*.72)/6.8,2));
+  const swale=-.15*Math.exp(-Math.pow((lateral+6.5)/8.4,2))*
+    Math.exp(-Math.pow((z+148)/62,2));
+  // Course-architect scale features: a readable approach ramp into the Ridge
+  // complex and a collection swale below the Lighthouse shelf. Both are broad
+  // enough to read in silhouette and never masquerade as procedural bumps.
+  const approachRamp=.52*Math.exp(-Math.pow((z+139)/30,2))*
+    Math.exp(-Math.pow(lateral/25,4));
+  const collection=-.27*Math.exp(-Math.pow((z+194)/27,2))*
+    Math.exp(-Math.pow((lateral+8.5)/9.0,2));
+
+  // Coastal bluff transitions gradually into the ocean shelf.
+  const coastEdge=37.5+2.1*Math.sin((z+32)*.020)+1.1*Math.sin((z-50)*.057);
+  const coast=-5.75*smoothstep(coastEdge,coastEdge+12,x);
+
+  return climb+ridge+shelfA+shelfB+saddleA+saddleB+earth+crossfall+broadRoll+landingCrest+landingHollow+shoulder+swale+approachRamp+collection+coast;
+}
+
+function nearestGreen(x,z){
+  let best=null,bestD=Infinity;
+  for(const g of GREENS){
+    const d=greenMetric(g,x,z,true);
+    if(d<bestD){bestD=d;best=g;}
+  }
+  return {g:best,d:bestD};
+}
+
+function shapedGreenHeight(g,x,z){
+  const dx=x-g.x,dz=z-g.z;
+  const base=baseLandHeight(x,z);
+  const centerBase=baseLandHeight(g.x,g.z);
+  // Golf-green contour: an authored fall line, broad crown and one honest
+  // collection shoulder. Nothing smaller than the player can visually read
+  // is allowed to move a putt.
+  const plane=centerBase+dx*g.tiltX+dz*g.tiltZ;
+  const cdx=dx-g.crownX,cdz=dz-g.crownZ;
+  const crown=.064*Math.exp(-((cdx*cdx)/(6.8*6.8)+(cdz*cdz)/(5.1*5.1)));
+  const shoulder=-.036*Math.exp(-((dx+g.crownX*.72)*(dx+g.crownX*.72)/(4.8*4.8)+(dz-g.crownZ*.58)*(dz-g.crownZ*.58)/(4.1*4.1)));
+  const authored=plane+crown+shoulder;
+  const d=greenMetric(g,x,z,true);
+  const blend=1-smoothstep(.72,1.10,d);
+  return lerp(base,authored,blend);
+}
+
+
+function bunkerMetric(b,x,z){
+  const nx=(x-b.x)/b.sx,nz=(z-b.z)/b.sz;
+  const a=Math.atan2(nz,nx);
+  const warp=1+
+    .085*Math.sin(a*3+b.seed)+
+    .045*Math.cos(a*5-b.seed*.7)+
+    .022*Math.sin(a*8+b.seed*.3);
+  return Math.hypot(nx,nz)/warp;
+}
+
+function bunkerShape(x,z){
+  let delta=0;
+  for(const b of BUNKERS){
+    const r=bunkerMetric(b,x,z);
+    if(r<1.16){
+      const bowl=-.62*Math.pow(1-smoothstep(.20,1.00,r),1.60);
+      const lip=.105*(1-smoothstep(.84,1.12,Math.abs(r-.94)+.84));
+      delta=Math.min(delta,bowl)+Math.max(0,lip);
+    }
+  }
+  return delta;
+}
+
+function teeShape(x,z,current){
+  let h=current;
+  for(const t of TEE_PADS){
+    const dx=(x-t.x)/t.rx,dz=(z-t.z)/t.rz,d=Math.hypot(dx,dz);
+    if(d<1.18){
+      const center=baseLandHeight(t.x,t.z);
+      const pad=center+(x-t.x)*.002+(z-t.z)*.001;
+      const blend=1-smoothstep(.78,1.15,d);
+      h=lerp(h,pad,blend);
+    }
+  }
+  return h;
+}
+
+function rawTerrainHeight(x,z){
+  let h=baseLandHeight(x,z);
+  const ng=nearestGreen(x,z);
+  if(ng.g&&ng.d<1.12)h=shapedGreenHeight(ng.g,x,z);
+  h=teeShape(x,z,h);
+  h+=bunkerShape(x,z);
+  return h;
+}
+
+const TERRAIN_GRID=Object.freeze({
+  xMin:-92,xMax:92,zMin:-292,zMax:52,nx:230,nz:430
+});
+const GRID_DX=(TERRAIN_GRID.xMax-TERRAIN_GRID.xMin)/TERRAIN_GRID.nx;
+const GRID_DZ=(TERRAIN_GRID.zMax-TERRAIN_GRID.zMin)/TERRAIN_GRID.nz;
+const GRID_W=TERRAIN_GRID.nx+1;
+const GRID_CACHE=new Float32Array(GRID_W*(TERRAIN_GRID.nz+1));
+GRID_CACHE.fill(NaN);
+const GRID_NORMAL_CACHE=new Float32Array(GRID_W*(TERRAIN_GRID.nz+1)*3);
+GRID_NORMAL_CACHE.fill(NaN);
+
+function gridSample(ix,iz){
+  ix=clamp(ix,0,TERRAIN_GRID.nx);iz=clamp(iz,0,TERRAIN_GRID.nz);
+  const k=iz*GRID_W+ix;
+  let h=GRID_CACHE[k];
+  if(Number.isNaN(h)){
+    const x=TERRAIN_GRID.xMin+ix*GRID_DX;
+    const z=TERRAIN_GRID.zMin+iz*GRID_DZ;
+    GRID_CACHE[k]=rawTerrainHeight(x,z);
+    // Return the same Float32 value on first and every later access. The mesh
+    // consumes this cache too, so lazy initialization cannot move contact by a
+    // fraction of a micron between otherwise identical samples.
+    h=GRID_CACHE[k];
+  }
+  return h;
+}
+
+function ensureGridNormal(ix,iz){
+  ix=clamp(ix,0,TERRAIN_GRID.nx);iz=clamp(iz,0,TERRAIN_GRID.nz);
+  const k=(iz*GRID_W+ix)*3;
+  if(Number.isNaN(GRID_NORMAL_CACHE[k])){
+    const lx=Math.max(0,ix-1),rx=Math.min(TERRAIN_GRID.nx,ix+1);
+    const dz=Math.max(0,iz-1),uz=Math.min(TERRAIN_GRID.nz,iz+1);
+    const gx=(gridSample(rx,iz)-gridSample(lx,iz))/Math.max(GRID_DX,((rx-lx)*GRID_DX));
+    const gz=(gridSample(ix,uz)-gridSample(ix,dz))/Math.max(GRID_DZ,((uz-dz)*GRID_DZ));
+    const inv=1/Math.hypot(gx,1,gz);
+    GRID_NORMAL_CACHE[k]=-gx*inv;
+    GRID_NORMAL_CACHE[k+1]=inv;
+    GRID_NORMAL_CACHE[k+2]=-gz*inv;
+  }
+  return k;
+}
+
+function gridNormal(ix,iz,out={x:0,y:1,z:0}){
+  const k=ensureGridNormal(ix,iz);
+  out.x=GRID_NORMAL_CACHE[k];out.y=GRID_NORMAL_CACHE[k+1];out.z=GRID_NORMAL_CACHE[k+2];
+  return out;
+}
+
+export function terrainHeight(x,z){
+  if(x<TERRAIN_GRID.xMin||x>TERRAIN_GRID.xMax||z<TERRAIN_GRID.zMin||z>TERRAIN_GRID.zMax){
+    return rawTerrainHeight(x,z);
+  }
+  const gx=(x-TERRAIN_GRID.xMin)/GRID_DX;
+  const gz=(z-TERRAIN_GRID.zMin)/GRID_DZ;
+  let ix=Math.floor(gx),iz=Math.floor(gz);
+  if(ix>=TERRAIN_GRID.nx)ix=TERRAIN_GRID.nx-1;
+  if(iz>=TERRAIN_GRID.nz)iz=TERRAIN_GRID.nz-1;
+  const u=clamp(gx-ix,0,1),v=clamp(gz-iz,0,1);
+  const h00=gridSample(ix,iz),h10=gridSample(ix+1,iz);
+  const h01=gridSample(ix,iz+1),h11=gridSample(ix+1,iz+1);
+  // ~0.80 m terrain cells preserve the authored roll while keeping the field
+  // efficient enough for current iPhones. Custom geometry uses diagonal B↔C.
+  // Interpolate the exact same
+  // triangles rather than a curved analytic field beneath a planar mesh.
+  if(u+v<=1)return h00+u*(h10-h00)+v*(h01-h00);
+  return h11+(1-u)*(h01-h11)+(1-v)*(h10-h11);
+}
+
+/*
+  One sampled terrain frame powers shading, ball contact and rolling. Heights
+  remain exact to the rendered triangles; normals are barycentrically blended
+  from the same vertex-normal field used by the mesh, so a visible fall line
+  and a physical fall line cannot quietly disagree at a cell diagonal.
+*/
+export function sampleTerrain(x,z,out={}){
+  if(x<TERRAIN_GRID.xMin||x>TERRAIN_GRID.xMax||z<TERRAIN_GRID.zMin||z>TERRAIN_GRID.zMax){
+    const e=.40;
+    const height=rawTerrainHeight(x,z);
+    const gx=(rawTerrainHeight(x+e,z)-rawTerrainHeight(x-e,z))/(2*e);
+    const gz=(rawTerrainHeight(x,z+e)-rawTerrainHeight(x,z-e))/(2*e);
+    const inv=1/Math.hypot(gx,1,gz);
+    out.height=height;
+    out.normal=out.normal||{x:0,y:1,z:0};
+    out.normal.x=-gx*inv;out.normal.y=inv;out.normal.z=-gz*inv;
+    out.dx=gx;out.dz=gz;out.grade=Math.hypot(gx,gz);out.triangle=-1;
+    return out;
+  }
+
+  const gx=(x-TERRAIN_GRID.xMin)/GRID_DX,gz=(z-TERRAIN_GRID.zMin)/GRID_DZ;
+  let ix=Math.floor(gx),iz=Math.floor(gz);
+  if(ix>=TERRAIN_GRID.nx)ix=TERRAIN_GRID.nx-1;
+  if(iz>=TERRAIN_GRID.nz)iz=TERRAIN_GRID.nz-1;
+  const u=clamp(gx-ix,0,1),v=clamp(gz-iz,0,1);
+  const h00=gridSample(ix,iz),h10=gridSample(ix+1,iz);
+  const h01=gridSample(ix,iz+1),h11=gridSample(ix+1,iz+1);
+  const k00=ensureGridNormal(ix,iz),k10=ensureGridNormal(ix+1,iz);
+  const k01=ensureGridNormal(ix,iz+1),k11=ensureGridNormal(ix+1,iz+1);
+  let height,nx,ny,nz,tri;
+  if(u+v<=1){
+    const w=1-u-v;
+    height=h00*w+h10*u+h01*v;
+    nx=GRID_NORMAL_CACHE[k00]*w+GRID_NORMAL_CACHE[k10]*u+GRID_NORMAL_CACHE[k01]*v;
+    ny=GRID_NORMAL_CACHE[k00+1]*w+GRID_NORMAL_CACHE[k10+1]*u+GRID_NORMAL_CACHE[k01+1]*v;
+    nz=GRID_NORMAL_CACHE[k00+2]*w+GRID_NORMAL_CACHE[k10+2]*u+GRID_NORMAL_CACHE[k01+2]*v;tri=0;
+  }else{
+    const w11=u+v-1,w01=1-u,w10=1-v;
+    height=h11*w11+h01*w01+h10*w10;
+    nx=GRID_NORMAL_CACHE[k11]*w11+GRID_NORMAL_CACHE[k01]*w01+GRID_NORMAL_CACHE[k10]*w10;
+    ny=GRID_NORMAL_CACHE[k11+1]*w11+GRID_NORMAL_CACHE[k01+1]*w01+GRID_NORMAL_CACHE[k10+1]*w10;
+    nz=GRID_NORMAL_CACHE[k11+2]*w11+GRID_NORMAL_CACHE[k01+2]*w01+GRID_NORMAL_CACHE[k10+2]*w10;tri=1;
+  }
+  const inv=1/Math.max(1e-8,Math.hypot(nx,ny,nz));nx*=inv;ny*=inv;nz*=inv;
+  out.height=height;out.normal=out.normal||{x:0,y:1,z:0};
+  out.normal.x=nx;out.normal.y=ny;out.normal.z=nz;
+  out.dx=-nx/Math.max(.18,ny);out.dz=-nz/Math.max(.18,ny);
+  out.grade=Math.hypot(out.dx,out.dz);out.cellX=ix;out.cellZ=iz;out.triangle=tri;
+  return out;
+}
+
+const CONTACT_SAMPLE={normal:{x:0,y:1,z:0}};
+export function terrainContactY(x,z,radius=0){
+  const s=sampleTerrain(x,z,CONTACT_SAMPLE);
+  // Smooth normal offset keeps the visual ball tangent to readable slopes.
+  // Clamp only guards non-playable coastal cliff extremes.
+  const normalLift=radius/Math.max(.74,s.normal.y);
+  return s.height+normalLift;
+}
+
+export function sweepTerrainSegment(a,b,radius=0){
+  const CONTACT_EPS=2e-6;
+  const contact=(t)=>{
+    const x=lerp(a.x,b.x,t),y=lerp(a.y,b.y,t),z=lerp(a.z,b.z,t);
+    return y-terrainContactY(x,z,radius);
+  };
+  const start=contact(0),end=contact(1);
+  // A grounded ball moving away from the surface is not an impact. This is
+  // essential for both launch and post-bounce separation.
+  if(start<=CONTACT_EPS&&end>start+CONTACT_EPS)return null;
+  // Every other grounded or penetrating segment is already in contact. In
+  // particular, a lateral step into an uphill triangle must resolve at t=0;
+  // waiting for a positive-to-negative root would miss the shared vertex.
+  if(start<=CONTACT_EPS)return {t:0,x:a.x,y:terrainContactY(a.x,a.z,radius),z:a.z};
+
+  const ts=[0,1],dx=b.x-a.x,dz=b.z-a.z;
+  if(Math.abs(dx)>1e-9){
+    const lo=Math.ceil((Math.min(a.x,b.x)-TERRAIN_GRID.xMin)/GRID_DX);
+    const hi=Math.floor((Math.max(a.x,b.x)-TERRAIN_GRID.xMin)/GRID_DX);
+    for(let i=Math.max(1,lo);i<=Math.min(TERRAIN_GRID.nx-1,hi);i++){
+      const t=(TERRAIN_GRID.xMin+i*GRID_DX-a.x)/dx;if(t>1e-8&&t<1-1e-8)ts.push(t);
+    }
+  }
+  if(Math.abs(dz)>1e-9){
+    const lo=Math.ceil((Math.min(a.z,b.z)-TERRAIN_GRID.zMin)/GRID_DZ);
+    const hi=Math.floor((Math.max(a.z,b.z)-TERRAIN_GRID.zMin)/GRID_DZ);
+    for(let i=Math.max(1,lo);i<=Math.min(TERRAIN_GRID.nz-1,hi);i++){
+      const t=(TERRAIN_GRID.zMin+i*GRID_DZ-a.z)/dz;if(t>1e-8&&t<1-1e-8)ts.push(t);
+    }
+  }
+  ts.sort((p,q)=>p-q);
+  const base=ts.slice();
+  for(let i=0;i<base.length-1;i++){
+    const ta=base[i],tb=base[i+1],tm=(ta+tb)*.5;
+    const mx=lerp(a.x,b.x,tm),mz=lerp(a.z,b.z,tm);
+    const ix=clamp(Math.floor((mx-TERRAIN_GRID.xMin)/GRID_DX),0,TERRAIN_GRID.nx-1);
+    const iz=clamp(Math.floor((mz-TERRAIN_GRID.zMin)/GRID_DZ),0,TERRAIN_GRID.nz-1);
+    const u0=(a.x-TERRAIN_GRID.xMin-ix*GRID_DX)/GRID_DX;
+    const v0=(a.z-TERRAIN_GRID.zMin-iz*GRID_DZ)/GRID_DZ;
+    const du=dx/GRID_DX,dv=dz/GRID_DZ,den=du+dv;
+    if(Math.abs(den)>1e-10){
+      const td=(1-u0-v0)/den;if(td>ta+1e-8&&td<tb-1e-8)ts.push(td);
+    }
+  }
+  ts.sort((p,q)=>p-q);
+  let prevT=ts[0],prevC=contact(prevT);
+  for(let i=1;i<ts.length;i++){
+    const t=ts[i];if(t-prevT<1e-8)continue;
+    const c=contact(t);
+    if(prevC>0&&c<=0){
+      // Height is planar inside this interval; the shared smooth-normal sphere
+      // lift is not perfectly linear, so refine the analytic crossing.
+      let lo=prevT,hi=t;
+      for(let k=0;k<10;k++){
+        const mid=(lo+hi)*.5;if(contact(mid)>0)lo=mid;else hi=mid;
+      }
+      const hitT=hi;
+      const x=lerp(a.x,b.x,hitT),z=lerp(a.z,b.z,hitT);
+      return {t:hitT,x,y:terrainContactY(x,z,radius),z};
+    }
+    prevT=t;prevC=c;
+  }
+  return null;
+}
+
+export function greenSurfaceHeight(center,x,z){
+  // Retained for compatibility; never expose the pre-tessellation analytic
+  // green as a second physical surface.
+  return terrainHeight(x,z);
+}
+
+function bunkerAt(x,z){
+  for(const b of BUNKERS){
+    if(bunkerMetric(b,x,z)<=1)return b;
+  }
+  return null;
+}
+function teeAt(x,z){
+  for(const t of TEE_PADS){
+    const dx=(x-t.x)/t.rx,dz=(z-t.z)/t.rz;
+    if(dx*dx+dz*dz<=1)return true;
+  }
+  return false;
+}
+function greenMetric(g,x,z,fringe=false){
+  const rx=fringe?g.fringeX:g.rx,rz=fringe?g.fringeZ:g.rz;
+  const nx=(x-g.x)/rx,nz=(z-g.z)/rz;
+  const a=Math.atan2(nz,nx);
+  const warp=1+
+    .038*Math.sin(a*3+g.seed*.13)+
+    .022*Math.cos(a*5-g.seed*.07)+
+    .011*Math.sin(a*7+g.seed*.19);
+  return Math.hypot(nx,nz)/warp;
+}
+function greenMetrics(x,z){
+  let bestGreen=Infinity,bestFringe=Infinity;
+  for(const g of GREENS){
+    bestGreen=Math.min(bestGreen,greenMetric(g,x,z,false));
+    bestFringe=Math.min(bestFringe,greenMetric(g,x,z,true));
+  }
+  return {green:bestGreen,fringe:bestFringe};
+}
+function coastEdge(z){
+  return 39.0+2.1*Math.sin((z+32)*.020)+1.1*Math.sin((z-50)*.057);
+}
+function teeMetricAt(x,z){
+  let best=Infinity;
+  for(const t of TEE_PADS){
+    const dx=(x-t.x)/t.rx,dz=(z-t.z)/t.rz;
+    best=Math.min(best,Math.hypot(dx,dz));
+  }
+  return best;
+}
+
+export function waterAt(x,z){
+  return z<-12&&x>coastEdge(z)&&terrainHeight(x,z)<=WATER_LEVEL+.015;
+}
+
+export function courseSurfaceAt(x,z){
+  if(waterAt(x,z))return'water';
+  if(bunkerAt(x,z))return'sand';
+  const gm=greenMetrics(x,z);
+  if(gm.green<=1)return'green';
+  if(gm.fringe<=1)return'fringe';
+  if(teeAt(x,z))return'tee';
+  const p=fairwayProfile(z);
+  if(p.insideRange){
+    const edge=fairwaySignedDistance(x,z);
+    if(edge<=0)return'fairway';
+    if(edge<=FIRST_CUT_WIDTH)return'firstCut';
+  }
+  return'rough';
+}
+

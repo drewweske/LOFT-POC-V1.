@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-13",
+  "command": "node gauntlet/sealed-shot/serve-contract-check.mjs",
+  "observedWith": "Browser accessibility tree; isolated loopback test page, not gameplay",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "initial": {"status":"PASS","checks":48},
+  "afterReload": {"status":"PASS","checks":48},
+  "courseHashes": ["3c32c824133f2df71bc7750de287db8bc22bdb094b3a7d5738a9805a6d288a20","2da352afb20fe28bda421c8f53c7ebe1ede11e7c129471df9c07d98f379f8815"],
+  "unmeasuredRuntimes": ["WebKit","Gecko","physical iOS WebView"],
+  "notClaimed": ["cross-runtime physics parity","SEED INTEGRITY","BOUNDARY SAFETY"]
+}

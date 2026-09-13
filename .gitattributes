@@ -6,3 +6,8 @@ prototype1/characterRig.js -text whitespace=cr-at-eol
 prototype1/clubVisual.js -text whitespace=cr-at-eol
 prototype1/clubAssembly.js -text whitespace=cr-at-eol
 prototype1/ballVisual.js -text whitespace=cr-at-eol
+# Step 1 byte fixtures and archived authoring programs must survive checkout.
+gauntlet/sealed-shot/** text eol=lf
+gauntlet/sealed-shot/authority/*.docx -text
+# Exact archived source slices retain their original terminal blank lines.
+gauntlet/sealed-shot/fixtures/*.txt whitespace=-blank-at-eof
