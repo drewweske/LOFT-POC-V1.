@@ -8,6 +8,13 @@ Branch: `prototype-1-gauntlet`
 
 Playable artifact: `/prototype1/`
 
+Publication blocker: Step 1 implementation/evidence is committed locally at
+`b51554e8e36081313f0dd2ee4e139167fd483887`. The main push was rejected by the
+publication safety check because the commit archives the supplied governing DOCX
+and findings document. No push occurred; remote main was reverified at `4497fc9`.
+Obtain explicit approval to publish those archived documents to LOFT GitHub main
+before retrying. Do not bypass the rejection or start Step 2.
+
 ## Current build assessment
 
 **Current checkpoint:** Flight camera/UI and the official-logo correction are
