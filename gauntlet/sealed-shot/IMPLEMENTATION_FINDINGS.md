@@ -327,3 +327,77 @@ Step 3 passes. STOP after publication. Next authorized step: **Step 4 — EXTRAC
 PARITY through the frozen parity projection**. No tolerance or normalization may
 hide extraction drift. No seeded dispersion, Q/epsilon, bands or authoritative
 result work in this checkpoint.
+
+## F-017 — Step 4 requires an independent implementation, not two current-solver paths
+
+2026-09-14, Integration 045. Step 3 was accepted. v1.2 remains CLOSED; all original
+authority, frozen fixtures, projection/version and F-009–F-011 are untouched.
+
+The Step 2 regression harness compares pre/post launch bodies but uses the current
+GolfPhysics in both paths. The Step 1 `legacy-parity-corpus.mjs` adapter also loads
+current modules. Neither alone proves EXTRACTION PARITY. The new Step 4 oracle
+reads every legacy executable module only with `git show` from accepted Step 2
+`ccb8873f0eeac6fa910dc3f96d71506162fe94a9`. Its closed VM module realm contains old
+physics/surfaces/worldV2/round/equipment/coastalHinterland/vendor Three, never today's
+solver or field. All eight source hashes (including the launch-prefix source
+game.js) are verified against the immutable commit. No expected output is derived
+from the extracted implementation.
+
+The adapter executes the exact old launch prefix through physics dispatch, plus
+the original constructor/setCup and height/surface wrappers. Presentation after
+dispatch is omitted from this physics comparison, not rewritten; the existing
+Step 2 reaction/default-clock comparisons still run unchanged. The current side
+executes actual resolveShot in a separate five-module pure realm. A test observer
+calls its original launch/putt/step methods once, then projects the actual instance.
+Returned snapshots are also projected with activity/accumulator observed at that
+same frame. No fabricated metadata, production diagnostics or decisionTrace.
+
+The original six solver-side fixtures are retained and separately verified
+against both implementations: 3,176 fixed frames. They lack gesture measurements,
+so an **input-only companion** adds 210 full-pipeline cases: six unchanged base
+configurations × five canon levels × seven raw scalars; three existing Step 2
+gesture profiles rotate through them. It has no expected output. Legacy-resolved
+equipment, field contact height and other explicit values become one deeply
+frozen intent passed identically to both runners. Signed-zero scalar bytes and
+before/after input hashes are checked. This is test provenance, not a production
+serialization or lifecycle contract. The companion hash is literal-locked at
+`011d8269d6eaed1613cab1703a8ec8d2cd8b550c7fafc69051e1848bcb4d2b51`.
+
+Projection v1 remains
+`11adea692e88a1636833e00688ceff2eda1d64c7e19904e2d06771975ceee906`, checked before
+and after execution along with all 11 original locks. Every shot comparison is
+through this unchanged raw-bit projection, not a tolerance or replacement schema.
+Warm reverse-order repeats exercise prior-shot/cache isolation against the old
+implementation again. Both initial and repeated runs agree at every projected
+launch/fixed-step/rest frame and every returned state snapshot.
+
+Evidence: **8/8 Step 4; 152/152 full gauntlet**, zero failed suites, **zero shot
+mismatches and zero extraction fixes**. 420 paired trajectories / 223,944 fixed
+frames; 224,784 returned-snapshot projections. Initial outcomes: 35 holed, 140
+bounced, 250 surface transitions; rest green 91 / fairway 75 / fringe 9 / cup 35.
+This corpus did not fire lipTouched, captureRejected or recovery. Their compared
+flags and byte-preserved predicates are not a claim of exhaustive branch coverage
+or the later adversarial BOUNDARY SAFETY/runtime drift matrix.
+
+The first new harness attempt stopped before shots because denying Math.random
+during the unmodified Three import prevented Object3D UUID initialization. The
+adapter now permits ordinary legacy module initialization, then denies randomness
+during shots; performance.now is denied throughout injected execution. That was
+a test bootstrap repair, not physics drift or a relaxed comparison. Six deliberate
+test-projection corruptions fail closed. No gameplay, UI, visual, stats, solver,
+field, protected asset, gitattributes or prior test script changed in Step 4.
+
+Detailed commands, source graphs/hashes, per-case inputs/results and pass counts:
+`evidence/step4-node.json`; independent audit/scope details in history 045. Original
+F-009–F-011 are unchanged: swept-distance-plus-speed cup capture; separate pre/post
+linear-speed/grade/resistance rest predicates, no angular rest check; procedural
+surfaces, not triangle IDs. No Q/epsilon, candidates, REST semantics or bands chosen.
+
+Runtime actually exercised: Node v24.15.0 / V8 13.6.233.17-node.48 / Windows x64.
+Chromium 152 byte/reload evidence remains historical Step 1 evidence. **WebKit,
+Gecko and physical iOS WebView remain PENDING**, as does the full required COURSE
+HASH STABILITY matrix. Normal local preview returned HTTP 200; no new browser
+visual or physical-iOS test is claimed. No current runtime row was upgraded.
+
+Step 4 is closed after publication. **STOP before Step 5.** Next authorized step
+after acceptance: install seeded integer dispersion and then run SEED INTEGRITY.

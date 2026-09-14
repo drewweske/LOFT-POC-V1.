@@ -1,4 +1,4 @@
-# The Sealed Shot — evidence through Step 3
+# The Sealed Shot — evidence through Step 4
 
 Authority: **Executable Specification v1.2 FINAL**, SHA-256
 `c207a3f6c7c3b8250ea54f9078290f46a395c551b7a2f73b729e4ed6e67678fd`;
@@ -11,20 +11,22 @@ findings are in `IMPLEMENTATION_FINDINGS.md` beside this file.
 
 Nothing in this directory is imported by the playable game. Production extraction
 is in `prototype1/shot/`; this directory contains authority and test-only evidence.
-Current closure: Step 3 PURITY, 144/144 checks. Run current evidence with:
+Current closure: Step 4 EXTRACTION PARITY, 152/152 checks. Run current evidence with:
 
 ```powershell
-node gauntlet/sealed-shot/run-step3-evidence.mjs
+node gauntlet/sealed-shot/run-step4-evidence.mjs
 ```
 
-It writes only `evidence/step3-node.json`. Do not rerun historical `run-evidence.mjs`
-or `run-step2-evidence.mjs` to overwrite accepted past evidence. Individual legacy
-gate commands remain current and are included by the Step 3 runner.
-See history 044 and F-016 for exact extraction boundary, inputs and limitations.
+It writes only `evidence/step4-node.json`. Do not rerun historical `run-evidence.mjs`,
+`run-step2-evidence.mjs` or `run-step3-evidence.mjs` to overwrite accepted evidence.
+Individual existing gates are included unchanged by the Step 4 runner.
+See history 045 and F-017 for independent oracle, input corpus and exact results;
+history 044/F-016 retain the original extraction boundary and PURITY evidence.
 No production seeded dispersion, boundary bands, quantized result or record replay.
 F-001 names the seed gate **SEED CONTRACT VECTORS**. Full **SEED INTEGRITY** belongs
-to Step 5. EXTRACTION PARITY is pending; the projection and legacy oracle exist,
-but the Step 4 comparison has not been run or claimed.
+to Step 5. EXTRACTION PARITY passes on Node/V8 only: six unchanged solver fixtures
+and 210 full-pipeline inputs, repeated reverse-order (420 pairs / 223,944 steps).
+WebKit, Gecko and physical iOS WebView remain pending.
 
 Historical Step 1 commands (retained for provenance, not closure instructions):
 
@@ -113,8 +115,9 @@ transition events, rest/holed/recovery flags and optional cupLipResolved presenc
 This deliberately strict same-runtime comparison is separate from the future 1 mm
 authoritative result. It is not a cross-engine physics identity claim.
 
-`legacy-parity-corpus.mjs` is a test adapter around the **unchanged legacy solver**,
-not a second solver or resolveShot. Six checked-in post-quality launch inputs cover
+`legacy-parity-corpus.mjs` retains the Step 1 low-level adapter, now loading the
+working-tree solver. It is **not the independent Step 4 oracle** and does not run
+the full composition-root pipeline. Six checked-in post-quality launch inputs cover
 full swing, iron, wedge, bunker, putt and lip putt. Their launch/terminal projections,
 frame counts, and SHA-256 of every projected fixed frame followed by LF are frozen.
 These are solver-side baselines; later EXTRACTION PARITY must also exercise the
@@ -149,5 +152,22 @@ read-only routes, no game imports, and does not expose the repository. Reload to
 test a fresh module instance. Stop this diagnostic server after testing; the
 normal playable preview on port 43117 is independent and stays running.
 
-Next authorized step: **Step 4 — EXTRACTION PARITY through the frozen projection.**
-STOP after Step 3 publication. Never loosen the projection to hide extraction drift.
+## Independent Step 4 comparison
+
+`node gauntlet/run-parity-gauntlet.mjs` runs eight checks. The child worker uses
+`step4-legacy-oracle.mjs` to load only immutable Git objects from accepted Step 2
+`ccb8873f0eeac6fa910dc3f96d71506162fe94a9` in a separate module realm. It cannot
+import today's solver into the reference. The current realm executes actual
+`resolveShot`; the test observer records its real active/accumulator metadata.
+Both runs and returned snapshots are compared only through frozen projection v1.
+
+`step4-inputs-v1.json` is a literal-hash-locked **input-only companion**, not new
+expected output. It adds existing gesture profiles/levels/raw dispersion to the
+six frozen base cases; equipment and initial contact height are resolved only
+from the legacy oracle before supplying the identical frozen intent to both paths.
+Original direct-solver expectations and all eleven Step 1 locks are untouched.
+Zero mismatches; zero production/extraction changes. This does not claim the later
+cross-engine drift or adversarial boundary gate. See evidence for coverage limits.
+
+Next authorized step after acceptance: **Step 5 — install seeded integer dispersion
+and then run SEED INTEGRITY.** STOP after Step 4 publication.

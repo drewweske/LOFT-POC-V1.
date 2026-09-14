@@ -2,7 +2,7 @@
 
 Updated: 2026-09-14
 
-Build: Integration 044 THE SEALED SHOT Step 3 / PURITY; native gameplay remains Integration 041
+Build: Integration 045 THE SEALED SHOT Step 4 / EXTRACTION PARITY; native gameplay remains Integration 041
 
 Branch: `prototype-1-gauntlet`
 
@@ -16,7 +16,22 @@ Destination is the verified LOFT origin, ordinary fast-forward, never force push
 
 ## Current build assessment
 
-**Step 3 / PURITY: PASS, 144/144 checks (105 existing + 19 Step 1 + 8 Step 2 + 12 Step 3).**
+**Step 4 / EXTRACTION PARITY: PASS. Full gauntlet 152/152 (144 existing + 8 Step 4).**
+Independent legacy execution reads only accepted Step 2 Git objects at
+`ccb8873f0eeac6fa910dc3f96d71506162fe94a9`, in an isolated module realm; current
+`resolveShot` executes in a separate pure realm. Both receive identical frozen
+inputs and injected dispersion. The original six solver fixtures (3,176 frames)
+still match their unchanged expectations. The input-only companion adds 210 full
+pipeline cases, each repeated reverse-order: 420 pairs / 223,944 fixed frames,
+zero mismatches, 224,784 returned-snapshot projection checks. Projection v1/hash
+and all prior fixtures remain frozen. No extraction fixes or production changes.
+Observed initial outcomes include 35 holed and 140 bounced; this is not a claim
+of every predicate branch or the later cross-runtime boundary/drift gate.
+Evidence: `gauntlet/history/integration_045.md`,
+`gauntlet/sealed-shot/evidence/step4-node.json`, local finding F-017.
+**STOP before Step 5.** WebKit, Gecko and physical iOS WebView remain PENDING.
+
+Accepted Step 3 assessment (historical): **PURITY PASS, 144/144 checks.**
 `prototype1/shot/resolveShot.js` executes six shot cases in bare Node with explicit
 inputs, native math and injected dispersion. Its closed dependency graph contains
 only the resolver, scalar vector subset, existing solver, surface response and
@@ -33,7 +48,7 @@ The missing distance API discovered by the terrain gate was repaired with the
 exact two vendored methods; terrain 14/14 and visual 37/37 pass. No open regression.
 Normal browser render, flight/result/Next Shot and cup/Next Hole smoke passed.
 Details: `gauntlet/history/integration_044.md`, `gauntlet/sealed-shot/evidence/step3-node.json`.
-**STOP before Step 4. EXTRACTION PARITY is not claimed.** Runtime rows remain pending.
+Step 3 was accepted and is not reimplemented. Runtime rows remain pending.
 
 **Current checkpoint:** Flight camera/UI and the official-logo correction are
 implemented. All 105 executable gates pass. Across 378 trajectories / 166,269
@@ -74,7 +89,7 @@ counts, hashes, vectors and limitations: `gauntlet/history/integration_042.md`.
 | Step 2 injection/preservation | PASS — Node v24.15.0/V8; exact default operand/site, fixed-scalar parity, narrow inverse seam |
 | SEED INTEGRITY | Not implemented — production seeded dispersion belongs to Step 5 |
 | PURITY | PASS — Step 3, 12 checks; isolated bare Node graph and source-faithful moves |
-| EXTRACTION PARITY | NOT RUN — next authorized Step 4, frozen projection untouched |
+| EXTRACTION PARITY | PASS — Step 4, independent ccb8873 oracle; 210 full-pipeline cases, 420 paired runs / 223,944 fixed frames; zero mismatches |
 | DETERMINISM / BOUNDARY SAFETY / REPLAY | Not implemented — later authorized steps |
 
 The assessment below is retained historical context through 039, not this session's
@@ -128,6 +143,9 @@ assessment, not evidence that this iteration changed or damaged those assets.
 
 ## Completed improvements
 
+- Integration 045: Step 4 independent legacy Git-module oracle and frozen-projection
+  comparison against actual resolveShot; 152 checks pass. No production changes,
+  no new expected trajectories, no altered projection and no seeded dispersion.
 - Integration 044: Step 3 native resolver extraction, scalar-only solver vector
   dependency, per-course cache ownership, strict relocation proof and 144 checks.
   No seeded dispersion, authoritative result, Q/epsilon/bands or MARGIN work.
@@ -269,9 +287,9 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **THE SEALED SHOT — after this closure, Step 4 only.** EXTRACTION PARITY through
-   the frozen parity projection. If comparison fails, fix/revert extraction;
-   never normalize the discrepancy away. Do not seed, quantize or install bands.
+1. **THE SEALED SHOT — after acceptance, Step 5 only.** Install seeded integer
+   dispersion and then run SEED INTEGRITY. Step 4 parity is complete; do not begin
+   Step 5 in this closure turn. No quantization, boundary bands or MARGIN yet.
 2. **Near-field turf / cut readability — queued, out of scope:** the course has more setting
    but the ground under the golfer still reads as a smooth painted sheet. Improve the
    maintained-grass/rough/fringe/sand material scale in real tee and putting views,
@@ -294,10 +312,10 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**THE SEALED SHOT — Step 3 / PURITY closure; stop after publication.**
+**THE SEALED SHOT — Step 4 / EXTRACTION PARITY closure; stop after publication.**
 
-Steps 1 and 2 are accepted and were not redone. Step 3 is extracted and verified;
-Step 4 must not begin in this turn. COURSE HASH STABILITY remains pending on WebKit, Gecko
+Steps 1–3 are accepted and were not redone. Step 4 passes against independent
+accepted legacy source. Step 5 must not begin in this turn. COURSE HASH STABILITY remains pending on WebKit, Gecko
 and physical iOS WebView; these rows are not waived. Governing v1.2 + findings are archived with
 digests. Existing math/contact/geometry/assets/stats remain protected. Freeze all
 v1 contract fixtures; never regenerate them to hide a regression or silently change
@@ -526,12 +544,12 @@ discrepancy is material scale: turf still reads painted and too uniform in real 
 
 ## Next action
 
-**STOP after Step 3 closure publication.** Next authorized work in a later turn:
-**Step 4 — EXTRACTION PARITY through the frozen parity projection.** Read archived
-v1.2, F-001–F-007 and local F-008–F-016 first. Keep the live wall-clock behavior;
-no seed before Step 5. Do not change the projection or invent a tolerance. Step 3
-raw output is not authoritative quantization or a ShotRecord lifecycle. Do not
-mislabel existing Step 2 comparisons as the completed Step 4 gate.
+**STOP after Step 4 closure publication.** Next authorized work after acceptance:
+**Step 5 — install seeded integer dispersion and then run SEED INTEGRITY.** Read
+archived v1.2, F-001–F-007 and local F-008–F-017 first. No Step 5 code is in this
+checkpoint. Do not change the frozen parity projection or invent a tolerance.
+Current raw output is not authoritative quantization or a ShotRecord lifecycle;
+Q/epsilon, boundary bands, decisionTrace and MARGIN remain later work.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`, hidden Node
 `gauntlet/serve.mjs 43117`. If absent, restart only this LOFT-local server. Current
