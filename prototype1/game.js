@@ -3,6 +3,7 @@ import {CLUBS,LEVELS,DEFAULT_CLUB,equipmentTier,clubPresentationProfile} from '.
 import {COLORS,COASTAL_AIR_SPEC,COASTAL_TURF_LIGHT_SPEC,WATER_LEVEL,terrainHeight,terrainContactY,sampleTerrain,sweepTerrainSegment,courseSurfaceAt,validateTerrain,buildWorld} from './worldV2.js?v=039-final';
 import {GOLFER_GROUND_CLEARANCE,LoftGolferRig} from './characterRig.js?v=038-final';
 import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
+import {launchShotPhysics} from './shot/resolveShot.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
@@ -834,35 +835,10 @@ function launchShot(metrics,dispersion){
   if(state.phase!=='ready')return;
   const c=club(),L=LEVELS[state.level],lie=state.currentLie||surfaceAt(TEE.x,TEE.z);
 
-  // LOFT Stroke quality is not one hidden power number. A great strike requires
-  // rhythm, centered path, decisive release and useful load.
-  // Optional raw sine scalar is a test seam; omitted keeps the legacy clock read here.
-  const pathNoise=(1-L.form)*(dispersion===undefined?Math.sin(performance.now()*.012):dispersion)*(c.head==='putter' ? .18 : .75);
-  const finalPath=clamp(metrics.path+pathNoise,-9,9);
-  const skill=c.head==='putter'
-    ? metrics.tempoScore*.30+metrics.rhythm*.27+metrics.center*.29+metrics.commitment*.14
-    : metrics.tempoScore*.28+metrics.rhythm*.18+metrics.center*.20+metrics.commitment*.18+metrics.loadScore*.10+metrics.speedScore*.06;
-
-  const q=c.head==='putter'
-    ? clamp(.58+.42*skill-.007*Math.abs(finalPath)-(1-L.form)*.012,.52,1.0)
-    : clamp(.48+.52*skill-.010*Math.abs(finalPath)-(1-L.form)*.025,.42,1.0);
-  const direction=new THREE.Vector3(Math.sin(aimYaw()),0,-Math.cos(aimYaw()));
-
-  if(c.head==='putter'){
-    physics.putt({position:ballGroup.position,club:c,power:metrics.power,paceFeet:metrics.puttPaceFeet,path:finalPath,aimYaw:aimYaw(),strike:q});
-  }else{
-    physics.launch({
-      position:ballGroup.position,
-      club:c,
-      power:metrics.power,
-      path:finalPath,
-      form:L.form,
-      aimYaw:aimYaw(),
-      strike:q,
-      release:metrics.commitment,
-      lie
-    });
-  }
+  const {q,finalPath,direction}=launchShotPhysics(physics,{
+    metrics,c,L,lie,position:ballGroup.position,aimYaw,dispersion,
+    dispersionSource:()=>Math.sin(performance.now()*.012)
+  });
 
   state.shot={
     quality:q,

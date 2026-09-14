@@ -14,6 +14,8 @@ import {puttContactProfile} from '../prototype1/putting.js';
 import {flightHudVisibility} from '../prototype1/flightPresentation.js';
 import {projectPhysicsFrame} from './sealed-shot/parity-projection-v1.mjs';
 import {undoStep2Seam,PRE_STEP2_COMMIT} from './sealed-shot/step2-preservation.mjs';
+import {restoreStep2Bytes,assertStep3ProductionScope} from './sealed-shot/step3-preservation.mjs';
+import {launchShotPhysics} from '../prototype1/shot/resolveShot.js';
 
 const root=new URL('../',import.meta.url);
 const read=path=>readFileSync(new URL(path,root));
@@ -23,6 +25,7 @@ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer
 const pre=git('show',PRE_STEP2_COMMIT+':prototype1/game.js');
 const integration041=git('show','4497fc90827ceda14ddf5d46f10b3ebccff7ec34:prototype1/game.js');
 const post=lf(read('prototype1/game.js'));
+const preservedPost=lf(restoreStep2Bytes('prototype1/game.js',read('prototype1/game.js')));
 const legacyClock='Math.sin(performance.now()*.012)';
 const functionSource=game=>{
   const start=game.indexOf('function classify(q,path)'),end=game.indexOf('function prepareShotAt(');
@@ -65,7 +68,7 @@ function harness(source){
     if(!elements.has(id))elements.set(id,{style:{},classList:{toggle:mark(id+'.toggle'),remove:mark(id+'.remove')}});
     return elements.get(id);
   };
-  const context={THREE,Math,LEVELS,clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),
+  const context={THREE,Math,LEVELS,launchShotPhysics,clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),
     club:()=>{trace.push(['club']);return current.club;},
     surfaceAt:(x,z)=>{trace.push(['lie',x,z]);return current.fallbackLie;},
     aimYaw:()=>{trace.push(['aim']);return current.aim;},
@@ -108,22 +111,23 @@ const legacy=harness(legacySource),current=harness(currentSource),suppliedLegacy
 
 check('EXACT SCOPE: inverse of two unique edits restores entire pre-Step-2 and Integration 041 game bytes',()=>{
   assert.equal(pre,integration041);
-  assert.equal(undoStep2Seam(post),pre);
+  assert.equal(undoStep2Seam(preservedPost),pre);
   assert.equal(pre.match(/launchShot\(\{/g).length,4,'all four live/QA call sites remain one-argument');
   const manifest=JSON.parse(read('gauntlet/sealed-shot/fixtures/behavior-baseline-v1.json'));
   assert.equal(hash(Buffer.from(pre)),manifest.files['prototype1/game.js'].sha256);
   console.log('INFO pre-Step-2 '+PRE_STEP2_COMMIT+' game SHA-256 '+hash(Buffer.from(pre)));
-  console.log('INFO post-Step-2 game SHA-256 '+hash(Buffer.from(post)));
+  console.log('INFO reconstructed accepted Step 2 game SHA-256 '+hash(Buffer.from(preservedPost)));
+  console.log('INFO current extracted game SHA-256 '+hash(Buffer.from(post)));
 });
 
 check('PRESERVATION FAILS CLOSED: altered formula, scale, clamp, caller or unrelated UI is rejected',()=>{
   const rejects=s=>assert.throws(()=>assert.equal(undoStep2Seam(s),pre));
-  rejects(post.replace('performance.now()*.012','performance.now()*.013'));
-  rejects(post.replace("? .18 : .75","? .18 : .76"));
-  rejects(post.replace('clamp(metrics.path+pathNoise,-9,9)','clamp(metrics.path+pathNoise,-8,8)'));
-  rejects(post.replace('launchShot({','launchShot(null,{'));
-  rejects(post.replace("$('tip').style.opacity='0'","$('tip').style.opacity='1'"));
-  rejects(post+'\n'+post.match(/function launchShot\(metrics,dispersion\)\{/)[0]);
+  rejects(preservedPost.replace('performance.now()*.012','performance.now()*.013'));
+  rejects(preservedPost.replace("? .18 : .75","? .18 : .76"));
+  rejects(preservedPost.replace('clamp(metrics.path+pathNoise,-9,9)','clamp(metrics.path+pathNoise,-8,8)'));
+  rejects(preservedPost.replace('launchShot({','launchShot(null,{'));
+  rejects(preservedPost.replace("$('tip').style.opacity='0'","$('tip').style.opacity='1'"));
+  rejects(preservedPost+'\n'+preservedPost.match(/function launchShot\(metrics,dispersion\)\{/)[0]);
 });
 
 check('LIVE DEFAULT: legacy clock expression, launch inputs, real solver launch and all reaction calls are bit-identical',()=>{
@@ -191,18 +195,16 @@ check('REAL TRAJECTORIES: supplied scalar preserves launch/every fixed frame/res
   }
 });
 
-check('PROTECTED SCOPE: all 42 other baseline files exact; no extra production file, seed, resolver or UI change',()=>{
+check('PROTECTED SCOPE: exact authorized extraction inverses only; frozen baseline and protected math unchanged',()=>{
   const manifest=JSON.parse(read('gauntlet/sealed-shot/fixtures/behavior-baseline-v1.json'));
   for(const [path,entry] of Object.entries(manifest.files)){
     if(path==='prototype1/game.js')continue;
-    const raw=read(path);assert.equal(hash(entry.comparison==='raw bytes'?raw:Buffer.from(lf(raw))),entry.sha256,path);
+    const raw=restoreStep2Bytes(path,read(path));assert.equal(hash(entry.comparison==='raw bytes'?raw:Buffer.from(lf(raw))),entry.sha256,path);
   }
-  const changed=git('diff','--name-only',PRE_STEP2_COMMIT,'--','prototype1','vendor').trim().split('\n');
-  assert.deepEqual(changed,['prototype1/game.js']);
-  assert.equal(git('ls-files','--others','--exclude-standard','--','prototype1','vendor').trim(),'');
+  assertStep3ProductionScope();
 });
 
 console.log('INFO coverage '+JSON.stringify(counts));
 console.log(`\nLOFT DISPERSION STEP 2: ${passed}/${passed+failed} PASS; ${failed} FAIL`);
-console.log('Node/V8 seam proof only. WebKit, Gecko and physical iOS WebView remain pending. No seeded dispersion, resolver or authoritative ShotResult.');
+console.log('Node/V8 seam proof retained through Step 3 extraction. WebKit, Gecko and physical iOS WebView remain pending. No seeded dispersion or authoritative ShotResult.');
 process.exitCode=failed?1:0;

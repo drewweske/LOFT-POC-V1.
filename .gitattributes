@@ -2,6 +2,8 @@
 # let a checkout's core.autocrlf rewrite them before the gate can verify them.
 prototype1/physics.js -text whitespace=cr-at-eol
 prototype1/worldV2.js -text whitespace=cr-at-eol
+# Step 3 relocated field retains the original raw/mixed-newline source bytes.
+prototype1/shot/courseField.js -text whitespace=cr-at-eol
 prototype1/characterRig.js -text whitespace=cr-at-eol
 prototype1/clubVisual.js -text whitespace=cr-at-eol
 prototype1/clubAssembly.js -text whitespace=cr-at-eol

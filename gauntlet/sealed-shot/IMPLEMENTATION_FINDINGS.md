@@ -215,3 +215,115 @@ schema was chosen. No frozen serialization/hash/sampling semantics changed.
 
 Step 2 is closed. STOP before Step 3. Next authorized work: extract `resolveShot`
 with native math untouched and injected dispersion, then structural PURITY.
+
+## F-016 — Step 3 is a shared native pipeline, not a new simulation policy
+
+2026-09-14, Integration 044. Resumed the existing partial extraction; did not
+discard/restart it. Authority archives, F-009–F-011, all frozen fixtures and the
+parity projection remain unchanged. v1.2 is CLOSED. No predicate, serialization,
+hash, sampling, rounding, seed or MARGIN semantics were revised.
+
+### Exact boundary
+
+- `prototype1/shot/resolveShot.js`: shared `launchShotPhysics(physics,
+  {metrics,c,L,lie,position,aimYaw,dispersion,dispersionSource})` contains the moved
+  launch calculation and dispatch. `resolveShot(ShotIntent, Course)` constructs a
+  fresh existing solver, launches through that function, advances its existing
+  exported fixed step to rest and returns raw launch/trajectory/rest snapshots.
+- `game.js`: imports/calls that launch function at the old launch site. It still
+  performs the ready guard, club/level/lie lookup and ordinary reactions. The
+  original `Math.sin(performance.now()*.012)` is supplied as a lazy source; injected
+  scalar bypasses it. No second launch calculation or solver body remains there.
+- `physics.js`: only the vector dependency import changes and existing `FIXED`
+  becomes exported as `SOLVER_FIXED_STEP`. Entire arithmetic/class body preserved.
+- `shot/solverVector.js`: constructor and 16 scalar methods copied from the exact
+  checked-in vendor source; no Three.js import. Method bodies, operation order,
+  defaults and `isVector3` prototype semantics match. MIT attribution retained.
+- `shot/courseField.js`: exact numerical field scope moved into
+  `createCourseField(ROUND_HOLES)`. Lazy Float32 height/normal caches, scratch contact
+  sample, authored-derived arrays and helpers belong to that explicit instance.
+  The browser world constructs one instance and reexports its same field methods;
+  the server caller supplies a field instance. No new mesh/classifier/candidate IDs.
+- `worldV2.js`: only factory import/bindings replace the moved scope. Renderer,
+  material/ecology/terrain mesh construction and protected field contract labels
+  remain unchanged. `surfaces.js` is still the exact shared response table/program.
+
+The browser uses shared `launchShotPhysics` plus the same `GolfPhysics.step(dt)`.
+It does **not** call synchronous whole-shot `resolveShot` at impact: precomputing
+then replacing playback would be an adjacent timing/presentation change. Both
+entry paths use one launch body and one solver class. Browser clocks, presentation,
+frame scheduling, score/round reactions and cup drop animation stay in the caller.
+
+### Explicit in-memory input/output, not a frozen record change
+
+Current ShotIntent supplies `courseHash`, `holeIndex`, `ballRestPosition`,
+`lieSurface`, resolved `club`, resolved `playerState`, `metrics`, `aimYaw`,
+`environmentState.wind` and the injected raw `dispersion` scalar. Legacy metrics
+retain their names (`loadScore`, `tempoScore`, `path`, `center`, `commitment`,
+`rhythm`, plus power/speedScore/puttPaceFeet). The supplied Course carries matching
+`courseHash`, authored `holes` and native field methods. A mismatched hash refuses.
+This is an in-memory extraction adapter, not Step 6 submission/record serialization
+or server trust validation. SeedContract remains fixture-only until Step 5.
+
+Output is non-authoritative: quality/path, raw launchState, fixed-step trajectory,
+last landingSurface and restState. A putt with no airborne contact legitimately
+has `landingSurface: null`; actual rest surface/holed state is in `restState`.
+No 1 mm rounding, decisionTrace, penalties/scoring schema or replay lifecycle yet.
+
+### Purity and preservation evidence
+
+12/12 Step 3 checks. Six native cases (full swing, iron, wedge, bunker, putt,
+lip-putt) execute in a separate bare Node process using parsed VM modules and a
+closed five-file graph. Forbidden global reads throw; clocks/randomness are denied;
+dynamic imports/string compilation are denied. No Three.js, renderer, DOM/canvas,
+browser globals, Node ambient process or mutable external gameplay state is used.
+Frozen inputs stay unchanged; repeated/interleaved shots and independent course
+instances are checked. Six case frame counts: 738, 849, 485, 575, 336, 17 (3,000).
+Repeated fresh process matches raw state hashes. These are isolation checks, not
+the later legacy-vs-extracted EXTRACTION PARITY gate.
+
+`step3-preservation.mjs` reconstructs old files **from current moved bodies**, then
+requires entire-file accepted ccb8873 hashes. It does not copy a baseline over the
+current body or exempt an entire file. Game text returns to accepted Step 2; the
+unchanged Step 2 inverse then returns to 041. Solver/field reconstruct exact raw
+bytes. Existing gate adapters only account for these specific moves; numerical
+assertions, thresholds, fixtures and projections are not loosened. Seven Step 3
+deliberate timestep/predicate/binding/clock/caller/moved-math mutations fail closed.
+All 43 original baseline entries and 11 frozen locks remain verified.
+
+The initial vector subset omitted `distanceTo`/`distanceToSquared`, discovered by
+the existing terrain gate. Restored their exact vendor bodies; did not edit that
+test. Terrain now 14/14 and visual 37/37. A test mutation initially named a nonexistent
+predicate variable; corrected the test target to actual `d<CUP_CAPTURE`, not physics.
+
+### Why the single .gitattributes addition is necessary
+
+`prototype1/shot/courseField.js -text whitespace=cr-at-eol` is the only new rule.
+The moved file retains 219 CRLF + 263 bare-LF line endings, 17,813 bytes. Its raw
+SHA-256 is `efd65bcbee3f651b455ba0120a1d7953e23987ad19de1153673719edd82a794e`;
+normalizing to LF changes it to
+`81d04a68f716fefaa4578663b445617c18d9d37e9dd702b7b9ade56f4cf97ff3`.
+Without the rule, checkout conversion can invalidate exact reconstruction of the
+raw-byte-protected world. It preserves provenance, not new math; the gate asserts
+the exact two-line addition and no other attributes change. No file normalization.
+
+### Closure and limits
+
+Full gauntlet: **144/144** (105 existing + 19 Step 1 + 8 Step 2 + 12 Step 3).
+Step 2 still checks 2,240 default + 2,240 undefined + 5,880 injected + 5,880 repeats,
+30 trajectory pairs / 15,901 fixed frames. Its existing projection comparisons
+remain historical regression checks, not a completed Step 4 gate.
+Commands, stdout, source hashes and graph: `evidence/step3-node.json`; history 044.
+
+Runtime: Node v24.15.0 / V8 13.6.233.17-node.48, Windows x64. Current in-app browser
+smoke verifies normal render, flight/result/Next Shot, cup-tap/3-stroke PAR and Next
+Hole to The Shelf; no warnings/errors reported by the tab log. Browser engine
+version was not available through the read-only inspection scope, so no new engine
+matrix claim. Historical Chromium 152 byte/reload evidence is retained, not rerun.
+WebKit, Gecko, physical iOS WebView remain PENDING. Full COURSE HASH STABILITY
+runtime matrix remains PENDING. No fresh visual critic scoring or retuning.
+
+Step 3 passes. STOP after publication. Next authorized step: **Step 4 — EXTRACTION
+PARITY through the frozen parity projection**. No tolerance or normalization may
+hide extraction drift. No seeded dispersion, Q/epsilon, bands or authoritative
+result work in this checkpoint.

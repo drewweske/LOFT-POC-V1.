@@ -1,12 +1,28 @@
 # LOFT Prototype 1 — Gauntlet State
 
-Current build: Integration 043 THE SEALED SHOT Step 2 closure; gameplay remains 041
+Current build: Integration 044 THE SEALED SHOT Step 3 / PURITY; native gameplay remains 041
 Branch: prototype-1-gauntlet
 Playable artifact: /prototype1/
-Active subsystem: Step 2 closure only; stop before Step 3
-Iteration: integration_043
+Active subsystem: Step 3 closure only; stop before Step 4
+Iteration: integration_044
 
-Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-13.
+Canonical continuation: `../GAUNTLET_STATE.md`. Updated 2026-09-14.
+
+## Integration 044 verdict
+
+144/144: 105 existing + 19 Step 1 + 8 Step 2 + 12 Step 3. PURITY passes in bare
+Node v24.15.0/V8, six cases, five-module closed graph with hostile ambient globals.
+Shared launch body and shared GolfPhysics; browser incremental step timing retained.
+Source-derived exact inverses reconstruct accepted ccb8873 bytes and then original
+041 via the unchanged Step 2 inverse. No fixture/projection rebaseline or tolerance.
+Course caches are per-instance; vector constructor + 16 methods match vendor bodies.
+The extra distance pair fixes an extraction API omission caught by terrain gates.
+The sole .gitattributes rule preserves moved mixed-newline field provenance.
+
+Evidence: `sealed-shot/evidence/step3-node.json`, history 044, F-016. Browser render,
+flight/result/Next Shot and tap-in/Next Hole smoke passed; no fresh visual scoring.
+WebKit, Gecko and physical iOS WebView remain PENDING. No Step 4 comparison run.
+STOP after commit/push. Next authorized: EXTRACTION PARITY through frozen projection.
 
 ## Integration 043 verdict
 

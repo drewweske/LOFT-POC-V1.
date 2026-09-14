@@ -1,4 +1,4 @@
-import * as THREE from '../vendor/three.module.js';
+import * as THREE from './shot/solverVector.js';
 import {surfacePhysics,lieShotModifiers} from './surfaces.js';
 
 const G=9.80665;
@@ -21,6 +21,8 @@ const CUP_LIP_CONTACT=CUP_RADIUS+BALL_RADIUS;
 export const BALL_CONTACT_HEIGHT=.0265;
 const CONTACT_HEIGHT=BALL_CONTACT_HEIGHT;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+export {FIXED as SOLVER_FIXED_STEP};
 
 export class GolfPhysics{
   constructor({terrainHeight,terrainSample=null,terrainContactY=null,terrainSweep=null,surfaceAt,wind,waterLevel=-.22}){

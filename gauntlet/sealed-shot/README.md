@@ -1,4 +1,4 @@
-# The Sealed Shot Step 1
+# The Sealed Shot — evidence through Step 3
 
 Authority: **Executable Specification v1.2 FINAL**, SHA-256
 `c207a3f6c7c3b8250ea54f9078290f46a395c551b7a2f73b729e4ed6e67678fd`;
@@ -9,13 +9,24 @@ findings are in `IMPLEMENTATION_FINDINGS.md` beside this file.
 
 ## Scope
 
-Nothing in this directory is imported by the playable game. This is Step 1 evidence,
-not production seeded dispersion, resolveShot, boundary bands or record replay.
+Nothing in this directory is imported by the playable game. Production extraction
+is in `prototype1/shot/`; this directory contains authority and test-only evidence.
+Current closure: Step 3 PURITY, 144/144 checks. Run current evidence with:
+
+```powershell
+node gauntlet/sealed-shot/run-step3-evidence.mjs
+```
+
+It writes only `evidence/step3-node.json`. Do not rerun historical `run-evidence.mjs`
+or `run-step2-evidence.mjs` to overwrite accepted past evidence. Individual legacy
+gate commands remain current and are included by the Step 3 runner.
+See history 044 and F-016 for exact extraction boundary, inputs and limitations.
+No production seeded dispersion, boundary bands, quantized result or record replay.
 F-001 names the seed gate **SEED CONTRACT VECTORS**. Full **SEED INTEGRITY** belongs
 to Step 5. EXTRACTION PARITY is pending; the projection and legacy oracle exist,
-but no extracted pipeline exists to compare against them.
+but the Step 4 comparison has not been run or claimed.
 
-Run from the repository root:
+Historical Step 1 commands (retained for provenance, not closure instructions):
 
 ```powershell
 node gauntlet/run-sealed-shot-gauntlet.mjs
@@ -138,6 +149,5 @@ read-only routes, no game imports, and does not expose the repository. Reload to
 test a fresh module instance. Stop this diagnostic server after testing; the
 normal playable preview on port 43117 is independent and stays running.
 
-Next authorized step: **make dispersion injectable while preserving current
-wall-clock behavior.** Do not install seeds, extract the pipeline, tune bands,
-alter controls, or change any protected behavior in Step 2.
+Next authorized step: **Step 4 — EXTRACTION PARITY through the frozen projection.**
+STOP after Step 3 publication. Never loosen the projection to hide extraction drift.

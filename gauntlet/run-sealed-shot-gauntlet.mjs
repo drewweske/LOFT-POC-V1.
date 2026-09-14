@@ -6,6 +6,7 @@ import {seedBytes,shotSeed,fnv1a32,fmix32,unitFloat,boundaryKeyBytes,boundaryWor
 import {projectPhysicsFrame,PARITY_FIELDS} from './sealed-shot/parity-projection-v1.mjs';
 import {runLegacyCase} from './sealed-shot/legacy-parity-corpus.mjs';
 import {undoStep2Seam} from './sealed-shot/step2-preservation.mjs';
+import {restoreStep2Bytes} from './sealed-shot/step3-preservation.mjs';
 const root=new URL('../',import.meta.url),base=new URL('./sealed-shot/',import.meta.url);
 const read=p=>readFileSync(new URL(p,base));
 const json=p=>JSON.parse(read(p));
@@ -112,15 +113,15 @@ await check('Parity projection retains -0 and optional presence; does not quanti
   assert.deepEqual(Object.keys(p.state).sort(),PARITY_FIELDS.filter(f=>f!=='cupLipResolved').slice().sort());
   const a=projectPhysicsFrame(p);p.state.pos.x=-0;assert.notDeepEqual(projectPhysicsFrame(p),a);p.state.pos.x=0;p.state.cupLipResolved=false;assert.notDeepEqual(projectPhysicsFrame(p),a);
 });
-await check('ZERO BEHAVIOR CHANGE: 43 baseline files exact except reversible Step 2 seam; protected bytes exact',()=>{
+await check('ZERO BEHAVIOR CHANGE: 43-file baseline preserved through exact Step 2/3 inverses; no fixture rebaseline',()=>{
   const baseline=json('fixtures/behavior-baseline-v1.json');
   assert.equal(baseline.baseCommit,'4497fc90827ceda14ddf5d46f10b3ebccff7ec34');
   assert.equal(Object.keys(baseline.files).length,43);
   for(const [path,entry] of Object.entries(baseline.files)){
-    const raw=readFileSync(new URL(path,root));
+    const raw=restoreStep2Bytes(path,readFileSync(new URL(path,root)));
     let canonical=entry.comparison==='raw bytes'?raw:Buffer.from(raw.toString('utf8').replace(/\r\n/g,'\n'));
-    // No fixture update: invert only the exact authorized injection seam before
-    // comparing the whole game against Integration 041. Any other edit fails.
+    // Step 3 restores exact accepted Step 2 bytes above; Step 2 then restores
+    // the Integration 041 game. No fixture update or broad file exemption.
     if(path==='prototype1/game.js')canonical=Buffer.from(undoStep2Seam(canonical.toString('utf8')));
     assert.equal(hash(canonical),entry.sha256,path);
   }

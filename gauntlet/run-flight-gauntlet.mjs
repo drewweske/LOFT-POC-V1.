@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {restoreStep2Bytes} from './sealed-shot/step3-preservation.mjs';
 import * as THREE from '../vendor/three.module.js';
 import * as currentCamera from '../prototype1/camera.js';
 import {GolfPhysics} from '../prototype1/physics.js';
@@ -22,7 +23,7 @@ if(baseline){
 }
 const spec=currentCamera.FLIGHT_CAMERA_SPEC||{punchDistance:.28,minFollowDistance:7.2,impactBlendSeconds:.78};
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-const hash=path=>createHash('sha256').update(readFileSync(new URL('../'+path,import.meta.url))).digest('hex');
+const hash=path=>createHash('sha256').update(restoreStep2Bytes(path,readFileSync(new URL('../'+path,import.meta.url)))).digest('hex');
 const viewports=[{name:'desktop',width:1280,height:720},{name:'portrait',width:390,height:844},{name:'landscape',width:844,height:390}];
 const profiles=[{name:'clean',power:1,path:0,form:1,strike:1,release:1},{name:'imperfect',power:.74,path:7,form:.38,strike:.7,release:.8}];
 const frameStep=process.argv.includes('--30fps')?.03:process.argv.includes('--120fps')?1/120:1/60;
@@ -33,7 +34,7 @@ const maxPunchFov=THREE.MathUtils.degToRad(1.15*1.25);
 let passed=0,failed=0;
 function check(name,fn){try{fn();passed++;console.log('PASS  '+name);}catch(error){failed++;console.log('FAIL  '+name+' — '+error.message);}}
 
-check('protected solver, contact field, cup, poses, clubface and ball bytes are unchanged this session',()=>{
+check('protected bytes reconstruct exactly through authorized extraction only; cup, poses, clubface and ball unchanged',()=>{
   // Captured from the resumed working build, not HEAD: 039/040 were already
   // uncommitted. New flight work may not erase or alter those accepted changes.
   const protectedHashes={
