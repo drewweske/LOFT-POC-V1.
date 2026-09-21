@@ -15,14 +15,15 @@ const old=p=>execFileSync('git',['show',baseline+':'+p],{cwd:root,maxBuffer:16*1
 const run=()=>JSON.parse(execFileSync(process.execPath,['--experimental-vm-modules','gauntlet/sealed-shot/step3-purity-worker.mjs'],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024,stdio:['ignore','pipe','pipe']}));
 let passed=0,failed=0,report;
 const check=(name,fn)=>{try{fn();passed++;console.log('PASS  '+name);}catch(e){failed++;console.error('FAIL  '+name+' — '+e.stack);}};
-check('PURITY / bare Node: six native shot cases execute to rest in isolated module realms, repeated in fresh process',()=>{
+check('PURITY / bare Node: six seeded and six historical injected cases execute to rest, repeated in fresh process',()=>{
   report=run();assert.equal(report.assertions.bareNode,true);assert.equal(report.cases.length,6);
+  assert.equal(report.seededCases.length,6);assert.ok(report.seededCases.every(c=>c.frames>0));
   assert.deepEqual(run(),report);assert.ok(report.cases.every(c=>c.frames>0));
 });
-check('PURITY / parsed dependency graph: only five local modules; no Three.js, DOM, canvas or renderer import',()=>{
+check('PURITY / parsed dependency graph: six local modules including shared seed contract; no Three.js, DOM, canvas or renderer import',()=>{
   assert.equal(report.assertions.closedGraph,true);
-  assert.deepEqual(report.graph,['prototype1/physics.js','prototype1/shot/courseField.js','prototype1/shot/resolveShot.js','prototype1/shot/solverVector.js','prototype1/surfaces.js']);
-  assert.equal(report.edges.length,4);
+  assert.deepEqual(report.graph,['prototype1/physics.js','prototype1/shot/courseField.js','prototype1/shot/resolveShot.js','prototype1/shot/seedContract.js','prototype1/shot/solverVector.js','prototype1/surfaces.js']);
+  assert.equal(report.edges.length,5);
 });
 check('PURITY / forbidden ambient state: browser and Node globals, clocks and random sources unavailable',()=>{
   assert.equal(report.assertions.noAmbientReads,true);assert.deepEqual(report.blockedAmbientReads,[]);
@@ -51,7 +52,8 @@ check('Browser delegation: one shared launch body and one GolfPhysics implementa
   assert.match(game,/launchShotPhysics\(physics,\{/);assert.match(resolver,/launchShotPhysics\(physics,\{/);
   assert.doesNotMatch(game,/const pathNoise=|class GolfPhysics|_tryCup\(/);
   assert.match(game,/const ps=physics\.step\(dt\)/);
-  assert.match(game,/dispersionSource:\(\)=>Math\.sin\(performance\.now\(\)\*\.012\)/);
+  assert.match(game,/dispersionSource:\(\)=>dispersionFromShotSeed\(shotIntent\.shotSeed\)/);
+  assert.doesNotMatch(game,/dispersionSource:\(\)=>Math\.sin\(performance\.now/);
   function files(dir){return readdirSync(new URL(dir,root),{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(dir+'/'+e.name):[dir+'/'+e.name]);}
   const js=files('prototype1').filter(p=>p.endsWith('.js'));
   assert.deepEqual(js.filter(p=>/class GolfPhysics\b/.test(lf(read(p)))),['prototype1/physics.js']);
@@ -63,11 +65,11 @@ check('Source-faithful relocation: entire solver/field raw bytes and game Git te
     assert.equal(sha(p.endsWith('game.js')?Buffer.from(lf(restored)):restored),sha(old(p)),p);
   }
 });
-check('Preservation rejects altered timestep, predicates, field math, live clock and caller edits; no tolerance',()=>{
+check('Preservation rejects altered timestep, predicates, field math, seed authority and caller edits; no tolerance',()=>{
   const probes=[['prototype1/physics.js','const FIXED=1/120','const FIXED=1/119'],
     ['prototype1/physics.js','d<CUP_CAPTURE','d<=CUP_CAPTURE'],
     ['prototype1/worldV2.js','createCourseField(ROUND_HOLES)','createCourseField([])'],
-    ['prototype1/game.js','performance.now()*.012','performance.now()*.013'],
+    ['prototype1/game.js','dispersionFromShotSeed(shotIntent.shotSeed)','dispersionFromShotSeed(shotIntent.shotSeed+1)'],
     ['prototype1/game.js','physics.step(dt)','physics.step(dt*.99)']];
   for(const [p,from,to] of probes){
     const source=read(p).toString();assert.ok(source.includes(from),'mutation target '+from);
@@ -94,7 +96,7 @@ check('Vector audit: constructor and all 16 scalar methods retain exact vendored
   new Vector3();new VendorVector3();
   assert.deepEqual(Object.getOwnPropertyDescriptor(Vector3.prototype,'isVector3'),Object.getOwnPropertyDescriptor(VendorVector3.prototype,'isVector3'));
 });
-check('Protected scope: only three production moves and three new pure modules; all frozen fixture locks unchanged',()=>{
+check('Protected scope: exact authorized extraction and seed adapter only; all frozen fixture locks unchanged',()=>{
   assertStep3ProductionScope();
   const attributeAddition='# Step 3 relocated field retains the original raw/mixed-newline source bytes.\nprototype1/shot/courseField.js -text whitespace=cr-at-eol\n';
   const attributes=lf(read('.gitattributes'));
@@ -106,10 +108,14 @@ check('Protected scope: only three production moves and three new pure modules; 
   const locks=JSON.parse(read('gauntlet/sealed-shot/fixture-lock-v1.json'));
   for(const [path,expected] of Object.entries(locks))assert.equal(sha(read('gauntlet/sealed-shot/'+path)),expected,path);
 });
-check('Canonical boundary: mismatched course identity and absent injected dispersion refuse; no seed installed',()=>{
+check('Canonical boundary: course mismatch and absent shotSeed refuse; raw dispersion is not production authority',()=>{
   assert.equal(report.assertions.courseIdentityRefusal,true);
+  assert.equal(report.assertions.singleSeedAuthority,true);
   assert.match(lf(read('prototype1/shot/resolveShot.js')),/export function resolveShot\(ShotIntent,Course\)/);
-  for(const p of report.graph)assert.doesNotMatch(lf(read(p)),/fnv1a32|fmix32|boundaryWord|seedContractVersion/);
+  const resolver=lf(read('prototype1/shot/resolveShot.js'));
+  assert.match(resolver,/dispersionSource:\(\)=>dispersionFromShotSeed\(ShotIntent\.shotSeed\)/);
+  assert.doesNotMatch(resolver,/ShotIntent\.dispersion|deriveShotSeed\(/);
+  for(const p of report.graph)assert.doesNotMatch(lf(read(p)),/boundaryWord|decisionTrace\s*:/);
 });
 if(report)console.log('INFO purity '+JSON.stringify(report));
 console.log(`\nLOFT PURITY STEP 3: ${passed}/${passed+failed} PASS; ${failed} FAIL`);

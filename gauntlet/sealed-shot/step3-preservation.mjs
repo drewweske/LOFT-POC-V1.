@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {restorePreStep5Bytes,assertStep5ProductionScope} from './step5-preservation.mjs';
 export const PRE_STEP3_COMMIT='ccb8873f0eeac6fa910dc3f96d71506162fe94a9';
 export const STEP3_BASELINE_HASHES=Object.freeze({
   'prototype1/game.js':'c1254918ae22ab6b56c3f7c5e83b2fa3388c633522148740c3fb3f8b8cf1f7be',
@@ -32,8 +33,8 @@ const gameCall='  const {q,finalPath,direction}=launchShotPhysics(physics,{\n   
 const launchSignature='export function launchShotPhysics(physics,{metrics,c,L,lie,position,aimYaw,dispersion,dispersionSource}){\n';
 
 export function restoreStep2Bytes(path,raw,movedSources={}){
-  let source=Buffer.isBuffer(raw)?raw.toString('utf8'):raw;
-  const movedSource=path=>movedSources[path]??read(path);
+  let source=restorePreStep5Bytes(path,raw).toString('utf8');
+  const movedSource=path=>restorePreStep5Bytes(path,movedSources[path]??read(path)).toString('utf8');
   if(path==='prototype1/game.js'){
     source=lf(source);
     const resolver=lf(movedSource('prototype1/shot/resolveShot.js'));
@@ -80,12 +81,13 @@ export function restoreStep2Bytes(path,raw,movedSources={}){
 }
 
 export function assertStep3ProductionScope(){
+  assertStep5ProductionScope();
   const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024}).trim();
   const changed=git('diff','--name-only',PRE_STEP3_COMMIT,'--','prototype1','vendor').split('\n').filter(Boolean);
   const untracked=git('ls-files','--others','--exclude-standard','--','prototype1','vendor').split('\n').filter(Boolean);
   assert.deepEqual([...new Set([...changed,...untracked])].sort(),[
-    'prototype1/game.js','prototype1/physics.js','prototype1/worldV2.js',...STEP3_NEW_PRODUCTION_FILES
-  ].sort(),'only exact three moves and three new extraction modules');
+    'prototype1/game.js','prototype1/physics.js','prototype1/worldV2.js',...STEP3_NEW_PRODUCTION_FILES,'prototype1/shot/seedContract.js'
+  ].sort(),'only exact Step 3 moves plus checked Step 5 seed/context wiring');
   for(const path of ['prototype1/game.js','prototype1/physics.js','prototype1/worldV2.js']){
     const before=execFileSync('git',['show',PRE_STEP3_COMMIT+':'+path],{cwd:root,maxBuffer:16*1024*1024});
     assert.equal(hash(before),STEP3_BASELINE_HASHES[path],path+' immutable checkpoint provenance');

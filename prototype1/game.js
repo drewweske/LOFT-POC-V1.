@@ -4,6 +4,7 @@ import {COLORS,COASTAL_AIR_SPEC,COASTAL_TURF_LIGHT_SPEC,WATER_LEVEL,terrainHeigh
 import {GOLFER_GROUND_CLEARANCE,LoftGolferRig} from './characterRig.js?v=038-final';
 import {GolfPhysics,BALL_CONTACT_HEIGHT} from './physics.js';
 import {launchShotPhysics} from './shot/resolveShot.js';
+import {deriveShotSeed,dispersionFromShotSeed} from './shot/seedContract.js';
 import {LoftCamera} from './camera.js';
 import {LoftTopoMap} from './topoMap.js';
 import {LoftFeedback} from './feedback.js';
@@ -88,6 +89,8 @@ const state={
   learned:{camera:false,line:false,stroke:false,putt:false},
   interaction:null,
   shotCount:0,
+  roundSequence:0,roundId:'prototype-local-round-0',playerId:'prototype-local-player',
+  strokeIndex:0,
   holeIndex:0,
   strokes:0,
   holeScores:[],
@@ -835,11 +838,15 @@ function launchShot(metrics,dispersion){
   if(state.phase!=='ready')return;
   const c=club(),L=LEVELS[state.level],lie=state.currentLie||surfaceAt(TEE.x,TEE.z);
 
+  const shotIntent=dispersion===undefined?{shotSeed:deriveShotSeed({
+    roundId:state.roundId,playerId:state.playerId,holeIndex:state.holeIndex,strokeIndex:state.strokeIndex
+  })}:null;
   const {q,finalPath,direction}=launchShotPhysics(physics,{
     metrics,c,L,lie,position:ballGroup.position,aimYaw,dispersion,
-    dispersionSource:()=>Math.sin(performance.now()*.012)
+    dispersionSource:()=>dispersionFromShotSeed(shotIntent.shotSeed)
   });
 
+  state.strokeIndex++;
   state.shot={
     quality:q,
     label:c.head==='putter'?classifyPutt(q,finalPath,metrics.puttPaceFeet):classify(q,finalPath),
@@ -1013,6 +1020,7 @@ function closeRoundChronicle({restoreFocus=true,force=false}={}){
 }
 
 function startHole(index,{intro=true}={}){
+  state.strokeIndex=0;
   closeRoundChronicle({restoreFocus:false,force:true});
   closePrecisionMap();
   holeIndex=index;state.holeIndex=index;holeDef=ROUND_HOLES[index];
@@ -1134,6 +1142,7 @@ $('round-end').addEventListener('keydown',e=>{
   else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus({preventScroll:true});}
 });
 $('run-it-back').onclick=()=>{
+  state.roundSequence++;state.roundId='prototype-local-round-'+state.roundSequence;
   state.holeScores=[];state.shotCount=0;state.learned={camera:true,line:true,stroke:true,putt:true};
   startHole(0,{intro:true});
 };

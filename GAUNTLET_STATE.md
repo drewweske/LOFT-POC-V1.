@@ -1,8 +1,8 @@
 # LOFT Gauntlet State
 
-Updated: 2026-09-14
+Updated: 2026-09-20
 
-Build: Integration 045 THE SEALED SHOT Step 4 / EXTRACTION PARITY; native gameplay remains Integration 041
+Build: Integration 046 THE SEALED SHOT Step 5 / SEED INTEGRITY; native solver unchanged, dispersion source now seeded
 
 Branch: `prototype-1-gauntlet`
 
@@ -15,6 +15,35 @@ archives remain byte-identical; latest local findings are a separate addendum.
 Destination is the verified LOFT origin, ordinary fast-forward, never force push.
 
 ## Current build assessment
+
+**Step 5 / SEED INTEGRITY: PASS. Full gauntlet 172/172; zero failed suites.**
+Creator Decision Record 002 resolved the pre-production F-018 mapping omission:
+`u=(shotSeed>>>0)/4294967296`, `dispersion=2*u-1`. Original blocker audit, original
+spec and accepted Step 1–4 evidence are preserved. No secondary PRNG, seed argument,
+raw production intent authority, clock fallback or hidden random state.
+
+11 independent SeedContract vectors and five exact mapping edges pass. Seed gate
+13/13; physical-context gate 7/7; PURITY 12/12; historical dispersion 8/8; frozen
+parity regression 8/8 (420 paired trajectories / 223,944 frames, zero mismatches).
+11,000 context derivations repeat exactly; each of two fresh Node seed workers
+executes 120 resolutions across 30 family/edge-seed cases, 30 launch-seam
+comparisons and 24 invalid-seed checks. The actual browser launch-adapter code,
+executed in Node, matches bare-Node resolveShot through 639 native frames.
+
+Local player identity is fixed; round serial starts at zero and advances only on
+RUN IT BACK. Existing hole index is zero-based. Separate physical `strokeIndex`
+resets on startHole, increments after physical launch, and ignores penalties;
+`state.strokes` remains scoring state. No persistence/account/network semantics.
+Only game.js, shot/resolveShot.js and new shot/seedContract.js change production.
+Exact inverse reconstructs accepted Step 4 and then prior protected baselines;
+all downstream factors/order/math, protected files and frozen artifacts remain.
+
+Evidence: `gauntlet/history/integration_046.md`, latest finding F-019,
+`gauntlet/sealed-shot/evidence/step5-node.json`. Runtime: Node v24.15.0 / V8
+13.6.233.17-node.48, Windows x64. Embedded-browser smoke UNAVAILABLE (kernel-assets
+initialization os error 3); not a gameplay failure or fresh Chromium pass. Normal
+preview HTTP 200; preview gate 4/4. WebKit, Gecko, physical iOS WebView and full
+COURSE HASH STABILITY matrix remain PENDING. **STOP before Step 6.**
 
 **Step 4 / EXTRACTION PARITY: PASS. Full gauntlet 152/152 (144 existing + 8 Step 4).**
 Independent legacy execution reads only accepted Step 2 Git objects at
@@ -29,7 +58,7 @@ Observed initial outcomes include 35 holed and 140 bounced; this is not a claim
 of every predicate branch or the later cross-runtime boundary/drift gate.
 Evidence: `gauntlet/history/integration_045.md`,
 `gauntlet/sealed-shot/evidence/step4-node.json`, local finding F-017.
-**STOP before Step 5.** WebKit, Gecko and physical iOS WebView remain PENDING.
+Step 4 evidence above is historical, unchanged. WebKit, Gecko and physical iOS WebView remain PENDING.
 
 Accepted Step 3 assessment (historical): **PURITY PASS, 144/144 checks.**
 `prototype1/shot/resolveShot.js` executes six shot cases in bare Node with explicit
@@ -287,9 +316,9 @@ new functional damage.
 
 ## Open quality gaps — ranked
 
-1. **THE SEALED SHOT — after acceptance, Step 5 only.** Install seeded integer
-   dispersion and then run SEED INTEGRITY. Step 4 parity is complete; do not begin
-   Step 5 in this closure turn. No quantization, boundary bands or MARGIN yet.
+1. **THE SEALED SHOT — Step 5 contract clarification.** Obtain the exact missing
+   seed-to-signed-dispersion map, then install seeded integer dispersion and close
+   SEED INTEGRITY. Do not infer new sampling semantics from the unit-float rule.
 2. **Near-field turf / cut readability — queued, out of scope:** the course has more setting
    but the ground under the golfer still reads as a smooth painted sheet. Improve the
    maintained-grass/rough/fringe/sand material scale in real tee and putting views,
@@ -312,10 +341,10 @@ new functional damage.
 
 ## Current Gauntlet target
 
-**THE SEALED SHOT — Step 4 / EXTRACTION PARITY closure; stop after publication.**
+**THE SEALED SHOT — Step 5 closed; await acceptance before any Step 6 work.**
 
-Steps 1–3 are accepted and were not redone. Step 4 passes against independent
-accepted legacy source. Step 5 must not begin in this turn. COURSE HASH STABILITY remains pending on WebKit, Gecko
+Steps 1–4 are accepted and were not redone. F-018 is historical; Decision Record
+002 and creator physical-ordinal clarification resolved Step 5. COURSE HASH STABILITY remains pending on WebKit, Gecko
 and physical iOS WebView; these rows are not waived. Governing v1.2 + findings are archived with
 digests. Existing math/contact/geometry/assets/stats remain protected. Freeze all
 v1 contract fixtures; never regenerate them to hide a regression or silently change
@@ -544,12 +573,12 @@ discrepancy is material scale: turf still reads painted and too uniform in real 
 
 ## Next action
 
-**STOP after Step 4 closure publication.** Next authorized work after acceptance:
-**Step 5 — install seeded integer dispersion and then run SEED INTEGRITY.** Read
-archived v1.2, F-001–F-007 and local F-008–F-017 first. No Step 5 code is in this
-checkpoint. Do not change the frozen parity projection or invent a tolerance.
-Current raw output is not authoritative quantization or a ShotRecord lifecycle;
-Q/epsilon, boundary bands, decisionTrace and MARGIN remain later work.
+**STOP. Await acceptance of Step 5 and explicit next-step authorization.**
+Resume from Integration 046; do not redo the audit or seeded implementation.
+Read archived v1.2, original findings, local F-008–F-019 and Decision Record 002.
+Do not alter the parity projection or begin Step 6 in this closure: authoritative
+quantization, Submission/Record lifecycle, Q/epsilon, bands, decisionTrace and
+MARGIN remain later work. Runtime pending rows are not waived by Node evidence.
 
 Normal preview: `http://127.0.0.1:43117/prototype1/`, hidden Node
 `gauntlet/serve.mjs 43117`. If absent, restart only this LOFT-local server. Current

@@ -8,6 +8,7 @@ import vm from 'node:vm';
 import path from 'node:path';
 import {createLegacyOracle,LEGACY_COMMIT} from './step4-legacy-oracle.mjs';
 import {projectPhysicsFrame,PARITY_PROJECTION_VERSION} from './parity-projection-v1.mjs';
+import {injectedResolverSource} from './step5-test-adapter.mjs';
 
 const root=new URL('../../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root));
@@ -22,7 +23,7 @@ assert.equal(PARITY_PROJECTION_VERSION,frozen.parityProjectionVersion);
 assert.equal(corpus.legacyCommit,LEGACY_COMMIT);
 const projectionBefore=sha(read(projectionPath));
 const allowed=new Set(['prototype1/shot/resolveShot.js','prototype1/shot/solverVector.js',
-  'prototype1/shot/courseField.js','prototype1/physics.js','prototype1/surfaces.js']);
+  'prototype1/shot/courseField.js','prototype1/physics.js','prototype1/surfaces.js','prototype1/shot/seedContract.js']);
 const context=vm.createContext({}, {codeGeneration:{strings:false,wasm:false}});
 const blocked=[];
 for(const name of ['window','document','navigator','canvas','THREE','performance','Date','process','require','fetch','setTimeout','setInterval','requestAnimationFrame']){
@@ -34,7 +35,8 @@ function load(p){
   assert.ok(allowed.has(p),'Current dependency outside pure graph: '+p);
   if(!modules.has(p)){
     sources.set(p,read(p));
-    modules.set(p,new vm.SourceTextModule(sources.get(p).toString('utf8'),{context,identifier:p,
+    const source=sources.get(p).toString('utf8');
+    modules.set(p,new vm.SourceTextModule(p==='prototype1/shot/resolveShot.js'?injectedResolverSource(source):source,{context,identifier:p,
       importModuleDynamically(){throw Error('Current dynamic import forbidden');}}));
   }
   return modules.get(p);
@@ -173,7 +175,8 @@ assert.deepEqual(blocked,[]);
 assert.equal(sha(read(projectionPath)),projectionBefore,'projection after');
 assert.equal(sha(read(corpusPath)),sha(corpusBytes),'input-only corpus after');
 for(const [p,b] of sources)assert.equal(sha(read(p)),sha(b),'production source unchanged during execution: '+p);
-console.log(JSON.stringify({phase:'Step 4 EXTRACTION PARITY only',node:process.version,v8:process.versions.v8,
+console.log(JSON.stringify({phase:'Step 4 frozen injected corpus regression through Step 5 test-only launch adapter',node:process.version,v8:process.versions.v8,
+  testAdapter:{path:'gauntlet/sealed-shot/step5-test-adapter.mjs',sha256:sha(read('gauntlet/sealed-shot/step5-test-adapter.mjs')),replacementCount:1},
   platform:process.platform,arch:process.arch,legacy:legacy.provenance(),
   extracted:{checkpoint:corpus.extractedCheckpoint,graph:[...modules.keys()].sort(),edges,sources:[...sources].map(([p,b])=>({path:p,sha256:sha(b)}))},
   projection:{version:PARITY_PROJECTION_VERSION,beforeSha256:projectionBefore,afterSha256:sha(read(projectionPath))},

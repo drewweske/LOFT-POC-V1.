@@ -401,3 +401,123 @@ visual or physical-iOS test is claimed. No current runtime row was upgraded.
 
 Step 4 is closed after publication. **STOP before Step 5.** Next authorized step
 after acceptance: install seeded integer dispersion and then run SEED INTEGRITY.
+
+## F-018 — Step 5 preflight: seed-to-signed-dispersion mapping is unspecified
+
+2026-09-14. Step 4 accepted at `0bfee37c7c2f4ba919d3676e457ca363515d652d`.
+This finding records a missing definition; it does **not** establish or revise a
+sampling algorithm, hash, byte contract, runtime behavior or version.
+
+Spec §2.1 freezes canonical tuple bytes, FNV/fmix and `(x >>> 0)/4294967296`.
+That conversion yields [0,1). F-015/current launchShotPhysics require a signed
+raw sine replacement in [-1,1], before the existing form and club factors.
+Neither the original DOCX, F-001–F-017 nor the checked-in contract/vector sources
+define the intervening signed map or a dispersion-specific word/PRNG operation.
+All 11 independent seed vectors stop at ShotSeed/unitFloat. Repository search and
+an independent read-only audit found no additional frozen mapping.
+
+Choosing `2*u-1`, `1-2*u`, a signed reinterpretation or another generated word
+would select observable shot behavior not determined by those contracts. Using
+u directly would remove negative dispersion. No such choice is installed. Any
+signed adapter also needs an explicit audit boundary relative to F-001's integer
+operation whitelist; this finding does not silently broaden that whitelist.
+
+Stopped before production edits per the user's governance instruction. The exact
+hash/serialization is implementable; closing Step 5 requires the missing mapping
+to be supplied or explicitly authorized with its relevant contract/version scope.
+SEED INTEGRITY is not claimed, no tests or parity fixtures were regenerated, and
+the complete gauntlet was not rerun. Accepted Step 4's 152/152 remains historical.
+WebKit, Gecko and physical iOS WebView remain pending. No Step 6 work.
+Detailed inspection/handoff: `gauntlet/history/step5_contract_audit.md`.
+
+## F-019 — Creator resolution, physical-shot identity and Step 5 SEED INTEGRITY
+
+2026-09-20. F-018 remains the historical pre-production contract-gap audit. The
+creator resolved it via `decision-record-002.md`, not by editing Executable Spec
+v1.2 or SeedContract v1. Mapping is exactly:
+
+```javascript
+const u = (shotSeed >>> 0) / 4294967296;
+const dispersion = 2 * u - 1;
+```
+
+Edge words 0x00000000 / 0x40000000 / 0x80000000 / 0xC0000000 / 0xFFFFFFFF produce
+-1 / -0.5 / +0 / 0.5 / 0.9999999995343387 exactly. This is initial solverVersion=1
+behavior. A later sampling/mapping change requires a solverVersion bump; it is
+not SeedContract v2 (reserved for commit-reveal/serverNonce). Integer-core audit
+is separate from the explicitly approved affine mapping; no whitelist is widened.
+
+Production path: game context → `seedBytes` (raw UTF-8 length-prefix LE strings,
+then uint32 LE hole/stroke) → `fmix32(fnv1a32(bytes))` → `shotIntent.shotSeed` →
+shared `dispersionFromShotSeed` → existing `launchShotPhysics`. Native
+`resolveShot(ShotIntent,Course)` reads that seed only, calls the same mapper at
+the existing lazy operand, and does not derive a seed again. An extra legacy
+raw `dispersion` field is never read and cannot override the seed. Missing/invalid
+seeds fail; no entropy fallback. Hash/mapping module has only functions at module
+scope and imports no generator/test/host encoding library. No PRNG/state/domain
+word was added. Original `(1-L.form)`, `.18`/`.75`, clamps, evaluation order and
+all solver/contact/cup/rest/surface code are untouched. Only the sampling source
+intentionally changes from wall-clock sine to Decision 002's discrete mapping.
+
+Prototype adapter meaning (creator clarification, not a serialization change):
+fixed `playerId='prototype-local-player'`; `roundId='prototype-local-round-'+N`,
+N starts at zero and advances only on RUN IT BACK; existing zero-based holeIndex;
+separate `state.strokeIndex` starts/resets at zero on `startHole()` and advances
+only after shared physics accepts a physical launch. Penalties increment only
+`state.strokes`, not strokeIndex. Cancelled/non-ready/failed launches do not
+consume a physical ordinal. A page reload deliberately resets local identities.
+No persistence, account, networking or globally unique identity claim.
+
+The launch-level injected scalar/source seam remains for tests. Production
+ShotIntent has no raw-dispersion authority. `step5-test-adapter.mjs` replaces one
+exact, unique launch operand **only in isolated test-loaded resolver source**;
+it feeds the frozen corpus scalar to the unchanged launch seam. No production
+branch, math copy, fixture rewrite or additional resolveShot argument is added.
+The legacy oracle still reads only accepted ccb8873 Git objects. Projection,
+corpus, oracle and all accepted Step 1–4 evidence remain byte-identical.
+
+Evidence: **172/172**, zero failed suites: previous 152 regression checks plus
+SEED INTEGRITY 13 and physical-context 7. Eleven independent Step 1 vectors match
+bytes/FNV/fmix/seed; five Decision 002 mapping vectors pass. 11,000 repeated
+context derivations and independent single-field tuple changes pass. Each of two
+fresh Node worker processes executes 30 cases (six families × five edge seeds),
+120 seeded resolutions (including raw-field refusal/ignore probes and reverse
+cache-order repeats), 30 mapped-scalar launch-seam comparisons and 24 invalid-seed
+rejections. One 30-case pass contains 14,996 native steps. Full result f64-bit
+digests agree; this is test evidence, not authoritative result serialization.
+
+Actual game lifecycle functions, executed in Node with inert presentation
+adapters, prove penalty/reset/round/cancel/guard behavior. The normal browser
+launch adapter agrees with bare-Node resolveShot for one real 639-frame shot,
+seed 3692739324. This is not a fresh browser-engine claim. PURITY remains 12/12
+with six normal seeded and six historical injected cases in a six-module closed
+graph, repeated in fresh processes. No Three.js/browser/DOM/canvas/clock/random
+dependency exists in the resolver graph; course caches stay per-instance.
+
+Historical Step 2 regression remains 8/8: 2,240 default + 2,240 undefined + 5,880
+injected + 5,880 repeated comparisons; 30 trajectories / 15,901 frames. Its clock
+checks explicitly run the narrow inverse historical adapter, not today's live
+default. Historical Step 4 corpus regression is 8/8, zero mismatches across 420
+pairs / 223,944 frames and 224,784 returned snapshots. The six old reference cases
+still match 3,176 frames. No numerical tolerance or expected output was changed.
+
+Exact source inverse rejects unauthorized edits and reconstructs accepted Step 4
+(`0bfee37c7c2f4ba919d3676e457ca363515d652d`), then the accepted Step 3/2 inverses
+restore the anchored Integration 041 baseline. Only production game.js,
+shot/resolveShot.js and new shot/seedContract.js change. Protected files, frozen
+parity artifacts, authority archives and historical evidence are not rebaselined.
+
+Commands/source hashes/results: `evidence/step5-node.json`; exact changed-file
+inventory and test-adapter rationale: `gauntlet/history/integration_046.md`.
+Runtime exercised: Node v24.15.0 / V8 13.6.233.17-node.48 / Windows x64 only.
+Embedded-browser initialization failed (`failed to write kernel assets`, os error
+3); smoke is **UNAVAILABLE**, not failed gameplay. Existing repository preview
+server responds HTTP 200; its non-interactive gate passes. Historical Chromium
+evidence stays historical. WebKit, Gecko, physical iOS WebView and full COURSE
+HASH STABILITY runtime matrix remain **PENDING**, not waived.
+
+Original F-009–F-011 remain unchanged: cup swept distance plus speed; separate
+pre/post-roll linear-speed/grade/resistance rest checks with no angular-speed rest
+predicate; procedural surface classification, not triangle-ID based. No Q/epsilon,
+bands, quantization, record lifecycle, MARGIN, networking or visual work.
+Step 5 executable closure is complete. **STOP before Step 6; await acceptance.**

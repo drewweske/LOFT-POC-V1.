@@ -1,6 +1,7 @@
-// Step 2 dependency-seam proof. Executes the actual pre/post composition-root
-// function with instrumented presentation adapters and the unchanged real solver.
-// Not resolveShot, not EXTRACTION PARITY, not a production seed or replay path.
+// Historical Step 2 dependency-seam regression. Step 5's exact, fail-closed
+// inverse removes only its authorized browser identity/seed adapter. This keeps
+// the accepted wall-clock comparisons as historical evidence, not a claim about
+// the normal seeded production default. The current shared launch body is used.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
@@ -15,6 +16,7 @@ import {flightHudVisibility} from '../prototype1/flightPresentation.js';
 import {projectPhysicsFrame} from './sealed-shot/parity-projection-v1.mjs';
 import {undoStep2Seam,PRE_STEP2_COMMIT} from './sealed-shot/step2-preservation.mjs';
 import {restoreStep2Bytes,assertStep3ProductionScope} from './sealed-shot/step3-preservation.mjs';
+import {restorePreStep5Bytes} from './sealed-shot/step5-preservation.mjs';
 import {launchShotPhysics} from '../prototype1/shot/resolveShot.js';
 
 const root=new URL('../',import.meta.url);
@@ -25,6 +27,7 @@ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer
 const pre=git('show',PRE_STEP2_COMMIT+':prototype1/game.js');
 const integration041=git('show','4497fc90827ceda14ddf5d46f10b3ebccff7ec34:prototype1/game.js');
 const post=lf(read('prototype1/game.js'));
+const historicalPost=lf(restorePreStep5Bytes('prototype1/game.js',read('prototype1/game.js')));
 const preservedPost=lf(restoreStep2Bytes('prototype1/game.js',read('prototype1/game.js')));
 const legacyClock='Math.sin(performance.now()*.012)';
 const functionSource=game=>{
@@ -32,7 +35,7 @@ const functionSource=game=>{
   assert.ok(start>=0&&end>start);
   return game.slice(start,end)+'\nlaunchShot;';
 };
-const legacySource=functionSource(pre),currentSource=functionSource(post);
+const legacySource=functionSource(pre),currentSource=functionSource(historicalPost);
 // Supply an operand to the immutable old function, not a retyped launch formula.
 // This single test-only substitution lets both versions receive the same scalar.
 assert.equal(legacySource.split(legacyClock).length-1,1);
@@ -130,7 +133,7 @@ check('PRESERVATION FAILS CLOSED: altered formula, scale, clamp, caller or unrel
   rejects(preservedPost+'\n'+preservedPost.match(/function launchShot\(metrics,dispersion\)\{/)[0]);
 });
 
-check('LIVE DEFAULT: legacy clock expression, launch inputs, real solver launch and all reaction calls are bit-identical',()=>{
+check('HISTORICAL DEFAULT: legacy clock expression, launch inputs, real solver launch and all reaction calls are bit-identical',()=>{
   for(const club of CLUBS)for(const level of Object.keys(LEVELS))for(const lie of surfaces)for(const time of times){
     const metrics={...metricCases[counts.defaultPairs%3],puttPaceFeet:counts.defaultPairs%2?undefined:2};
     const options={club,level,lie,time,metrics,aim:[-.31,0,.19][counts.defaultPairs%3]};
@@ -152,7 +155,7 @@ check('INJECTION: fixed raw scalars including +0/-0 bypass clock and match legac
   }
 });
 
-check('CLOCK LOCATION: ready guard, club/lie/form read order, full-form clock read and delayed reactions are preserved',()=>{
+check('HISTORICAL CLOCK LOCATION: ready guard, club/lie/form read order, full-form clock read and delayed reactions are preserved',()=>{
   for(const level of [1,50,75])for(const lie of ['tee',null]){
     const opts={observeForm:true,level,lie,time:44.5};
     const a=legacy.run(opts),b=current.run(opts);
@@ -167,7 +170,7 @@ check('CLOCK LOCATION: ready guard, club/lie/form read order, full-form clock re
   }
 });
 
-check('INJECTION IS PER CALL: fixed sample cannot leak into the next default/live shot',()=>{
+check('INJECTION IS PER CALL: fixed sample cannot leak into the next historical default shot',()=>{
   const opts={time:18765,metrics:metricCases[1]};
   const a=legacy.run(opts).snapshot;
   current.run({...opts,forbidClock:true},[0]);
@@ -206,5 +209,5 @@ check('PROTECTED SCOPE: exact authorized extraction inverses only; frozen baseli
 
 console.log('INFO coverage '+JSON.stringify(counts));
 console.log(`\nLOFT DISPERSION STEP 2: ${passed}/${passed+failed} PASS; ${failed} FAIL`);
-console.log('Node/V8 seam proof retained through Step 3 extraction. WebKit, Gecko and physical iOS WebView remain pending. No seeded dispersion or authoritative ShotResult.');
+console.log('Historical Node/V8 Step 2 seam proof retained through the exact Step 5 inverse. Normal production uses shotSeed, not this historical clock adapter. WebKit, Gecko and physical iOS WebView remain pending; no authoritative ShotResult.');
 process.exitCode=failed?1:0;

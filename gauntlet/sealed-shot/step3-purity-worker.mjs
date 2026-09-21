@@ -4,12 +4,13 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import {CLUBS,LEVELS} from '../../prototype1/equipment.js';
+import {injectedResolverSource} from './step5-test-adapter.mjs';
 const root=new URL('../../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8');
 const coursePackage=JSON.parse(read('gauntlet/sealed-shot/fixtures/coastal-ridge-v1.json'));
 const courseDigest=JSON.parse(read('gauntlet/sealed-shot/fixtures/contract-vectors-v1.json')).courses[0].sha256;
 const inputs=JSON.parse(read('gauntlet/sealed-shot/fixtures/parity-v1.json')).cases.map(c=>c.input);
-const allowed=new Set(['prototype1/shot/resolveShot.js','prototype1/shot/solverVector.js','prototype1/shot/courseField.js','prototype1/physics.js','prototype1/surfaces.js']);
+const allowed=new Set(['prototype1/shot/resolveShot.js','prototype1/shot/solverVector.js','prototype1/shot/courseField.js','prototype1/shot/seedContract.js','prototype1/physics.js','prototype1/surfaces.js']);
 const modules=new Map(),edges=[],blocked=[];
 const context=vm.createContext({}, {codeGeneration:{strings:false,wasm:false}});
 // The resolver's realm has neither Node globals nor browser conveniences. Reads
@@ -42,6 +43,18 @@ await link(resolver);await link(field);await resolver.evaluate();await field.eva
 assert.deepEqual([...modules.keys()].sort(),[...allowed].sort());
 assert.deepEqual(blocked,[]);
 const {resolveShot,launchShotPhysics}=resolver.namespace;
+// Historical raw scalars belong exclusively to this explicit test adapter.
+// The normal resolver above is also executed below, unmodified, with shotSeed.
+const injectedResolver=new vm.SourceTextModule(injectedResolverSource(read('prototype1/shot/resolveShot.js')),
+  {context,identifier:'prototype1/shot/resolveShot.js',importModuleDynamically(){throw Error('Dynamic imports forbidden');}});
+await injectedResolver.link((specifier,parent)=>{
+  const path=new URL(specifier,new URL(parent.identifier,root)).href.slice(root.href.length);
+  assert.ok(modules.has(path),'Test seam must reuse the audited production graph');
+  return modules.get(path);
+});
+await injectedResolver.evaluate();
+const resolveInjected=injectedResolver.namespace.resolveShot;
+const {deriveShotSeed}=modules.get('prototype1/shot/seedContract.js').namespace;
 const {GolfPhysics,SOLVER_FIXED_STEP}=modules.get('prototype1/physics.js').namespace;
 const {Vector3}=modules.get('prototype1/shot/solverVector.js').namespace;
 const {createCourseField}=field.namespace;
@@ -60,8 +73,14 @@ const intents=inputs.map((input,index)=>{
     environmentState:{wind:{x:input.wind[0],y:input.wind[1],z:input.wind[2]}}});
 });
 const inputBefore=raw(intents),holeBefore=raw(holes);
-const results=intents.map(intent=>resolveShot(intent,course));
-for(const r of results){
+const seededIntents=intents.map((intent,index)=>{
+  const {dispersion,...normal}=intent;
+  return deepFreeze({...normal,shotSeed:deriveShotSeed({roundId:'purity-round-0',playerId:'purity-player',holeIndex:0,strokeIndex:index})});
+});
+const seededBefore=raw(seededIntents);
+const results=intents.map(intent=>resolveInjected(intent,course));
+const seededResults=seededIntents.map(intent=>resolveShot(intent,course));
+for(const r of [...results,...seededResults]){
   assert.ok(r.trajectory.length>0&&r.trajectory.length<4000);
   assert.equal(r.restState.stopped,true);
   assert.ok(Object.values(r.restState.pos).every(Number.isFinite));
@@ -72,15 +91,26 @@ for(const r of results){
 }
 // Same-call identity / isolation evidence, not a legacy-vs-extracted parity gate.
 const resultDigests=results.map(digest);
-for(let i=intents.length-1;i>=0;i--)assert.equal(digest(resolveShot(intents[i],course)),resultDigests[i]);
+const seededDigests=seededResults.map(digest);
+for(let i=intents.length-1;i>=0;i--){
+  assert.equal(digest(resolveInjected(intents[i],course)),resultDigests[i]);
+  assert.equal(digest(resolveShot(seededIntents[i],course)),seededDigests[i]);
+  // A raw scalar on an arbitrary caller object is never a second production
+  // authority. Valid shotSeed alone determines the normal resolver's mapping.
+  assert.equal(digest(resolveShot({...seededIntents[i],dispersion:999},course)),seededDigests[i]);
+}
 const anotherCourse=Object.freeze({...createCourseField(holes),holes,courseHash:courseDigest});
 assert.notEqual(course.BUNKERS,anotherCourse.BUNKERS,'authored arrays are instance-owned');
 course.BUNKERS[0].x+=100; // Disturb another instance; never a shipped/runtime edit.
-for(let i=0;i<intents.length;i++)assert.equal(digest(resolveShot(intents[i],anotherCourse)),resultDigests[i]);
+for(let i=0;i<intents.length;i++){
+  assert.equal(digest(resolveInjected(intents[i],anotherCourse)),resultDigests[i]);
+  assert.equal(digest(resolveShot(seededIntents[i],anotherCourse)),seededDigests[i]);
+}
 assert.equal(raw(intents),inputBefore);assert.equal(raw(holes),holeBefore);
-assert.throws(()=>resolveShot({...intents[0],courseHash:'wrong'},anotherCourse),/courseHash/);
-assert.throws(()=>resolveShot({...intents[0],dispersion:undefined},anotherCourse),/injected dispersion/);
-assert.throws(()=>resolveShot({...intents[0],holeIndex:-1},anotherCourse),/holeIndex/);
+assert.equal(raw(seededIntents),seededBefore);
+assert.throws(()=>resolveShot({...seededIntents[0],courseHash:'wrong'},anotherCourse),/courseHash/);
+assert.throws(()=>resolveShot({...seededIntents[0],shotSeed:undefined,dispersion:.5},anotherCourse),/shotSeed/);
+assert.throws(()=>resolveShot({...seededIntents[0],holeIndex:-1},anotherCourse),/holeIndex/);
 assert.deepEqual(blocked,[]);
 // Both entry points reach the same launch body and GolfPhysics class. Observe
 // explicit reader order; no local stand-in for the solver is used here.
@@ -99,6 +129,7 @@ call(undefined);assert.equal(scalarReads,1);assert.equal(aimReads,6);assert.equa
 console.log(JSON.stringify({node:process.version,v8:process.versions.v8,platform:process.platform,arch:process.arch,
   graph:[...modules.keys()].sort(),edges,blockedAmbientReads:blocked,
   cases:inputs.map((input,i)=>({name:input.name,frames:results[i].trajectory.length,resultSha256:resultDigests[i]})),
+  seededCases:inputs.map((input,i)=>({name:input.name,shotSeed:seededIntents[i].shotSeed,frames:seededResults[i].trajectory.length,resultSha256:seededDigests[i]})),
   assertions:{bareNode:true,closedGraph:true,noAmbientReads:true,frozenInputsUnchanged:true,courseInstancesIsolated:true,
-    rawResults:true,injectedSource:true,courseIdentityRefusal:true},
-  phase:'Step 3 structural PURITY only; not Step 4 EXTRACTION PARITY'}));
+    rawResults:true,injectedSource:true,courseIdentityRefusal:true,singleSeedAuthority:true},
+  phase:'Step 3 PURITY regression with Step 5 production seed authority and explicit historical test seam; not Step 4 EXTRACTION PARITY'}));

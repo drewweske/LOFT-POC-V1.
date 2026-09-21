@@ -113,7 +113,7 @@ await check('Parity projection retains -0 and optional presence; does not quanti
   assert.deepEqual(Object.keys(p.state).sort(),PARITY_FIELDS.filter(f=>f!=='cupLipResolved').slice().sort());
   const a=projectPhysicsFrame(p);p.state.pos.x=-0;assert.notDeepEqual(projectPhysicsFrame(p),a);p.state.pos.x=0;p.state.cupLipResolved=false;assert.notDeepEqual(projectPhysicsFrame(p),a);
 });
-await check('ZERO BEHAVIOR CHANGE: 43-file baseline preserved through exact Step 2/3 inverses; no fixture rebaseline',()=>{
+await check('PROTECTED BEHAVIOR: 43-file baseline preserved through exact authorized Step 2/3/5 inverses; no fixture rebaseline',()=>{
   const baseline=json('fixtures/behavior-baseline-v1.json');
   assert.equal(baseline.baseCommit,'4497fc90827ceda14ddf5d46f10b3ebccff7ec34');
   assert.equal(Object.keys(baseline.files).length,43);
@@ -127,5 +127,5 @@ await check('ZERO BEHAVIOR CHANGE: 43-file baseline preserved through exact Step
   }
 });
 console.log(`\nLOFT SEALED SHOT STEP 1: ${passed}/${passed+failed} PASS; ${failed} FAIL`);
-console.log('SEED INTEGRITY, EXTRACTION PARITY, production DETERMINISM and BOUNDARY SAFETY remain NOT IMPLEMENTED.');
+console.log('Historical Step 1 contracts/fixtures retained. Later SEED INTEGRITY and EXTRACTION PARITY have separate gates; BOUNDARY SAFETY remains pending.');
 process.exitCode=failed?1:0;

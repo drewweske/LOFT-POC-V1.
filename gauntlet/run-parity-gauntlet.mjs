@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {restoreStep2Bytes} from './sealed-shot/step3-preservation.mjs';
+import {assertStep5ProductionScope} from './sealed-shot/step5-preservation.mjs';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root));
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -51,10 +52,11 @@ check('Returned launch/trajectory/rest snapshots: unchanged projection, actual o
   assert.equal(report.returnedSnapshotComparisons,report.totalPairedFrames+report.totalPairedRuns*2);
   assert.ok(report.outcomes.holed>0);assert.ok(report.outcomes.bounced>0);assert.ok(report.outcomes.surfaceTransitions>0);
 });
-check('Protected source audit: current-main extraction unchanged; old launch/solver/field invert byte-exactly',()=>{
+check('Protected source audit: exact Step 5 seed wiring only; old launch/solver/field invert byte-exactly',()=>{
   assert.equal(report.extracted.checkpoint,extractedCheckpoint);
   for(const {path,sha256} of report.extracted.sources)assert.equal(sha(read(path)),sha256);
-  assert.equal(git('diff',extractedCheckpoint,'--','prototype1','vendor','.gitattributes').toString(),'');
+  assertStep5ProductionScope();
+  assert.equal(report.testAdapter.replacementCount,1);
   for(const p of ['prototype1/game.js','prototype1/physics.js','prototype1/worldV2.js']){
     const restored=restoreStep2Bytes(p,read(p));
     assert.equal(sha(p.endsWith('game.js')?Buffer.from(restored.toString().replace(/\r\n/g,'\n')):restored),sha(git('show',legacyCommit+':'+p)),p);
@@ -70,5 +72,5 @@ check('Frozen projection v1/locks unchanged before and after; comparator rejects
 });
 if(report)console.log('INFO parity '+JSON.stringify(report));
 console.log(`\nLOFT EXTRACTION PARITY STEP 4: ${passed}/${passed+failed} PASS; ${failed} FAIL`);
-console.log('Node/V8 only. WebKit, Gecko and physical iOS WebView remain PENDING. STOP before Step 5.');
+console.log('Historical injected-dispersion parity retained via explicit test adapter; normal seeded production tested separately. WebKit, Gecko and physical iOS WebView remain PENDING.');
 process.exitCode=failed?1:0;
